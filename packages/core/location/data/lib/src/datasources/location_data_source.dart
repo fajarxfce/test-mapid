@@ -4,6 +4,8 @@ import 'package:core_location_domain/core_location_domain.dart';
 
 abstract interface class LocationDataSource {
   Future<Result<LocationFixDto>> locate();
-  Stream<Result<LocationFixDto>> watch();
+
+  /// Passive resume checks access without opening another permission dialog.
+  Stream<Result<LocationFixDto>> watch({bool requestPermission = true});
   Future<Result<void>> openSettings(LocationSettingsTarget target);
 }

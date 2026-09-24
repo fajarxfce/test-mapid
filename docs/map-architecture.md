@@ -124,14 +124,18 @@ The data layer combines the GPS and compass sources with RxDart. Android request
 high-accuracy updates at a one-second interval and zero distance filter; the OS
 controls actual delivery. The first fix races a 20-second deadline. Once a fix
 arrives, that deadline is cancelled, so stationary tracking never times out.
-Stream errors become typed failures and close the watch, allowing explicit retry.
+Stream errors become typed failures and release both sensor subscriptions.
+The lifecycle observer remains active so permission or GPS changes in Android
+Settings can recover without another location-button tap.
 
 The shared data layer observes application visibility. Backgrounding cancels
-both sensor subscriptions; resuming creates fresh subscriptions. Inactive states
-such as permission dialogs do not interrupt the request. Cancelling the consumer
-also removes the lifecycle observer. `MapBloc` uses `emit.forEach` with a
-`droppable` location event: repeated button taps cannot create duplicate watches.
-Closing the route releases the subscription automatically.
+both sensor subscriptions; resuming checks access before creating fresh streams.
+Only an explicit tracking request may open a permission dialog; automatic resume
+is a passive check. Inactive states such as permission dialogs do not interrupt
+the request. Cancelling the consumer also removes the lifecycle observer.
+`MapBloc` uses `emit.forEach` and filters duplicate requests while tracking or
+acquiring. An explicit retry after failure replaces the previous watcher through
+`restartable()`. Closing the route releases the subscription automatically.
 
 `LocationBearing` distinguishes magnetic compass heading from GPS movement
 direction. Valid compass readings take priority, are rounded to one degree,

@@ -8,7 +8,6 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/models/location_action.dart';
 import 'package:map_presentation/src/map/models/location_tracking_status.dart';
 
 import 'support/fake_repositories.dart';
@@ -196,8 +195,8 @@ void main() {
       },
       verify: (bloc) {
         expect(locations.opened, entry.value);
-        expect(bloc.state.locationAction, LocationAction.locate);
-        expect(bloc.state.settingsMessage, isNotNull);
+        expect(bloc.state.locationFailure?.kind, entry.key);
+        expect(bloc.state.settingsMessage, isNull);
       },
     );
   }
@@ -218,6 +217,38 @@ void main() {
       pending.complete(Success(sampleLayer));
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.layer, isNull);
+    },
+  );
+
+  test(
+    'retry after a tracking failure replaces the observer and releases it',
+    () async {
+      final streams = <StreamController<Result<LocationFix>>>[];
+      locations.updates = () {
+        final stream = StreamController<Result<LocationFix>>();
+        streams.add(stream);
+        return stream.stream;
+      };
+      final bloc = createBloc();
+      bloc.add(const MapLocationRequested());
+      await Future<void>.delayed(Duration.zero);
+      streams.single.add(
+        const FailureResult(Failure(FailureKind.permissionDenied, 'denied')),
+      );
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const MapLocationActionRequested());
+      await Future<void>.delayed(Duration.zero);
+      expect(streams, hasLength(2));
+      expect(streams.first.hasListener, isFalse);
+      streams.last.add(const Success(sampleLocation));
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.live);
+      expect(bloc.state.locationFailure, isNull);
+      await bloc.close();
+      expect(streams.last.hasListener, isFalse);
+      for (final stream in streams) {
+        await stream.close();
+      }
     },
   );
 }

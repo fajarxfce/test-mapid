@@ -17,7 +17,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
   const GeolocatorLocationDataSource(this._platform);
   final GeolocatorPlatform _platform;
 
-  Future<Result<void>> _requestAccess() async {
+  Future<Result<void>> _requestAccess({bool requestPermission = true}) async {
     try {
       if (!await _platform.isLocationServiceEnabled()) {
         return const FailureResult(
@@ -28,7 +28,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
         );
       }
       var permission = await _platform.checkPermission();
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied && requestPermission) {
         permission = await _platform.requestPermission();
       }
       return switch (permission) {
@@ -73,44 +73,56 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
   }
 
   @override
-  Stream<Result<LocationFixDto>> watch() => Rx.defer(
-    () => Stream.fromFuture(_requestAccess()).switchMap(
-      (access) => switch (access) {
-        FailureResult(:final failure) => Stream.value(
-          FailureResult<LocationFixDto>(failure),
-        ),
-        Success() => Rx.race<Result<LocationFixDto>>([
-          Rx.defer(
-                () => _platform.getPositionStream(
-                  locationSettings:
-                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android
-                      ? AndroidSettings(
-                          accuracy: LocationAccuracy.high,
-                          distanceFilter: 0,
-                          intervalDuration: const Duration(seconds: 1),
-                        )
-                      : const LocationSettings(
-                          accuracy: LocationAccuracy.high,
-                          distanceFilter: 0,
-                        ),
-                ),
-              )
-              .map<Result<LocationFixDto>>(
-                (position) => Success(LocationFixDto.fromPosition(position)),
-              )
-              .onErrorReturnWith(
-                (error, _) => FailureResult(mapLocationException(error)),
-              ),
-          // The first fix cancels this deadline. Standing still never times out.
-          Rx.timer(
-            const FailureResult<LocationFixDto>(
-              Failure(FailureKind.timeout, 'The first location fix timed out.'),
+  Stream<Result<LocationFixDto>> watch({
+    bool requestPermission = true,
+  }) => Rx.defer(
+    () =>
+        Stream.fromFuture(
+          _requestAccess(requestPermission: requestPermission),
+        ).switchMap(
+          (access) => switch (access) {
+            FailureResult(:final failure) => Stream.value(
+              FailureResult<LocationFixDto>(failure),
             ),
-            const Duration(seconds: 20),
-          ),
-        ]).takeWhileInclusive((result) => result is Success<LocationFixDto>),
-      },
-    ),
+            Success() => Rx.race<Result<LocationFixDto>>(
+              [
+                Rx.defer(
+                      () => _platform.getPositionStream(
+                        locationSettings:
+                            !kIsWeb &&
+                                defaultTargetPlatform == TargetPlatform.android
+                            ? AndroidSettings(
+                                accuracy: LocationAccuracy.high,
+                                distanceFilter: 0,
+                                intervalDuration: const Duration(seconds: 1),
+                              )
+                            : const LocationSettings(
+                                accuracy: LocationAccuracy.high,
+                                distanceFilter: 0,
+                              ),
+                      ),
+                    )
+                    .map<Result<LocationFixDto>>(
+                      (position) =>
+                          Success(LocationFixDto.fromPosition(position)),
+                    )
+                    .onErrorReturnWith(
+                      (error, _) => FailureResult(mapLocationException(error)),
+                    ),
+                // The first fix cancels this deadline. Standing still never times out.
+                Rx.timer(
+                  const FailureResult<LocationFixDto>(
+                    Failure(
+                      FailureKind.timeout,
+                      'The first location fix timed out.',
+                    ),
+                  ),
+                  const Duration(seconds: 20),
+                ),
+              ],
+            ).takeWhileInclusive((result) => result is Success<LocationFixDto>),
+          },
+        ),
   );
 
   @override

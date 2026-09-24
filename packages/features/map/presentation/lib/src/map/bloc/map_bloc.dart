@@ -15,7 +15,17 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   MapBloc(this._loadLayer, this._watchLocation, this._openSettings)
     : super(const MapState()) {
     on<MapLayerRequested>(_loadMapLayer, transformer: restartable());
-    on<MapLocationRequested>(_onLocationRequested, transformer: droppable());
+    on<MapLocationRequested>(
+      _onLocationRequested,
+      transformer: (events, mapper) => restartable<MapLocationRequested>()(
+        events.where(
+          (_) =>
+              !state.locating &&
+              state.locationStatus != LocationTrackingStatus.live,
+        ),
+        mapper,
+      ),
+    );
     on<MapLocationActionRequested>(
       _handleLocationAction,
       transformer: droppable(),
@@ -92,9 +102,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     if (emit.isDone) return;
     emit(
       state.copyWith(
-        locationFailure: null,
         settingsMessage: switch (result) {
-          Success() => 'Setelah mengaktifkan lokasi, ketuk Lokasi saya.',
+          Success() => null,
           FailureResult() =>
             'Buka pengaturan lokasi perangkat, lalu coba lagi.',
         },

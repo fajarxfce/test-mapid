@@ -110,6 +110,152 @@ void main() {
     );
   });
 
+  test('a passive permission check never opens a permission dialog', () async {
+    when(platform.checkPermission)
+        .thenAnswer((_) async => LocationPermission.denied);
+    final results = await source.watch(requestPermission: false).toList();
+    expect(
+      (results.single as FailureResult).failure.kind,
+      FailureKind.permissionDenied,
+    );
+    verifyNever(platform.requestPermission);
+    verifyNever(
+      () => platform.getPositionStream(
+        locationSettings: any(named: 'locationSettings'),
+      ),
+    );
+  });
+
+  for (final failure in [
+    FailureKind.permissionPermanentlyDenied,
+    FailureKind.serviceDisabled,
+  ]) {
+    test(
+      'returning from Settings recovers $failure without a new request',
+      () async {
+        WidgetsBinding.instance.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        when(platform.isLocationServiceEnabled)
+            .thenAnswer((_) async => failure != FailureKind.serviceDisabled);
+        when(platform.checkPermission)
+            .thenAnswer((_) async => LocationPermission.deniedForever);
+        final compass = _Compass();
+        final headings = <StreamController<double?>>[];
+        when(compass.watch).thenAnswer((_) {
+          final stream = StreamController<double?>()..add(null);
+          headings.add(stream);
+          return stream.stream;
+        });
+        final results = <Result<LocationFix>>[];
+        final recovered = Completer<void>();
+        final subscription = DeviceLocationRepository(source, compass)
+            .watch()
+            .listen((result) {
+              results.add(result);
+              if (result is Success<LocationFix> && !recovered.isCompleted) {
+                recovered.complete();
+              }
+            });
+        addTearDown(subscription.cancel);
+        await settle();
+        expect((results.last as FailureResult).failure.kind, failure);
+        expect(headings.single.hasListener, isFalse);
+        for (final state in [
+          AppLifecycleState.inactive,
+          AppLifecycleState.hidden,
+          AppLifecycleState.paused,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        await settle();
+        when(platform.isLocationServiceEnabled).thenAnswer((_) async => true);
+        when(platform.checkPermission)
+            .thenAnswer((_) async => LocationPermission.whileInUse);
+        for (final state in [
+          AppLifecycleState.hidden,
+          AppLifecycleState.inactive,
+          AppLifecycleState.resumed,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        await settle();
+        positions.add(position());
+        await recovered.future.timeout(const Duration(seconds: 2));
+        expect(results.last, isA<Success<LocationFix>>());
+        verifyNever(platform.requestPermission);
+        await subscription.cancel();
+        expect(positions.hasListener, isFalse);
+        expect(headings.last.hasListener, isFalse);
+        // A disposed watcher must not restart sensors on a later resume.
+        for (final state in [
+          AppLifecycleState.inactive,
+          AppLifecycleState.hidden,
+          AppLifecycleState.paused,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        for (final state in [
+          AppLifecycleState.hidden,
+          AppLifecycleState.inactive,
+          AppLifecycleState.resumed,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        await settle();
+        expect(headings, hasLength(2));
+        for (final stream in headings) {
+          await stream.close();
+        }
+      },
+    );
+  }
+
+  test(
+    'returning without granting permission does not prompt repeatedly',
+    () async {
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      );
+      when(platform.checkPermission)
+          .thenAnswer((_) async => LocationPermission.denied);
+      when(platform.requestPermission)
+          .thenAnswer((_) async => LocationPermission.denied);
+      final compass = _Compass();
+      when(compass.watch).thenAnswer((_) => Stream.value(null));
+      final results = <Result<LocationFix>>[];
+      final subscription = DeviceLocationRepository(
+        source,
+        compass,
+      ).watch().listen(results.add);
+      await settle();
+      for (var i = 0; i < 2; i++) {
+        for (final state in [
+          AppLifecycleState.inactive,
+          AppLifecycleState.hidden,
+          AppLifecycleState.paused,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        await settle();
+        for (final state in [
+          AppLifecycleState.hidden,
+          AppLifecycleState.inactive,
+          AppLifecycleState.resumed,
+        ]) {
+          WidgetsBinding.instance.handleAppLifecycleStateChanged(state);
+        }
+        await settle();
+        expect(
+          (results.last as FailureResult).failure.kind,
+          FailureKind.permissionDenied,
+        );
+      }
+      verify(platform.requestPermission).called(1);
+      await subscription.cancel();
+    },
+  );
+
   test(
     'a platform stream failure emits a typed failure and closes tracking',
     () async {
@@ -216,7 +362,9 @@ void main() {
       final compass = _Compass();
       final gpsStreams = <StreamController<Result<LocationFixDto>>>[];
       final compassStreams = <StreamController<double?>>[];
-      when(local.watch).thenAnswer((_) {
+      when(
+        () => local.watch(requestPermission: any(named: 'requestPermission')),
+      ).thenAnswer((_) {
         final stream = StreamController<Result<LocationFixDto>>();
         gpsStreams.add(stream);
         return stream.stream;
@@ -292,36 +440,43 @@ void main() {
     },
   );
 
-  test('GPS failure closes the combined watch and releases compass', () async {
-    WidgetsBinding.instance.handleAppLifecycleStateChanged(
-      AppLifecycleState.resumed,
-    );
-    final local = _Locations();
-    final compass = _Compass();
-    final gps = StreamController<Result<LocationFixDto>>();
-    final headings = StreamController<double?>()..add(null);
-    when(local.watch).thenAnswer((_) => gps.stream);
-    when(compass.watch).thenAnswer((_) => headings.stream);
-    final results = <Result<LocationFix>>[];
-    var done = false;
-    final subscription = DeviceLocationRepository(
-      local,
-      compass,
-    ).watch().listen(results.add, onDone: () => done = true);
-    await settle();
-    gps.add(
-      const FailureResult(Failure(FailureKind.serviceDisabled, 'GPS disabled')),
-    );
-    await settle();
-    expect(done, isTrue);
-    expect(headings.hasListener, isFalse);
-    expect(gps.hasListener, isFalse);
-    expect(
-      (results.last as FailureResult).failure.kind,
-      FailureKind.serviceDisabled,
-    );
-    await subscription.cancel();
-    await gps.close();
-    await headings.close();
-  });
+  test(
+    'GPS failure releases sensors but keeps observing permission recovery',
+    () async {
+      WidgetsBinding.instance.handleAppLifecycleStateChanged(
+        AppLifecycleState.resumed,
+      );
+      final local = _Locations();
+      final compass = _Compass();
+      final gps = StreamController<Result<LocationFixDto>>();
+      final headings = StreamController<double?>()..add(null);
+      when(
+        () => local.watch(requestPermission: any(named: 'requestPermission')),
+      ).thenAnswer((_) => gps.stream);
+      when(compass.watch).thenAnswer((_) => headings.stream);
+      final results = <Result<LocationFix>>[];
+      var done = false;
+      final subscription = DeviceLocationRepository(
+        local,
+        compass,
+      ).watch().listen(results.add, onDone: () => done = true);
+      await settle();
+      gps.add(
+        const FailureResult(
+          Failure(FailureKind.serviceDisabled, 'GPS disabled'),
+        ),
+      );
+      await settle();
+      expect(done, isFalse);
+      expect(headings.hasListener, isFalse);
+      expect(gps.hasListener, isFalse);
+      expect(
+        (results.last as FailureResult).failure.kind,
+        FailureKind.serviceDisabled,
+      );
+      await subscription.cancel();
+      await gps.close();
+      await headings.close();
+    },
+  );
 }

@@ -17,37 +17,35 @@ final class DeviceLocationRepository implements LocationRepository {
     FailureResult(:final failure) => FailureResult(failure),
   };
   @override
-  Stream<Result<LocationFix>> watch() => watchAppForeground()
-      .switchMap(
-        (foreground) => foreground
-            ? Rx.combineLatest2(
-                _local.watch(),
-                _compass.watch(),
-                (result, heading) => switch (result) {
-                  Success(:final value) => Success(
-                    value.toEntity(compassHeading: heading),
-                  ),
-                  FailureResult(:final failure) => FailureResult<LocationFix>(
-                    failure,
-                  ),
-                },
-              )
-            : Stream.value(
-                const FailureResult<LocationFix>(
-                  Failure(
-                    FailureKind.cancelled,
-                    'Foreground location tracking is paused.',
-                  ),
-                ),
-              ),
-      )
-      .takeWhileInclusive(
-        (result) => switch (result) {
-          Success() => true,
-          FailureResult(:final failure) =>
-            failure.kind == FailureKind.cancelled,
+  Stream<Result<LocationFix>> watch() => Rx.defer(() {
+    // Only a new caller request may prompt. Returning from Settings is passive.
+    var requestPermission = true;
+    return watchAppForeground().switchMap((foreground) {
+      if (!foreground) {
+        return Stream.value(
+          const FailureResult<LocationFix>(
+            Failure(
+              FailureKind.cancelled,
+              'Foreground location tracking is paused.',
+            ),
+          ),
+        );
+      }
+      final fixes = _local.watch(requestPermission: requestPermission);
+      requestPermission = false;
+      // Release sensors on failure, retaining visibility observation for resume.
+      return Rx.combineLatest2(
+        fixes,
+        _compass.watch(),
+        (result, heading) => switch (result) {
+          Success(:final value) => Success<LocationFix>(
+            value.toEntity(compassHeading: heading),
+          ),
+          FailureResult(:final failure) => FailureResult<LocationFix>(failure),
         },
-      );
+      ).takeWhileInclusive((result) => result is Success<LocationFix>);
+    });
+  });
   @override
   Future<Result<void>> openSettings(LocationSettingsTarget target) =>
       _local.openSettings(target);
