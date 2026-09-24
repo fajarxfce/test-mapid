@@ -3,22 +3,13 @@ publish_to: none
 environment:
   sdk: ">=3.13.0 <4.0.0"
 workspace:
-  - packages/features/map/presentation
-  - packages/features/map/domain
-  - packages/features/map/data
   - apps/fluent_starter
   - packages/core/common
-  - packages/core/data
   - packages/core/network
   - packages/core/design_system
-  - packages/core/testing
-  - packages/core/identity/domain
-  - packages/core/identity/data
-  - packages/features/auth/presentation
-  - packages/features/home/presentation
-  - packages/features/settings/domain
-  - packages/features/settings/data
-  - packages/features/settings/presentation
+  - packages/features/map/domain
+  - packages/features/map/data
+  - packages/features/map/presentation
 dev_dependencies:
   melos: any
   flutter_lints: any
@@ -83,6 +74,6 @@ melos:
     flavors:
       run: dart run tool/flavors.dart
     run:dev:
-      run: dart run tool/app.dart run linux dev
+      run: dart run tool/app.dart run android dev
     build:web:
       run: dart run tool/app.dart build web dev --smoke

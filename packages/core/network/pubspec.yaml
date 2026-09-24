@@ -11,7 +11,6 @@ dependencies:
   dio: any
   json_annotation: any
 dev_dependencies:
-  core_testing: any
   get_it: any
   build_runner: any
   injectable_generator: any

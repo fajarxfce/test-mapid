@@ -1,5 +1,2 @@
-/// Injectable qualifier for the main backend client and its dependencies.
-const mainApi = 'mainApi';
-
-/// GEO MAPID layer transport; separate from authenticated APIs.
+/// Injectable qualifier for the GEO MAPID layer HTTP client.
 const mapidApi = 'mapidApi';

@@ -2,32 +2,23 @@ import 'dart:convert';
 import 'dart:io';
 
 Future<void> main(List<String> args) async {
-  const platforms = {'android', 'ios', 'web', 'linux', 'windows', 'macos'};
+  const platforms = {'android', 'ios', 'web'};
   if (args.length < 3 ||
       !{'run', 'build'}.contains(args[0]) ||
       !platforms.contains(args[1]) ||
       !{'dev', 'staging', 'prod'}.contains(args[2])) {
     stderr.writeln(
-      'Usage: dart run tool/app.dart <run|build> <platform> <dev|staging|prod> [--api=https://host] [--oauth-providers=google,github --oauth-redirect=uri] [--device=id] [--smoke]',
+      'Usage: dart run tool/app.dart <run|build> <android|ios|web> <dev|staging|prod> [--device=id] [--smoke]',
     );
     exitCode = 64;
     return;
   }
   final [action, platform, flavor, ...options] = args;
-  String? api;
   String? device;
-  String? oauthProviders;
-  String? oauthRedirect;
   var smoke = false;
   for (final option in options) {
-    if (option.startsWith('--api=')) {
-      api = option.substring(6);
-    } else if (option.startsWith('--device=')) {
-      device = option.substring(9);
-    } else if (option.startsWith('--oauth-providers=')) {
-      oauthProviders = option.substring('--oauth-providers='.length);
-    } else if (option.startsWith('--oauth-redirect=')) {
-      oauthRedirect = option.substring('--oauth-redirect='.length);
+    if (option.startsWith('--device=')) {
+      device = option.substring('--device='.length);
     } else if (option == '--smoke') {
       smoke = true;
     } else {
@@ -36,35 +27,19 @@ Future<void> main(List<String> args) async {
       return;
     }
   }
-  if ((oauthProviders != null || oauthRedirect != null) &&
-      (api == null || oauthProviders == null || oauthRedirect == null)) {
+  final environment = File.fromUri(Platform.script.resolve('../.env'));
+  if (!environment.existsSync()) {
     stderr.writeln(
-      'OAuth options require --api, --oauth-providers and --oauth-redirect together.',
+      'Create the root .env from .env.example and populate the MAPID configuration.',
     );
-    exitCode = 64;
+    exitCode = 78;
     return;
-  }
-  if (api != null) {
-    final uri = Uri.tryParse(api);
-    if (uri == null ||
-        uri.scheme != 'https' ||
-        uri.host.isEmpty ||
-        uri.userInfo.isNotEmpty ||
-        uri.hasQuery ||
-        uri.hasFragment ||
-        (uri.path != '' && uri.path != '/')) {
-      stderr.writeln('--api must be an HTTPS origin.');
-      exitCode = 64;
-      return;
-    }
   }
   final command = <String>[action];
   if (action == 'build') {
     command.add(platform == 'android' ? 'apk' : platform);
     command.add(smoke && platform == 'android' ? '--debug' : '--release');
-    if (smoke && platform == 'ios') {
-      command.add('--no-codesign');
-    }
+    if (smoke && platform == 'ios') command.add('--no-codesign');
   } else {
     if (device == null && {'android', 'ios'}.contains(platform)) {
       final result = await Process.run('flutter', [
@@ -80,7 +55,8 @@ Future<void> main(List<String> args) async {
           .cast<Map<String, dynamic>>();
       final candidates = devices
           .where(
-            (d) => (d['targetPlatform'] as String? ?? '').startsWith(platform),
+            (entry) =>
+                (entry['targetPlatform'] as String? ?? '').startsWith(platform),
           )
           .toList();
       if (candidates.length != 1) {
@@ -90,30 +66,19 @@ Future<void> main(List<String> args) async {
       }
       device = candidates.single['id'] as String;
     }
-    command.addAll(['-d', device ?? (platform == 'web' ? 'chrome' : platform)]);
+    command.addAll(['-d', device ?? 'chrome']);
   }
   if (platform != 'web') command.addAll(['--flavor', flavor]);
   command.addAll([
+    '--dart-define-from-file=${environment.path}',
     '--dart-define=FLAVOR=$flavor',
-    '--dart-define=BACKEND=${api == null ? 'demo' : 'api'}',
   ]);
-  if (api != null) command.add('--dart-define=API_BASE_URL=$api');
-  if (oauthProviders != null) {
-    command.add('--dart-define=OAUTH_PROVIDERS=$oauthProviders');
-  }
-  if (oauthRedirect != null) {
-    command.add('--dart-define=OAUTH_REDIRECT_URI=$oauthRedirect');
-  }
   final process = await Process.start(
     'flutter',
     command,
-    workingDirectory: 'apps/fluent_starter',
-    environment: smoke && platform == 'macos'
-        ? {
-            'FLUTTER_XCODE_CODE_SIGNING_ALLOWED': 'NO',
-            'FLUTTER_XCODE_CODE_SIGNING_REQUIRED': 'NO',
-          }
-        : null,
+    workingDirectory: Directory.fromUri(
+      Platform.script.resolve('../apps/fluent_starter/'),
+    ).path,
     runInShell: Platform.isWindows,
     mode: ProcessStartMode.inheritStdio,
   );

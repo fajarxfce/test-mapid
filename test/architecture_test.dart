@@ -13,7 +13,7 @@ void main() {
         .writeAsStringSync('workspace: [common, domain]\n');
     for (final entry in {
       'common': 'core_common',
-      'domain': 'identity_domain',
+      'domain': 'map_domain',
     }.entries) {
       Directory(p.join(root.path, entry.key, 'lib'))
           .createSync(recursive: true);
@@ -30,12 +30,12 @@ void main() {
   });
   test('presentation accepts feature sources under src and DI beside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-      'name: auth_presentation\ndependencies: {core_common: any}\n',
+      'name: map_presentation\ndependencies: {core_common: any}\n',
     );
     for (final entry in {
-      'auth_presentation.dart': "export 'src/login/bloc/login_event.dart';",
-      'di/injection.dart': 'void configureAuthPresentationPackage() {}',
-      'src/login/bloc/login_event.dart': 'sealed class LoginEvent {}\nfinal class LoginSubmitted extends LoginEvent {}',
+      'map_presentation.dart': "export 'src/map/bloc/map_event.dart';",
+      'di/injection.dart': 'void configureMapPresentationPackage() {}',
+      'src/map/bloc/map_event.dart': 'sealed class MapEvent {}\nfinal class MapSubmitted extends MapEvent {}',
     }.entries) {
       final file = File(p.join(root.path, 'domain/lib', entry.key));
       file.parent.createSync(recursive: true);
@@ -45,13 +45,11 @@ void main() {
   });
   test('presentation rejects feature sources outside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-      'name: auth_presentation\ndependencies: {core_common: any}\n',
+      'name: map_presentation\ndependencies: {core_common: any}\n',
     );
-    final file = File(
-      p.join(root.path, 'domain/lib/login/bloc/login_bloc.dart'),
-    );
+    final file = File(p.join(root.path, 'domain/lib/map/bloc/map_bloc.dart'));
     file.parent.createSync(recursive: true);
-    file.writeAsStringSync('class LoginBloc {}');
+    file.writeAsStringSync('class MapBloc {}');
     expect(
       checkArchitecture(root),
       contains(contains('presentation features belong in lib/src')),
@@ -72,30 +70,29 @@ void main() {
     expect(checkArchitecture(root), contains(contains('escapes library')));
   });
   test('rejects forbidden dependency and cycles', () {
-    File(p.join(root.path, 'common/pubspec.yaml')).writeAsStringSync(
-      'name: core_common\ndependencies: {identity_domain: any}\n',
-    );
+    File(
+      p.join(root.path, 'common/pubspec.yaml'),
+    ).writeAsStringSync('name: core_common\ndependencies: {map_domain: any}\n');
     expect(checkArchitecture(root), contains(contains('forbidden dependency')));
     expect(checkArchitecture(root), contains(contains('cycle')));
   });
   test('rejects implementations and imports in a package barrel', () {
-    File(p.join(root.path, 'domain/lib/identity_domain.dart'))
-        .writeAsStringSync(
-          "import 'package:core_common/core_common.dart';\nclass User {}",
-        );
+    File(p.join(root.path, 'domain/lib/map_domain.dart')).writeAsStringSync(
+      "import 'package:core_common/core_common.dart';\nclass User {}",
+    );
     expect(checkArchitecture(root), contains(contains('only exports')));
   });
   test('rejects unrelated public types in one implementation file', () {
     File(p.join(root.path, 'domain/lib/models.dart')).writeAsStringSync(
-      'class User {}\nabstract interface class IdentityRepository {}',
+      'class User {}\nabstract interface class MapRepository {}',
     );
     expect(checkArchitecture(root), contains(contains('split public types')));
   });
   test('accepts a sealed event family in one source file', () {
-    File(p.join(root.path, 'domain/lib/login_event.dart')).writeAsStringSync('''
-sealed class LoginEvent {}
-final class LoginSubmitted extends LoginEvent {}
-final class LoginCancelled implements LoginEvent {}
+    File(p.join(root.path, 'domain/lib/map_event.dart')).writeAsStringSync('''
+sealed class MapEvent {}
+final class MapSubmitted extends MapEvent {}
+final class MapCancelled implements MapEvent {}
 ''');
     expect(checkArchitecture(root), isEmpty);
   });
@@ -111,15 +108,14 @@ final class MapTapped extends SceneEvent {}
   });
   test('sealed family exception still rejects unrelated public types', () {
     for (final unrelated in [
-      'class LoginRepository {}',
-      'enum LoginStatus { idle }',
+      'class MapRepository {}',
+      'enum MapStatus { idle }',
       'sealed class SessionEvent {}',
-      'final class OtherSubmitted extends other.LoginEvent {}',
+      'final class OtherSubmitted extends other.MapEvent {}',
     ]) {
-      File(p.join(root.path, 'domain/lib/login_event.dart'))
-          .writeAsStringSync('''
-sealed class LoginEvent {}
-final class LoginSubmitted extends LoginEvent {}
+      File(p.join(root.path, 'domain/lib/map_event.dart')).writeAsStringSync('''
+sealed class MapEvent {}
+final class MapSubmitted extends MapEvent {}
 $unrelated
 ''');
       expect(
@@ -130,7 +126,7 @@ $unrelated
     }
   });
   test('accepts export barrels, private companions and generated types', () {
-    File(p.join(root.path, 'domain/lib/identity_domain.dart'))
+    File(p.join(root.path, 'domain/lib/map_domain.dart'))
         .writeAsStringSync("export 'view.dart';");
     File(p.join(root.path, 'domain/lib/view.dart'))
         .writeAsStringSync('class View {}\nclass _ViewState {}');
@@ -198,11 +194,11 @@ const explanation = 'Cubit, ValueNotifier and StatefulWidget';
     'feature DI and router configuration can resolve route-scoped Blocs',
     () {
       File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-        'name: auth_presentation\ndependencies: {get_it: any}\n',
+        'name: map_presentation\ndependencies: {get_it: any}\n',
       );
       for (final path in [
         'di/injection.dart',
-        'src/navigation/auth_router.dart',
+        'src/navigation/map_router.dart',
       ]) {
         final file = File(p.join(root.path, 'domain/lib', path));
         file.parent.createSync(recursive: true);
@@ -212,13 +208,13 @@ const explanation = 'Cubit, ValueNotifier and StatefulWidget';
     },
   );
   for (final path in [
-    'src/login/bloc/login_bloc.dart',
-    'src/login/pages/login_page.dart',
+    'src/map/bloc/map_bloc.dart',
+    'src/map/pages/map_page.dart',
     'src/navigation/helpers.dart',
   ]) {
     test('feature locator access is rejected in $path', () {
       File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-        'name: auth_presentation\ndependencies: {get_it: any}\n',
+        'name: map_presentation\ndependencies: {get_it: any}\n',
       );
       final file = File(p.join(root.path, 'domain/lib', path));
       file.parent.createSync(recursive: true);
@@ -230,17 +226,15 @@ const explanation = 'Cubit, ValueNotifier and StatefulWidget';
     });
   }
   void writeView(String source) {
-    final file = File(
-      p.join(root.path, 'domain/lib/login/pages/login_view.dart'),
-    );
+    final file = File(p.join(root.path, 'domain/lib/map/pages/map_view.dart'));
     file.parent.createSync(recursive: true);
     file.writeAsStringSync(source);
   }
 
   test('UI checks cover feature folders and shared or app widgets', () {
     for (final path in [
-      'login/pages/login_view.dart',
-      'login/widgets/login_form.dart',
+      'map/pages/map_view.dart',
+      'map/widgets/map_form.dart',
       'src/views/example_view.dart',
       'src/widgets/example_widget.dart',
       'routing/pages/example_page.dart',
@@ -248,13 +242,11 @@ const explanation = 'Cubit, ValueNotifier and StatefulWidget';
       final file = File(p.join(root.path, 'domain/lib', path));
       file.parent.createSync(recursive: true);
       file.writeAsStringSync(
-        'class View { void submit() => repository.login(); }',
+        'class View { void submit() => repository.map(); }',
       );
       expect(
         checkArchitecture(root),
-        contains(
-          'identity_domain/$path: UI must not declare logic/helper methods',
-        ),
+        contains('map_domain/$path: UI must not declare logic/helper methods'),
         reason: path,
       );
       file.deleteSync();
@@ -297,7 +289,7 @@ const explanation = 'Cubit, ValueNotifier and StatefulWidget';
   });
   test('UI cannot import use cases, data, storage or service locators', () {
     writeView(
-      "import 'package:identity_domain/identity_domain.dart'; import 'package:get_it/get_it.dart';",
+      "import 'package:map_domain/map_domain.dart'; import 'package:get_it/get_it.dart';",
     );
     expect(
       checkArchitecture(root),

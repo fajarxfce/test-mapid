@@ -9,37 +9,18 @@ import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
 const allowed = <String, Set<String>>{
-  'map_presentation': {'map_domain', 'core_common', 'core_design_system'},
-  'map_domain': {'core_common'},
-  'map_data': {'map_domain', 'core_common', 'core_network'},
   'core_common': {},
-  'core_data': {'core_common'},
   'core_network': {'core_common'},
   'core_design_system': {},
-  'core_testing': {'core_common'},
-  'identity_domain': {'core_common'},
-  'identity_data': {'identity_domain', 'core_common', 'core_network'},
-  'auth_presentation': {'identity_domain', 'core_common', 'core_design_system'},
-  'home_presentation': {'core_design_system', 'core_common', 'identity_domain'},
-  'settings_domain': {'core_common'},
-  'settings_data': {'settings_domain', 'core_common'},
-  'settings_presentation': {
-    'settings_domain',
-    'core_common',
-    'core_design_system',
-  },
+  'map_domain': {'core_common'},
+  'map_data': {'map_domain', 'core_common', 'core_network'},
+  'map_presentation': {'map_domain', 'core_common', 'core_design_system'},
   'fluent_starter': {
-    'core_common',
-    'core_data',
     'core_network',
     'core_design_system',
-    'identity_domain',
-    'identity_data',
-    'auth_presentation',
-    'home_presentation',
-    'settings_domain',
-    'settings_data',
-    'settings_presentation',
+    'map_domain',
+    'map_data',
+    'map_presentation',
   },
 };
 
@@ -233,16 +214,7 @@ List<String> checkArchitecture(Directory root) {
             '$name: service locator belongs to app composition or feature route/DI composition',
           );
         }
-        if (!{
-              'map_data',
-              'map_presentation',
-              'core_network',
-              'identity_data',
-              'auth_presentation',
-              'home_presentation',
-              'settings_data',
-              'settings_presentation',
-            }.contains(name) &&
+        if (!{'map_data', 'map_presentation', 'core_network'}.contains(name) &&
             uris.any((uri) => uri.startsWith('package:injectable/'))) {
           errors.add(
             '$name: Injectable annotations are not allowed in this layer',
