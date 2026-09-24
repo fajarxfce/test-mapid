@@ -10,6 +10,9 @@ class MapLocationCard extends StatelessWidget {
   final MapState state;
   @override
   Widget build(BuildContext context) => AppCard(
+    backgroundColor: FluentTheme.of(context)
+        .resources
+        .solidBackgroundFillColorBase,
     padding: const EdgeInsets.all(16),
     child: SingleChildScrollView(
       child: Column(

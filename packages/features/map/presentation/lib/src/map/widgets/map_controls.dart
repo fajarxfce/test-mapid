@@ -9,6 +9,9 @@ class MapControls extends StatelessWidget {
   final bool enabled;
   @override
   Widget build(BuildContext context) => AppCard(
+    backgroundColor: FluentTheme.of(context)
+        .resources
+        .solidBackgroundFillColorBase,
     padding: const EdgeInsets.all(4),
     child: Column(
       mainAxisSize: MainAxisSize.min,

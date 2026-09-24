@@ -24,20 +24,21 @@ The API key is absent from tracked source and local commit history. The root
 
 ## Android device verification
 
-The release APK installed and launched on an Android 16 device. Interactive
-verification of the native basemap, marker selection, and live GPS position is
-pending a foreground device session. Automated tests do not replace this check.
+The release APK was installed and tested on a Samsung Galaxy A72 running
+Android 16 on 24 September 2026.
 
-To complete the device check:
+| Scenario | Observed result |
+| --- | --- |
+| Basemap and data | Liberty tiles and the 10-point tourism layer rendered. |
+| Point selection | Tapping a point displayed its name, address, area, period, and coordinates. |
+| Popup dismissal | Closing the popup restored the location card. |
+| Camera controls | Zoom and the layer control updated the map as expected. |
+| Current location | Foreground location access produced a blue position marker; **Lokasi saya** centered the camera on it. |
+| Location denied | The tourism layer and popup remained usable. The recovery button opened Android application settings. |
+| Permission restored | Location acquisition succeeded again after restoring foreground access. |
+| Overlay readability | Cards use solid Fluent surfaces and Android status icons remain visible against the light header. |
 
-1. Open the application with internet access and confirm the Liberty basemap
-   and all 10 tourism points appear.
-2. Tap an orange point and verify its name and address in the popup.
-3. Grant foreground location access, select **Lokasi saya**, and confirm the
-   blue position marker appears. Use the layer control to return to Jogja.
-4. Deny location access or disable GPS and confirm the tourism map remains
-   usable with an appropriate recovery action.
-
-An initial native style request encountered a transient DNS lookup failure.
-The device subsequently resolved the OpenFreeMap host. Confirm basemap loading
-in the foreground and use **Muat peta** to retry if required.
+The selected point used for popup verification was **BENTARA BUDAYA
+YOGYAKARTA (BBY)**, with its address on **JL. SUROTO NO.2**. Native map rendering
+and GPS were verified on the device; GPS-disabled and timeout behavior are
+covered by automated data-layer tests.

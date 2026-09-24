@@ -8,6 +8,9 @@ class PlacePopup extends StatelessWidget {
   final VoidCallback onClose;
   @override
   Widget build(BuildContext context) => AppCard(
+    backgroundColor: FluentTheme.of(context)
+        .resources
+        .solidBackgroundFillColorBase,
     padding: const EdgeInsets.all(18),
     child: SingleChildScrollView(
       child: Column(
