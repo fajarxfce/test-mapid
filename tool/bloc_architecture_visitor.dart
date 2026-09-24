@@ -32,6 +32,15 @@ class BlocArchitectureVisitor extends RecursiveAstVisitor<void> {
   @override
   void visitNamedType(NamedType node) {
     _check(node.name.lexeme);
+    final owner = node.thisOrAncestorOfType<ClassDeclaration>();
+    if (owner?.extendsClause?.superclass.name.lexeme == 'Bloc' &&
+        node.name.lexeme.endsWith('Bloc') &&
+        node.name.lexeme != 'Bloc' &&
+        node.name.lexeme != owner?.namePart.typeName.lexeme) {
+      report(
+        'Blocs must not depend on another Bloc; communicate through events',
+      );
+    }
     if (node.name.lexeme == 'State' &&
         (node.parent is ExtendsClause ||
             node.parent is ClassTypeAlias ||

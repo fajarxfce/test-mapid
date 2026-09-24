@@ -28,6 +28,50 @@ void main() {
         .writeAsStringSync("import 'package:core_common/core_common.dart';");
     expect(checkArchitecture(root), isEmpty);
   });
+  test('shared location cannot depend on a feature', () {
+    File(p.join(root.path, 'pubspec.yaml'))
+        .writeAsStringSync('workspace: [common, domain, location]\n');
+    Directory(p.join(root.path, 'location/lib')).createSync(recursive: true);
+    File(p.join(root.path, 'location/pubspec.yaml')).writeAsStringSync(
+      'name: core_location_data\ndependencies: {core_common: any, map_domain: any}\n',
+    );
+    expect(
+      checkArchitecture(root),
+      contains(contains('forbidden dependency map_domain')),
+    );
+  });
+  test('screen data Bloc cannot import a native map SDK', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
+    );
+    final file = File(
+      p.join(root.path, 'domain/lib/src/map/bloc/map_bloc.dart'),
+    );
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync("import 'package:maplibre_gl/maplibre_gl.dart';");
+    expect(
+      checkArchitecture(root),
+      contains(
+        contains('screen data Bloc must not depend on native map rendering'),
+      ),
+    );
+  });
+  test('Blocs cannot depend on sibling Blocs', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_presentation\ndependencies: {core_common: any}\n',
+    );
+    final file = File(
+      p.join(root.path, 'domain/lib/src/map/bloc/map_bloc.dart'),
+    );
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync(
+      'class MapBloc extends Bloc<Event, State> { MapBloc(this.other); final OtherBloc other; }',
+    );
+    expect(
+      checkArchitecture(root),
+      contains(contains('Blocs must not depend on another Bloc')),
+    );
+  });
   test('presentation accepts feature sources under src and DI beside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any}\n',

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core_common/core_common.dart';
@@ -10,269 +9,171 @@ import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
 import 'package:map_presentation/src/map/models/location_action.dart';
-import 'package:map_presentation/src/map/rendering/map_libre_renderer.dart';
 
-final layer = MapLayer(
-  name: 'Jogja',
-  places: [
-    const MapPlace(
-      id: 'place-1',
-      name: 'Museum',
-      address: 'Jalan Museum',
-      city: 'Yogyakarta',
-      district: 'Gondomanan',
-      period: '2024',
-      point: GeoPoint(latitude: -7.8, longitude: 110.36),
-    ),
-  ],
-);
-const location = LocationFix(
-  point: GeoPoint(latitude: -6.2, longitude: 106.8),
-  accuracyMeters: 12,
-);
-
-class _MapRepository implements MapRepository {
-  Future<Result<MapLayer>> Function() response = () async => Success(layer);
-  @override
-  Future<Result<MapLayer>> loadLayer() => response();
-}
-
-class _LocationRepository implements LocationRepository {
-  Result<LocationFix> result = const Success(location);
-  LocationSettingsTarget? opened;
-  @override
-  Future<Result<LocationFix>> locate() async => result;
-  @override
-  Future<Result<void>> openSettings(LocationSettingsTarget target) async {
-    opened = target;
-    return const Success(null);
-  }
-}
-
-class _Renderer extends MapLibreRenderer {
-  final calls = <String>[];
-  String? picked = 'place-1';
-  @override
-  Future<void> renderLayer(MapLayer layer) async {
-    calls.add('layer:${layer.name}');
-  }
-
-  @override
-  Future<void> renderLocation(LocationFix location) async {
-    calls.add('location');
-  }
-
-  @override
-  Future<void> fitLayer(MapLayer layer) async {
-    calls.add('fit');
-  }
-
-  @override
-  Future<void> focusLocation(LocationFix location) async {
-    calls.add('focus-location');
-  }
-
-  @override
-  Future<String?> placeAt(Point<double> point) async => picked;
-  @override
-  Future<void> reloadStyle() async {
-    calls.add('reload');
-  }
-
-  @override
-  void detach() {
-    calls.add('detach');
-  }
-}
+import 'support/fake_repositories.dart';
+import 'support/map_fixtures.dart';
 
 void main() {
-  late _MapRepository maps;
-  late _LocationRepository locations;
-  late _Renderer renderer;
+  late FakeMapRepository maps;
+  late FakeLocationRepository locations;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
     GetCurrentLocation(locations),
     OpenLocationSettings(locations),
-    renderer,
   );
   setUp(() {
-    maps = _MapRepository();
-    locations = _LocationRepository();
-    renderer = _Renderer();
+    maps = FakeMapRepository();
+    locations = FakeLocationRepository();
   });
 
   blocTest<MapBloc, MapState>(
-    'data can arrive before the style without touching an unready map',
+    'loads layer data without creating a native map',
     build: createBloc,
-    act: (bloc) async {
-      final loaded = bloc.stream.firstWhere((state) => !state.loadingLayer);
-      bloc.add(const MapLayerRequested());
-      await loaded;
-      expect(renderer.calls, isEmpty);
-      bloc.add(const MapStyleLoaded());
-    },
+    act: (bloc) => bloc.add(const MapLayerRequested()),
     verify: (bloc) {
+      expect(bloc.state.layer, same(sampleLayer));
+      expect(bloc.state.content.layer, same(sampleLayer));
       expect(bloc.state.placeCount, 1);
-      expect(renderer.calls, containsAllInOrder(['layer:Jogja', 'fit']));
+      expect(bloc.state.loadingLayer, isFalse);
     },
   );
 
   blocTest<MapBloc, MapState>(
-    'data arriving after style readiness is rendered and fitted',
+    'location denial does not prevent layer loading',
+    setUp: () => locations.response = () async =>
+        const FailureResult(Failure(FailureKind.permissionDenied, 'internal')),
     build: createBloc,
     act: (bloc) {
-      bloc.add(const MapStyleLoaded());
-      bloc.add(const MapLayerRequested());
-    },
-    wait: const Duration(milliseconds: 20),
-    verify: (bloc) {
-      expect(bloc.state.placeCount, 1);
-      expect(renderer.calls, containsAllInOrder(['layer:Jogja', 'fit']));
-    },
-  );
-
-  blocTest<MapBloc, MapState>(
-    'GPS denial does not prevent the tourism layer loading',
-    setUp: () => locations.result = const FailureResult(
-      Failure(FailureKind.permissionPermanentlyDenied, 'Permission required'),
-    ),
-    build: createBloc,
-    act: (bloc) {
-      bloc.add(const MapStyleLoaded());
       bloc.add(const MapLayerRequested());
       bloc.add(const MapLocationRequested());
     },
-    wait: const Duration(milliseconds: 20),
     verify: (bloc) {
       expect(bloc.state.placeCount, 1);
-      expect(bloc.state.locationAction, LocationAction.appSettings);
-      expect(bloc.state.locating, isFalse);
+      expect(bloc.state.locationFailure?.kind, FailureKind.permissionDenied);
+      expect(
+        bloc.state.locationMessage,
+        contains('Peta wisata tetap bisa digunakan'),
+      );
+      expect(bloc.state.locationMessage, isNot(contains('internal')));
     },
   );
 
-  blocTest<MapBloc, MapState>(
-    'location can arrive before the style and is restored on style load',
-    build: createBloc,
-    act: (bloc) async {
-      final fixed = bloc.stream.firstWhere(
-        (state) => state.locationMessage != null,
-      );
-      bloc.add(const MapLocationRequested());
-      await fixed;
-      expect(renderer.calls, isEmpty);
-      bloc.add(const MapStyleLoaded());
-    },
-    verify: (_) => expect(
-      renderer.calls,
-      containsAllInOrder(['location', 'focus-location']),
-    ),
-  );
+  test('a superseded request cannot overwrite newer layer data', () async {
+    final old = Completer<Result<MapLayer>>();
+    final started = Completer<void>();
+    maps.response = () {
+      started.complete();
+      return old.future;
+    };
+    final bloc = createBloc();
+    addTearDown(bloc.close);
+    bloc.add(const MapLayerRequested());
+    await started.future;
+    maps.response = () async => Success(sampleLayer);
+    final loaded = bloc.stream.firstWhere((state) => state.layer != null);
+    bloc.add(const MapLayerRequested());
+    await loaded;
+    old.complete(Success(MapLayer(name: 'Stale', places: [])));
+    await Future<void>.delayed(Duration.zero);
+    expect(bloc.state.layer, same(sampleLayer));
+  });
 
-  blocTest<MapBloc, MapState>(
-    'a feature tap supplies popup attributes and a blank tap clears them',
-    build: createBloc,
-    act: (bloc) async {
-      final loaded = bloc.stream.firstWhere((state) => state.placeCount == 1);
-      bloc.add(const MapStyleLoaded());
+  test(
+    'a failed refresh preserves the visible layer and can be retried',
+    () async {
+      final bloc = createBloc();
+      addTearDown(bloc.close);
+      var settled = bloc.stream.firstWhere((state) => state.layer != null);
       bloc.add(const MapLayerRequested());
-      await loaded;
-      final selected = bloc.stream.firstWhere(
-        (state) => state.selected != null,
-      );
-      bloc.add(const MapTapped(Point(20, 20)));
-      final state = await selected;
-      expect(state.selected!.name, 'Museum');
-      expect(state.selected!.address, 'Jalan Museum');
-      renderer.picked = null;
-      bloc.add(const MapTapped(Point(100, 100)));
-    },
-    verify: (bloc) => expect(bloc.state.selected, isNull),
-  );
-
-  blocTest<MapBloc, MapState>(
-    'failed data loading supports a successful retry',
-    setUp: () =>
-        maps.response = () async =>
-            const FailureResult(Failure(FailureKind.network, 'offline')),
-    build: createBloc,
-    act: (bloc) async {
-      final failed = bloc.stream.firstWhere(
-        (state) => state.layerError != null,
+      await settled;
+      maps.response = () async =>
+          const FailureResult(Failure(FailureKind.network, 'network'));
+      settled = bloc.stream.firstWhere((state) => state.layerFailure != null);
+      bloc.add(const MapLayerRequested());
+      await settled;
+      expect(bloc.state.layer, same(sampleLayer));
+      maps.response = () async => Success(sampleLayer);
+      settled = bloc.stream.firstWhere(
+        (state) => !state.loadingLayer && state.layerFailure == null,
       );
       bloc.add(const MapLayerRequested());
-      await failed;
-      maps.response = () async => Success(layer);
-      bloc.add(const MapLayerRequested());
-    },
-    wait: const Duration(milliseconds: 20),
-    verify: (bloc) {
-      expect(bloc.state.placeCount, 1);
+      await settled;
       expect(bloc.state.layerError, isNull);
     },
   );
 
+  test('repeated location requests share one in-flight operation', () async {
+    final pending = Completer<Result<LocationFix>>();
+    locations.response = () => pending.future;
+    final bloc = createBloc();
+    addTearDown(bloc.close);
+    final started = bloc.stream.firstWhere((state) => state.locating);
+    bloc.add(const MapLocationRequested());
+    await started;
+    bloc.add(const MapLocationRequested());
+    await Future<void>.delayed(Duration.zero);
+    expect(locations.calls, 1);
+    final found = bloc.stream.firstWhere((state) => state.location != null);
+    pending.complete(const Success(sampleLocation));
+    await found;
+    expect(bloc.state.locationMessage, contains('12 m'));
+  });
+
   test(
-    'a superseded layer request cannot overwrite the latest response',
+    'the location button completes GPS acquisition and releases the Bloc',
     () async {
-      final old = Completer<Result<MapLayer>>();
-      maps.response = () => old.future;
       final bloc = createBloc();
-      addTearDown(bloc.close);
-      final started = bloc.stream.first;
+      final found = bloc.stream.firstWhere((state) => state.location != null);
+      bloc.add(const MapLocationActionRequested());
+      await found;
+      expect(locations.calls, 1);
+      await bloc.close().timeout(const Duration(seconds: 2));
+      expect(bloc.isClosed, isTrue);
+    },
+  );
+
+  for (final entry in {
+    FailureKind.serviceDisabled: LocationSettingsTarget.device,
+    FailureKind.permissionPermanentlyDenied: LocationSettingsTarget.application,
+  }.entries) {
+    blocTest<MapBloc, MapState>(
+      'opens the right settings for ${entry.key}',
+      setUp: () =>
+          locations.response = () async =>
+              FailureResult(Failure(entry.key, 'internal')),
+      build: createBloc,
+      act: (bloc) async {
+        final failed = bloc.stream.firstWhere(
+          (state) => state.locationFailure != null,
+        );
+        bloc.add(const MapLocationRequested());
+        await failed;
+        bloc.add(const MapLocationActionRequested());
+      },
+      verify: (bloc) {
+        expect(locations.opened, entry.value);
+        expect(bloc.state.locationAction, LocationAction.locate);
+        expect(bloc.state.settingsMessage, isNotNull);
+      },
+    );
+  }
+
+  test(
+    'closing while data is pending does not publish a late result',
+    () async {
+      final pending = Completer<Result<MapLayer>>();
+      final started = Completer<void>();
+      maps.response = () {
+        started.complete();
+        return pending.future;
+      };
+      final bloc = createBloc();
       bloc.add(const MapLayerRequested());
-      await started;
-      maps.response = () async => Success(layer);
-      final loaded = bloc.stream.firstWhere((state) => state.placeCount == 1);
-      bloc.add(const MapLayerRequested());
-      await loaded;
-      old.complete(Success(MapLayer(name: 'Stale', places: [])));
+      await started.future;
+      await bloc.close();
+      pending.complete(Success(sampleLayer));
       await Future<void>.delayed(Duration.zero);
-      expect(bloc.state.layerName, 'Jogja');
-    },
-  );
-
-  blocTest<MapBloc, MapState>(
-    'style reload restores the layer and user marker',
-    build: createBloc,
-    act: (bloc) async {
-      final ready = bloc.stream.firstWhere(
-        (state) => state.placeCount == 1 && state.locationMessage != null,
-      );
-      bloc.add(const MapStyleLoaded());
-      bloc.add(const MapLayerRequested());
-      bloc.add(const MapLocationRequested(focus: false));
-      await ready;
-      final reloading = bloc.stream.firstWhere((state) => !state.styleReady);
-      bloc.add(const MapStyleReloadRequested());
-      await reloading;
-      bloc.add(const MapStyleLoaded());
-    },
-    verify: (bloc) {
-      expect(bloc.state.styleReady, isTrue);
-      expect(
-        renderer.calls,
-        containsAllInOrder(['reload', 'layer:Jogja', 'location', 'fit']),
-      );
-    },
-  );
-
-  blocTest<MapBloc, MapState>(
-    'GPS service errors direct the user to device location settings',
-    setUp: () => locations.result = const FailureResult(
-      Failure(FailureKind.serviceDisabled, 'GPS disabled'),
-    ),
-    build: createBloc,
-    act: (bloc) async {
-      final failed = bloc.stream.firstWhere(
-        (state) => state.locationAction == LocationAction.deviceSettings,
-      );
-      bloc.add(const MapLocationRequested());
-      await failed;
-      bloc.add(const MapLocationSettingsRequested());
-    },
-    verify: (bloc) {
-      expect(locations.opened, LocationSettingsTarget.device);
-      expect(bloc.state.locationAction, LocationAction.locate);
+      expect(bloc.state.layer, isNull);
     },
   );
 }

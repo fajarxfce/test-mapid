@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:map_presentation/src/map/bloc/map_bloc.dart';
-import 'package:map_presentation/src/map/bloc/map_event.dart';
-import 'package:map_presentation/src/map/rendering/map_style.dart';
+import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
+import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class MapCanvas extends StatelessWidget {
@@ -12,6 +12,8 @@ class MapCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MapLibreMap(
     styleString: MapStyle.liberty,
+    annotationOrder: const [],
+    annotationConsumeTapEvents: const [],
     initialCameraPosition: const CameraPosition(
       target: LatLng(-7.80, 110.37),
       zoom: 11,
@@ -20,10 +22,10 @@ class MapCanvas extends StatelessWidget {
     compassViewPosition: CompassViewPosition.bottomRight,
     compassViewMargins: const Point(16, 16),
     onMapCreated: (controller) =>
-        context.read<MapBloc>().add(MapAttached(controller)),
+        context.read<MapCanvasBloc>().add(MapCanvasAttached(controller)),
     onStyleLoadedCallback: () =>
-        context.read<MapBloc>().add(const MapStyleLoaded()),
+        context.read<MapCanvasBloc>().add(const MapCanvasStyleLoaded()),
     onMapClick: (point, coordinates) =>
-        context.read<MapBloc>().add(MapTapped(point)),
+        context.read<MapCanvasBloc>().add(MapCanvasTapped(point)),
   );
 }

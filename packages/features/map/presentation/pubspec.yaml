@@ -16,6 +16,7 @@ dependencies:
   fluent_ui: any
   flutter_bloc: any
   bloc_concurrency: any
+  synchronized: any
   freezed_annotation: any
   injectable: any
   get_it: any

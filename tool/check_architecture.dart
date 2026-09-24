@@ -153,6 +153,15 @@ List<String> checkArchitecture(Directory root) {
         }
       }
       for (final uri in uris) {
+        if (name == 'map_presentation' &&
+            relativePath.startsWith('src/map/bloc/') &&
+            (uri.startsWith('package:maplibre_gl/') ||
+                uri.contains('/src/map/canvas/') ||
+                uri.contains('/rendering/'))) {
+          errors.add(
+            '$name/$relativePath: screen data Bloc must not depend on native map rendering',
+          );
+        }
         final parsed = Uri.parse(uri);
         if (parsed.scheme == 'dart') {
           if (pure &&

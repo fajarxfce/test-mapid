@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MapState {
 
- bool get loadingLayer; bool get locating; bool get styleReady; int get placeCount; String get layerName; String? get layerError; String? get mapError; String? get locationMessage; LocationAction get locationAction; PlaceDetails? get selected;
+ MapLayer? get layer; LocationFix? get location; bool get loadingLayer; bool get locating; Failure? get layerFailure; Failure? get locationFailure; String? get settingsMessage;
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $MapStateCopyWith<MapState> get copyWith => _$MapStateCopyWithImpl<MapState>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as MapState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapState&&(identical(other.loadingLayer, _this.loadingLayer) || other.loadingLayer == _this.loadingLayer)&&(identical(other.locating, _this.locating) || other.locating == _this.locating)&&(identical(other.styleReady, _this.styleReady) || other.styleReady == _this.styleReady)&&(identical(other.placeCount, _this.placeCount) || other.placeCount == _this.placeCount)&&(identical(other.layerName, _this.layerName) || other.layerName == _this.layerName)&&(identical(other.layerError, _this.layerError) || other.layerError == _this.layerError)&&(identical(other.mapError, _this.mapError) || other.mapError == _this.mapError)&&(identical(other.locationMessage, _this.locationMessage) || other.locationMessage == _this.locationMessage)&&(identical(other.locationAction, _this.locationAction) || other.locationAction == _this.locationAction)&&(identical(other.selected, _this.selected) || other.selected == _this.selected));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapState&&(identical(other.layer, _this.layer) || other.layer == _this.layer)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.loadingLayer, _this.loadingLayer) || other.loadingLayer == _this.loadingLayer)&&(identical(other.locating, _this.locating) || other.locating == _this.locating)&&(identical(other.layerFailure, _this.layerFailure) || other.layerFailure == _this.layerFailure)&&(identical(other.locationFailure, _this.locationFailure) || other.locationFailure == _this.locationFailure)&&(identical(other.settingsMessage, _this.settingsMessage) || other.settingsMessage == _this.settingsMessage));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MapState;
-  return Object.hash(runtimeType,_this.loadingLayer,_this.locating,_this.styleReady,_this.placeCount,_this.layerName,_this.layerError,_this.mapError,_this.locationMessage,_this.locationAction,_this.selected);
+  return Object.hash(runtimeType,_this.layer,_this.location,_this.loadingLayer,_this.locating,_this.layerFailure,_this.locationFailure,_this.settingsMessage);
 }
 
 @override
 String toString() {
   final _this = this as MapState;
-  return 'MapState(loadingLayer: ${_this.loadingLayer}, locating: ${_this.locating}, styleReady: ${_this.styleReady}, placeCount: ${_this.placeCount}, layerName: ${_this.layerName}, layerError: ${_this.layerError}, mapError: ${_this.mapError}, locationMessage: ${_this.locationMessage}, locationAction: ${_this.locationAction}, selected: ${_this.selected})';
+  return 'MapState(layer: ${_this.layer}, location: ${_this.location}, loadingLayer: ${_this.loadingLayer}, locating: ${_this.locating}, layerFailure: ${_this.layerFailure}, locationFailure: ${_this.locationFailure}, settingsMessage: ${_this.settingsMessage})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $MapStateCopyWith<$Res>  {
   factory $MapStateCopyWith(MapState value, $Res Function(MapState) _then) = _$MapStateCopyWithImpl;
 @useResult
 $Res call({
- bool loadingLayer, bool locating, bool styleReady, int placeCount, String layerName, String? layerError, String? mapError, String? locationMessage, LocationAction locationAction, PlaceDetails? selected
+ MapLayer? layer, LocationFix? location, bool loadingLayer, bool locating, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
 });
 
 
@@ -68,19 +68,16 @@ class _$MapStateCopyWithImpl<$Res>
 
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loadingLayer = null,Object? locating = null,Object? styleReady = null,Object? placeCount = null,Object? layerName = null,Object? layerError = freezed,Object? mapError = freezed,Object? locationMessage = freezed,Object? locationAction = null,Object? selected = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locating = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
   return _then(MapState(
-loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
+layer: freezed == layer ? _self.layer : layer // ignore: cast_nullable_to_non_nullable
+as MapLayer?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as LocationFix?,loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
 as bool,locating: null == locating ? _self.locating : locating // ignore: cast_nullable_to_non_nullable
-as bool,styleReady: null == styleReady ? _self.styleReady : styleReady // ignore: cast_nullable_to_non_nullable
-as bool,placeCount: null == placeCount ? _self.placeCount : placeCount // ignore: cast_nullable_to_non_nullable
-as int,layerName: null == layerName ? _self.layerName : layerName // ignore: cast_nullable_to_non_nullable
-as String,layerError: freezed == layerError ? _self.layerError : layerError // ignore: cast_nullable_to_non_nullable
-as String?,mapError: freezed == mapError ? _self.mapError : mapError // ignore: cast_nullable_to_non_nullable
-as String?,locationMessage: freezed == locationMessage ? _self.locationMessage : locationMessage // ignore: cast_nullable_to_non_nullable
-as String?,locationAction: null == locationAction ? _self.locationAction : locationAction // ignore: cast_nullable_to_non_nullable
-as LocationAction,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
-as PlaceDetails?,
+as bool,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
+as Failure?,locationFailure: freezed == locationFailure ? _self.locationFailure : locationFailure // ignore: cast_nullable_to_non_nullable
+as Failure?,settingsMessage: freezed == settingsMessage ? _self.settingsMessage : settingsMessage // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -165,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool loadingLayer,  bool locating,  bool styleReady,  int placeCount,  String layerName,  String? layerError,  String? mapError,  String? locationMessage,  LocationAction locationAction,  PlaceDetails? selected)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MapState() when $default != null:
-return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCount,_that.layerName,_that.layerError,_that.mapError,_that.locationMessage,_that.locationAction,_that.selected);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   return orElse();
 
 }
@@ -186,10 +183,10 @@ return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool loadingLayer,  bool locating,  bool styleReady,  int placeCount,  String layerName,  String? layerError,  String? mapError,  String? locationMessage,  LocationAction locationAction,  PlaceDetails? selected)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)  $default,) {final _that = this;
 switch (_that) {
 case _MapState():
-return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCount,_that.layerName,_that.layerError,_that.mapError,_that.locationMessage,_that.locationAction,_that.selected);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +203,10 @@ return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool loadingLayer,  bool locating,  bool styleReady,  int placeCount,  String layerName,  String? layerError,  String? mapError,  String? locationMessage,  LocationAction locationAction,  PlaceDetails? selected)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _MapState() when $default != null:
-return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCount,_that.layerName,_that.layerError,_that.mapError,_that.locationMessage,_that.locationAction,_that.selected);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   return null;
 
 }
@@ -221,19 +218,16 @@ return $default(_that.loadingLayer,_that.locating,_that.styleReady,_that.placeCo
 
 
 class _MapState extends MapState {
-  const _MapState({this.loadingLayer = true, this.locating = false, this.styleReady = false, this.placeCount = 0, this.layerName = 'Pariwisata Jogja', this.layerError, this.mapError, this.locationMessage, this.locationAction = LocationAction.locate, this.selected}): super._();
+  const _MapState({this.layer, this.location, this.loadingLayer = true, this.locating = false, this.layerFailure, this.locationFailure, this.settingsMessage}): super._();
   
 
+@override final  MapLayer? layer;
+@override final  LocationFix? location;
 @override@JsonKey() final  bool loadingLayer;
 @override@JsonKey() final  bool locating;
-@override@JsonKey() final  bool styleReady;
-@override@JsonKey() final  int placeCount;
-@override@JsonKey() final  String layerName;
-@override final  String? layerError;
-@override final  String? mapError;
-@override final  String? locationMessage;
-@override@JsonKey() final  LocationAction locationAction;
-@override final  PlaceDetails? selected;
+@override final  Failure? layerFailure;
+@override final  Failure? locationFailure;
+@override final  String? settingsMessage;
 
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
@@ -245,18 +239,18 @@ _$MapStateCopyWith<_MapState> get copyWith => __$MapStateCopyWithImpl<_MapState>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapState&&(identical(other.loadingLayer, loadingLayer) || other.loadingLayer == loadingLayer)&&(identical(other.locating, locating) || other.locating == locating)&&(identical(other.styleReady, styleReady) || other.styleReady == styleReady)&&(identical(other.placeCount, placeCount) || other.placeCount == placeCount)&&(identical(other.layerName, layerName) || other.layerName == layerName)&&(identical(other.layerError, layerError) || other.layerError == layerError)&&(identical(other.mapError, mapError) || other.mapError == mapError)&&(identical(other.locationMessage, locationMessage) || other.locationMessage == locationMessage)&&(identical(other.locationAction, locationAction) || other.locationAction == locationAction)&&(identical(other.selected, selected) || other.selected == selected));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapState&&(identical(other.layer, layer) || other.layer == layer)&&(identical(other.location, location) || other.location == location)&&(identical(other.loadingLayer, loadingLayer) || other.loadingLayer == loadingLayer)&&(identical(other.locating, locating) || other.locating == locating)&&(identical(other.layerFailure, layerFailure) || other.layerFailure == layerFailure)&&(identical(other.locationFailure, locationFailure) || other.locationFailure == locationFailure)&&(identical(other.settingsMessage, settingsMessage) || other.settingsMessage == settingsMessage));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,loadingLayer,locating,styleReady,placeCount,layerName,layerError,mapError,locationMessage,locationAction,selected);
+    return Object.hash(runtimeType,layer,location,loadingLayer,locating,layerFailure,locationFailure,settingsMessage);
 }
 
 @override
 String toString() {
-    return 'MapState(loadingLayer: $loadingLayer, locating: $locating, styleReady: $styleReady, placeCount: $placeCount, layerName: $layerName, layerError: $layerError, mapError: $mapError, locationMessage: $locationMessage, locationAction: $locationAction, selected: $selected)';
+    return 'MapState(layer: $layer, location: $location, loadingLayer: $loadingLayer, locating: $locating, layerFailure: $layerFailure, locationFailure: $locationFailure, settingsMessage: $settingsMessage)';
 }
 
 
@@ -267,7 +261,7 @@ abstract mixin class _$MapStateCopyWith<$Res> implements $MapStateCopyWith<$Res>
   factory _$MapStateCopyWith(_MapState value, $Res Function(_MapState) _then) = __$MapStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool loadingLayer, bool locating, bool styleReady, int placeCount, String layerName, String? layerError, String? mapError, String? locationMessage, LocationAction locationAction, PlaceDetails? selected
+ MapLayer? layer, LocationFix? location, bool loadingLayer, bool locating, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
 });
 
 
@@ -284,19 +278,16 @@ class __$MapStateCopyWithImpl<$Res>
 
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? loadingLayer = null,Object? locating = null,Object? styleReady = null,Object? placeCount = null,Object? layerName = null,Object? layerError = freezed,Object? mapError = freezed,Object? locationMessage = freezed,Object? locationAction = null,Object? selected = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locating = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
   return _then(_MapState(
-loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
+layer: freezed == layer ? _self.layer : layer // ignore: cast_nullable_to_non_nullable
+as MapLayer?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as LocationFix?,loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
 as bool,locating: null == locating ? _self.locating : locating // ignore: cast_nullable_to_non_nullable
-as bool,styleReady: null == styleReady ? _self.styleReady : styleReady // ignore: cast_nullable_to_non_nullable
-as bool,placeCount: null == placeCount ? _self.placeCount : placeCount // ignore: cast_nullable_to_non_nullable
-as int,layerName: null == layerName ? _self.layerName : layerName // ignore: cast_nullable_to_non_nullable
-as String,layerError: freezed == layerError ? _self.layerError : layerError // ignore: cast_nullable_to_non_nullable
-as String?,mapError: freezed == mapError ? _self.mapError : mapError // ignore: cast_nullable_to_non_nullable
-as String?,locationMessage: freezed == locationMessage ? _self.locationMessage : locationMessage // ignore: cast_nullable_to_non_nullable
-as String?,locationAction: null == locationAction ? _self.locationAction : locationAction // ignore: cast_nullable_to_non_nullable
-as LocationAction,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
-as PlaceDetails?,
+as bool,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
+as Failure?,locationFailure: freezed == locationFailure ? _self.locationFailure : locationFailure // ignore: cast_nullable_to_non_nullable
+as Failure?,settingsMessage: freezed == settingsMessage ? _self.settingsMessage : settingsMessage // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
