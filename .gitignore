@@ -20,3 +20,4 @@ local.properties
 **/pubspec_overrides.yaml
 !/pubspec_overrides.yaml
 **/.tmp/
+dist/

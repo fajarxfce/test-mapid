@@ -2,5 +2,5 @@
 #include "Warnings.xcconfig"
 
 ASSET_PREFIX=staging
-BUNDLE_NAME=Fluent Starter Staging
-BUNDLE_DISPLAY_NAME=Fluent Starter Staging
+BUNDLE_NAME=MAPID Explorer Staging
+BUNDLE_DISPLAY_NAME=MAPID Explorer Staging

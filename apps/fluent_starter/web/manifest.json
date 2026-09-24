@@ -1,11 +1,11 @@
 {
-    "name": "Fluent Starter",
-    "short_name": "Fluent Starter",
+    "name": "MAPID Explorer",
+    "short_name": "MAPID Explorer",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A modular workspace built with Fluent UI.",
+    "description": "Explore GEO MAPID places with OpenFreeMap and current location.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

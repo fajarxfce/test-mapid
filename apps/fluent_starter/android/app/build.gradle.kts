@@ -5,17 +5,17 @@ plugins {
 }
 
 android {
-    namespace = "dev.example.fluentstarter"
+    namespace = "io.github.fajarxfce.testmapid"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     defaultConfig {
-        applicationId = "dev.example.fluentstarter"
+        applicationId = "io.github.fajarxfce.testmapid"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -28,13 +28,18 @@ android {
         versionName = flutter.versionName
     }
 
-    // Configure distribution signing here before publishing release artifacts.
+    // Case-study artifacts use local debug signing in both build modes.
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
     }
 }
 

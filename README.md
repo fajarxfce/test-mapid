@@ -10,7 +10,8 @@ AutoRoute, Retrofit/JsonSerializable, and a Fluent UI design system.
 
 ## Getting started
 
-Requires **Flutter 3.47.5 / Dart 3.13.4**, as specified in `.fvmrc`.
+Requires **Flutter 3.47.5 / Dart 3.13.4**, as specified in `.fvmrc`, and **JDK 21**
+for Android builds. Set `JAVA_HOME` to the JDK installation directory.
 
 ```sh
 cp .env.example .env
@@ -28,10 +29,12 @@ through `--dart-define-from-file`; environment values are embedded in the APK.
 ```sh
 dart run melos run generate --no-select
 dart run melos run check --no-select
-dart run tool/app.dart build android dev --smoke
+# Release APK; append --smoke for a debug APK.
+dart run tool/app.dart build android dev
 ```
 
-APK output: `apps/fluent_starter/build/app/outputs/flutter-apk/app-dev-debug.apk`.
+APK output: `apps/fluent_starter/build/app/outputs/flutter-apk/app-dev-release.apk`
+or `app-dev-debug.apk`. Case-study release builds use local debug signing.
 VS Code and Zed configurations include run, debug, build, and maintenance tasks.
 
 ## Project structure

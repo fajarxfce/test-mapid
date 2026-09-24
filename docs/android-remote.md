@@ -82,7 +82,7 @@ The phone should be listed as `127.0.0.1:15555` with ADB status `device`. Pairin
 
 ## Run or debug
 
-In Zed, use `debugger: start` → `Debug | dev | Android via SSH tunnel`. In VS Code's Remote SSH window, select the same launch preset and press F5. Both editors also have staging and prod variants. These presets use the demo backend.
+In Zed, use `debugger: start` → `Debug | dev | Android via SSH tunnel`. In VS Code's Remote SSH window, select the same launch preset and press F5. Both editors also have staging and prod variants. Each preset loads the GEO MAPID configuration from the root `.env` file.
 
 For a terminal run from the repository root:
 

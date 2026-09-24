@@ -2,153 +2,6 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Android: Run | dev",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "run",
-        "android",
-        "dev"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK debug | dev",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "dev",
-        "--smoke"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK release | dev",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "dev"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Run | staging",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "run",
-        "android",
-        "staging"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK debug | staging",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "staging",
-        "--smoke"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK release | staging",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "staging"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Run | prod",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "run",
-        "android",
-        "prod"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK debug | prod",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "prod",
-        "--smoke"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Android: Build APK release | prod",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "android",
-        "prod"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Workspace: Pub get (locked)",
       "type": "shell",
       "command": "flutter",
@@ -160,7 +13,27 @@
       "options": {
         "cwd": "${workspaceFolder}/apps/fluent_starter"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Workspace: Bootstrap",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "bootstrap"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "App: Clean",
@@ -216,20 +89,6 @@
       }
     },
     {
-      "label": "Workspace: Bootstrap",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "melos",
-        "bootstrap"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Workspace: Generate",
       "type": "shell",
       "command": "dart",
@@ -243,7 +102,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Workspace: Check",
@@ -259,7 +121,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Workspace: Analyze",
@@ -275,7 +140,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Workspace: Format",
@@ -291,7 +159,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Workspace: Test",
@@ -308,9 +179,8 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
-      "group": {
-        "kind": "test",
-        "isDefault": true
+      "runOptions": {
+        "instanceLimit": 1
       }
     },
     {
@@ -327,7 +197,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Flutter: Devices",
@@ -339,7 +212,10 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
       "label": "Flutter: Doctor",
@@ -352,138 +228,322 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
-      "label": "Integration: Linux (isolated keyring)",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "tool/test_linux.sh"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Flutter: Run (demo)",
+      "label": "Android: Run | dev",
       "type": "shell",
       "command": "dart",
       "args": [
         "run",
         "tool/app.dart",
         "run",
-        "${input:platform}",
-        "${input:flavor}"
+        "android",
+        "dev"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
-      "label": "Flutter: Run API",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "run",
-        "${input:platform}",
-        "${input:flavor}",
-        "--api=${input:apiBaseUrl}"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Flutter: Build release (demo)",
+      "label": "Android: Build APK debug | dev",
       "type": "shell",
       "command": "dart",
       "args": [
         "run",
         "tool/app.dart",
         "build",
-        "${input:platform}",
-        "${input:flavor}"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Flutter: Build smoke (demo)",
-      "type": "shell",
-      "command": "dart",
-      "args": [
-        "run",
-        "tool/app.dart",
-        "build",
-        "${input:platform}",
-        "${input:flavor}",
+        "android",
+        "dev",
         "--smoke"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
       "group": {
         "kind": "build",
         "isDefault": true
       }
     },
     {
-      "label": "Flutter: Build release API",
+      "label": "Android: Build APK release | dev",
       "type": "shell",
       "command": "dart",
       "args": [
         "run",
         "tool/app.dart",
         "build",
-        "${input:platform}",
-        "${input:flavor}",
-        "--api=${input:apiBaseUrl}"
+        "android",
+        "dev"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
-    }
-  ],
-  "inputs": [
-    {
-      "id": "platform",
-      "type": "pickString",
-      "description": "Target platform (requires its native host/toolchain)",
-      "options": [
-        "linux",
-        "web",
-        "android",
-        "ios",
-        "macos",
-        "windows"
-      ],
-      "default": "linux"
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
     },
     {
-      "id": "flavor",
-      "type": "pickString",
-      "description": "Flutter flavor (native and Dart configuration stay aligned)",
-      "options": [
-        "dev",
+      "label": "Web: Run | dev",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "web",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Web: Build | dev",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "web",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Android: Run | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "android",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Android: Build APK debug | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
         "staging",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Android: Build APK release | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Web: Run | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "web",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Web: Build | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "web",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Android: Run | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "android",
         "prod"
       ],
-      "default": "dev"
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     },
     {
-      "id": "apiBaseUrl",
-      "type": "promptString",
-      "description": "API HTTPS origin, without path/query (for example https://api.your-company.com)"
+      "label": "Android: Build APK debug | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "prod",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Android: Build APK release | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "prod"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Web: Run | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "web",
+        "prod"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Web: Build | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "web",
+        "prod"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
     }
   ]
 }

@@ -1,4 +1,4 @@
-package dev.example.fluentstarter
+package io.github.fajarxfce.testmapid
 
 import io.flutter.embedding.android.FlutterActivity
 

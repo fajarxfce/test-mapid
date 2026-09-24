@@ -28,37 +28,37 @@ instructions:
 flavors:
   dev:
     app:
-      name: Fluent Starter Dev
+      name: MAPID Explorer Dev
     android:
-      applicationId: dev.example.fluentstarter.dev
+      applicationId: io.github.fajarxfce.testmapid.dev
     ios:
-      bundleId: dev.example.fluentstarter.dev
+      bundleId: io.github.fajarxfce.testmapid.dev
     macos:
-      bundleId: dev.example.fluentstarter.dev
+      bundleId: io.github.fajarxfce.testmapid.dev
     linux:
-      applicationId: dev.example.fluentstarter.dev
+      applicationId: io.github.fajarxfce.testmapid.dev
     windows: {}
   staging:
     app:
-      name: Fluent Starter Staging
+      name: MAPID Explorer Staging
     android:
-      applicationId: dev.example.fluentstarter.staging
+      applicationId: io.github.fajarxfce.testmapid.staging
     ios:
-      bundleId: dev.example.fluentstarter.staging
+      bundleId: io.github.fajarxfce.testmapid.staging
     macos:
-      bundleId: dev.example.fluentstarter.staging
+      bundleId: io.github.fajarxfce.testmapid.staging
     linux:
-      applicationId: dev.example.fluentstarter.staging
+      applicationId: io.github.fajarxfce.testmapid.staging
     windows: {}
   prod:
     app:
-      name: Fluent Starter
+      name: MAPID Explorer
     android:
-      applicationId: dev.example.fluentstarter
+      applicationId: io.github.fajarxfce.testmapid
     ios:
-      bundleId: dev.example.fluentstarter
+      bundleId: io.github.fajarxfce.testmapid
     macos:
-      bundleId: dev.example.fluentstarter
+      bundleId: io.github.fajarxfce.testmapid
     linux:
-      applicationId: dev.example.fluentstarter
+      applicationId: io.github.fajarxfce.testmapid
     windows: {}

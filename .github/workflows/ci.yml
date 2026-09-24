@@ -1,4 +1,4 @@
-name: Verify workspace
+name: Verify MAPID Explorer
 on:
   push:
     branches: [main]
@@ -16,39 +16,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-flutter
       - run: dart run melos run generate --no-select
-      - name: Generated source is committed
+      - name: Verify committed generated sources
         run: git diff --exit-code
       - run: dart run melos run check --no-select
-  builds:
+  android:
     needs: quality
-    strategy:
-      fail-fast: false
-      matrix:
-        flavor: [dev, staging, prod]
-        target:
-          - {platform: android, runner: ubuntu-latest}
-          - {platform: web, runner: ubuntu-latest}
-          - {platform: linux, runner: ubuntu-latest}
-          - {platform: windows, runner: windows-latest}
-          - {platform: ios, runner: macos-latest}
-          - {platform: macos, runner: macos-latest}
-    runs-on: ${{ matrix.target.runner }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        if: matrix.target.platform == 'android'
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: android-actions/setup-android@v3
-        if: matrix.target.platform == 'android'
-      - name: Linux build dependencies
-        if: matrix.target.platform == 'linux'
-        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev libwebkit2gtk-4.1-dev xvfb xauth dbus-x11 gnome-keyring
       - uses: ./.github/actions/setup-flutter
-      - name: Build without distribution signing
-        shell: bash
-        run: dart run tool/app.dart build ${{ matrix.target.platform }} ${{ matrix.flavor }} --smoke
-      - name: Native session persistence integration
-        if: matrix.target.platform == 'linux' && matrix.flavor == 'dev'
-        run: bash tool/test_linux.sh
+      - name: Configure compile-only test values
+        run: |
+          python - <<'PYTHON'
+          from pathlib import Path
+          Path('.env').write_text('MAPID_API_KEY=ci-placeholder\nMAPID_LAYER_ID=ci-layer\nMAPID_PROJECT_ID=ci-project\n')
+          PYTHON
+      - name: Verify Android compilation
+        run: dart run tool/app.dart build android dev --smoke

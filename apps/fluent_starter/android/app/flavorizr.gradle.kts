@@ -8,18 +8,18 @@ android.apply {
     productFlavors {
         create("dev") {
             dimension = "flavor-type"
-            applicationId = "dev.example.fluentstarter.dev"
-            resValue(type = "string", name = "app_name", value = "Fluent Starter Dev")
+            applicationId = "io.github.fajarxfce.testmapid.dev"
+            resValue(type = "string", name = "app_name", value = "MAPID Explorer Dev")
         }
         create("staging") {
             dimension = "flavor-type"
-            applicationId = "dev.example.fluentstarter.staging"
-            resValue(type = "string", name = "app_name", value = "Fluent Starter Staging")
+            applicationId = "io.github.fajarxfce.testmapid.staging"
+            resValue(type = "string", name = "app_name", value = "MAPID Explorer Staging")
         }
         create("prod") {
             dimension = "flavor-type"
-            applicationId = "dev.example.fluentstarter"
-            resValue(type = "string", name = "app_name", value = "Fluent Starter")
+            applicationId = "io.github.fajarxfce.testmapid"
+            resValue(type = "string", name = "app_name", value = "MAPID Explorer")
         }
     }
 
