@@ -16,7 +16,6 @@ class MapCanvas extends StatelessWidget {
     child: MapLibreMap(
       styleString: MapStyle.liberty,
       annotationOrder: const [],
-      annotationConsumeTapEvents: const [],
       initialCameraPosition: const CameraPosition(
         target: LatLng(-7.80, 110.37),
         zoom: 11,
