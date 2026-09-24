@@ -56,6 +56,14 @@ See [Map architecture](docs/map-architecture.md) for rendering boundaries and li
 [OpenFreeMap Liberty](https://tiles.openfreemap.org/styles/liberty) basemap.
 GEO MAPID provides the tourism layer. Tapping a point displays its name, address,
 and additional attributes. Foreground location access displays the user's
-position. The map remains available when location permission is denied.
+position continuously while the application is visible. The map remains
+available when location permission is denied.
+
+Select **Lokasi saya** to follow your position. Dragging the map stops camera
+follow while location updates continue; select the button again to recenter.
+The arrow shows the device's compass heading, with GPS movement direction as a
+fallback when available. GPS and compass subscriptions stop in the background
+and restart when the application returns. Android requests one-second GPS
+updates; actual frequency and accuracy depend on the device and surroundings.
 
 An internet connection is required to load the basemap and layer data.

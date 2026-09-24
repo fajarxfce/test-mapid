@@ -12,7 +12,7 @@ import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart
 import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
 import 'package:maplibre_gl/maplibre_gl.dart'
-    show CameraUpdate, CircleLayerProperties;
+    show CameraUpdate, CircleLayerProperties, SymbolLayerProperties;
 import 'package:mocktail/mocktail.dart';
 
 import 'support/map_fixtures.dart';
@@ -29,6 +29,8 @@ void main() {
     registerFallbackValue(const CircleLayerProperties());
     registerFallbackValue(Rect.zero);
     registerFallbackValue(CameraUpdate.zoomBy(1));
+    registerFallbackValue(const SymbolLayerProperties());
+    registerFallbackValue(Uint8List(0));
   });
   setUp(() {
     renderer = MapLibreRenderer();

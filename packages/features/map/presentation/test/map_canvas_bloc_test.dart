@@ -24,6 +24,22 @@ void main() {
   tearDown(() => bloc.close());
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
+
+  test(
+    'panning stops camera follow once and the location action restores it',
+    () async {
+      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
+      bloc.add(const MapCanvasPanned());
+      bloc.add(const MapCanvasPanned());
+      await settle();
+      expect(bloc.state.scene.focus, MapCameraFocus.free);
+      expect(renderer.scenes, hasLength(1));
+      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
+      await settle();
+      expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
+      expect(renderer.focuses, hasLength(2));
+    },
+  );
   Future<void> selectPlace() async {
     bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
     bloc.add(const MapCanvasTapped(Point(20, 20)));

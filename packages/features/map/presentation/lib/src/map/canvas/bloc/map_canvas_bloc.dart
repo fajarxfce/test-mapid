@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_state.dart';
+import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 
@@ -19,8 +20,17 @@ class MapCanvasBloc extends Bloc<MapCanvasEvent, MapCanvasState> {
     on<MapCanvasSelectionCleared>(_onSelectionCleared);
     on<MapCanvasFocusRequested>(_onFocusRequested);
     on<MapCanvasZoomRequested>(_onZoomRequested);
+    on<MapCanvasPanned>(_onPanned);
   }
   final MapRenderer _renderer;
+
+  void _onPanned(MapCanvasPanned event, Emitter<MapCanvasState> emit) {
+    if (state.scene.focus == MapCameraFocus.free) return;
+    emit(
+      state.copyWith(scene: state.scene.copyWith(focus: MapCameraFocus.free)),
+    );
+    _renderer.render(state.scene);
+  }
 
   Future<void> _onAttached(
     MapCanvasAttached event,

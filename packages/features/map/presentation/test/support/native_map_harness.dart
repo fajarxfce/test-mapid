@@ -40,6 +40,18 @@ class NativeMapHarness {
       cameraMoves.add(command);
       return true;
     });
+    when(() => controller.addImage(any(), any())).thenAnswer((_) async {});
+    when(
+      () => controller.addSymbolLayer(
+        any(),
+        any(),
+        any(),
+        filter: any<dynamic>(named: 'filter'),
+        enableInteraction: false,
+      ),
+    ).thenAnswer((call) async {
+      layers.add(call.positionalArguments[1] as String);
+    });
     when(() => controller.setStyle(any())).thenAnswer((_) async {
       operations.add('reload');
       sources.clear();

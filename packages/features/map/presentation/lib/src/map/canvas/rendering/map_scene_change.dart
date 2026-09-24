@@ -18,6 +18,7 @@ final class MapLocationChanged extends MapSceneChange {
 }
 
 final class MapCameraChanged extends MapSceneChange {
-  const MapCameraChanged(this.scene);
+  const MapCameraChanged(this.scene, {this.reframe = false});
   final MapScene scene;
+  final bool reframe;
 }

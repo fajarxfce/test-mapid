@@ -7,7 +7,7 @@ import 'package:map_domain/map_domain.dart';
   ignoreUnregisteredTypes: [
     GetIt,
     LoadMapLayer,
-    GetCurrentLocation,
+    WatchLocation,
     OpenLocationSettings,
   ],
   throwOnMissingDependencies: true,

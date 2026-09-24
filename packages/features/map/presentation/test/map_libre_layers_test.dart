@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
@@ -22,6 +23,8 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const CircleLayerProperties());
     registerFallbackValue(Rect.zero);
+    registerFallbackValue(const SymbolLayerProperties());
+    registerFallbackValue(Uint8List(0));
   });
   setUp(() {
     controller = TestMapController();
@@ -31,6 +34,18 @@ void main() {
     layerIds = {};
     writes = [];
     when(controller.getSourceIds).thenAnswer((_) async => sourceIds.toList());
+    when(() => controller.addImage(any(), any())).thenAnswer((_) async {});
+    when(
+      () => controller.addSymbolLayer(
+        any(),
+        any(),
+        any(),
+        filter: any<dynamic>(named: 'filter'),
+        enableInteraction: false,
+      ),
+    ).thenAnswer((call) async {
+      layerIds.add(call.positionalArguments[1] as String);
+    });
     when(controller.getLayerIds).thenAnswer((_) async => layerIds.toList());
     when(() => controller.addGeoJsonSource(any(), any()))
         .thenAnswer((call) async {
@@ -63,6 +78,41 @@ void main() {
     final location =
         (locationGeoJson(sampleLocation)['features'] as List).single as Map;
     expect((location['geometry'] as Map)['coordinates'], [106.8, -6.2]);
+  });
+
+  test('heading uses a map-aligned symbol and disappears when bearing is unavailable', () async {
+    final location = LocationFix(
+      point: sampleLocation.point,
+      accuracyMeters: 12,
+      bearing: const LocationBearing(
+        degrees: 90,
+        source: LocationBearingSource.compass,
+      ),
+    );
+    await layers.showLocation(location);
+    await layers.showLocation(location);
+    expect(layerIds, contains(MapStyle.headingLayer));
+    verify(() => controller.addImage(MapStyle.headingImage, any())).called(1);
+    final properties =
+        verify(
+              () => controller.addSymbolLayer(
+                MapStyle.locationSource,
+                MapStyle.headingLayer,
+                captureAny(),
+                filter: any<dynamic>(named: 'filter'),
+                enableInteraction: false,
+              ),
+            ).captured.single
+            as SymbolLayerProperties;
+    expect(properties.iconRotationAlignment, 'map');
+    expect(properties.iconRotate, ['get', 'bearing']);
+    final feature = (writes.last['features'] as List).single as Map;
+    expect((feature['properties'] as Map)['bearing'], 90);
+    await layers.showLocation(sampleLocation);
+    final unavailable = (writes.last['features'] as List).single as Map;
+    expect((unavailable['properties'] as Map)['bearing'], isNull);
+    await layers.showLocation(null);
+    expect(writes.last['features'], isEmpty);
   });
 
   test(

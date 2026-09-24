@@ -8,6 +8,10 @@ sealed class MapCanvasEvent {
   const MapCanvasEvent();
 }
 
+final class MapCanvasPanned extends MapCanvasEvent {
+  const MapCanvasPanned();
+}
+
 final class MapCanvasAttached extends MapCanvasEvent {
   const MapCanvasAttached(this.controller);
   final MapLibreMapController controller;

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/canvas/rendering/draw_heading_image.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_geojson_encoder.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
@@ -24,17 +25,46 @@ class MapLibreLayers {
     ),
   );
 
-  Future<void> showLocation(LocationFix? location) => _replaceCircleData(
-    sourceId: MapStyle.locationSource,
-    layerId: MapStyle.locationLayer,
-    data: locationGeoJson(location),
-    paint: const CircleLayerProperties(
-      circleRadius: 9,
-      circleColor: '#1468D4',
-      circleStrokeColor: '#FFFFFF',
-      circleStrokeWidth: 3,
-    ),
-  );
+  Future<void> showLocation(LocationFix? location) async {
+    await _replaceCircleData(
+      sourceId: MapStyle.locationSource,
+      layerId: MapStyle.locationLayer,
+      data: locationGeoJson(location),
+      paint: const CircleLayerProperties(
+        circleRadius: 9,
+        circleColor: '#1468D4',
+        circleStrokeColor: '#FFFFFF',
+        circleStrokeWidth: 3,
+      ),
+    );
+    if (_controller.isDisposed || location?.bearing == null) return;
+    final layers = await _controller.getLayerIds();
+    if (_controller.isDisposed || layers.contains(MapStyle.headingLayer)) {
+      return;
+    }
+    final image = await drawHeadingImage();
+    if (_controller.isDisposed) return;
+    await _controller.addImage(MapStyle.headingImage, image);
+    if (_controller.isDisposed) return;
+    await _controller.addSymbolLayer(
+      MapStyle.locationSource,
+      MapStyle.headingLayer,
+      const SymbolLayerProperties(
+        iconImage: MapStyle.headingImage,
+        iconSize: 0.8,
+        iconRotate: ['get', 'bearing'],
+        iconRotationAlignment: 'map',
+        iconAllowOverlap: true,
+        iconIgnorePlacement: true,
+      ),
+      filter: [
+        '!=',
+        ['get', 'bearing'],
+        null,
+      ],
+      enableInteraction: false,
+    );
+  }
 
   Future<void> _replaceCircleData({
     required String sourceId,

@@ -9,6 +9,7 @@ import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
 import 'package:map_presentation/src/map/models/location_action.dart';
+import 'package:map_presentation/src/map/models/location_tracking_status.dart';
 
 import 'support/fake_repositories.dart';
 import 'support/map_fixtures.dart';
@@ -18,13 +19,56 @@ void main() {
   late FakeLocationRepository locations;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
-    GetCurrentLocation(locations),
+    WatchLocation(locations),
     OpenLocationSettings(locations),
   );
   setUp(() {
     maps = FakeMapRepository();
     locations = FakeLocationRepository();
   });
+
+  test(
+    'live fixes and heading updates continue without repeated button taps',
+    () async {
+      final updates = StreamController<Result<LocationFix>>();
+      locations.updates = () => updates.stream;
+      final bloc = createBloc();
+      bloc.add(const MapLocationRequested());
+      await Future<void>.delayed(Duration.zero);
+      updates.add(const Success(sampleLocation));
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.live);
+      bloc.add(const MapLocationRequested());
+      await Future<void>.delayed(Duration.zero);
+      expect(locations.calls, 1);
+      final moved = LocationFix(
+        point: const GeoPoint(latitude: -6.21, longitude: 106.8),
+        accuracyMeters: 10,
+        bearing: const LocationBearing(
+          degrees: 90,
+          source: LocationBearingSource.compass,
+        ),
+      );
+      updates.add(Success(moved));
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.location, same(moved));
+      expect(bloc.state.bearingLabel, 'Arah hadap · 90°');
+      expect(bloc.state.locationMessage, contains('realtime'));
+      updates.add(
+        const FailureResult(Failure(FailureKind.cancelled, 'background')),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.paused);
+      expect(bloc.state.bearingLabel, isNull);
+      expect(bloc.state.locationMessage, contains('Lokasi terakhir'));
+      updates.add(Success(moved));
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.live);
+      await bloc.close();
+      expect(updates.hasListener, isFalse);
+      await updates.close();
+    },
+  );
 
   blocTest<MapBloc, MapState>(
     'loads layer data without creating a native map',

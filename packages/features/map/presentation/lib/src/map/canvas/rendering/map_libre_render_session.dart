@@ -87,7 +87,10 @@ final class MapLibreRenderSession {
       await switch (change) {
         MapPlacesChanged(:final layer) => _layers.showPlaces(layer),
         MapLocationChanged(:final location) => _layers.showLocation(location),
-        MapCameraChanged(:final scene) => _camera.focus(scene),
+        MapCameraChanged(:final scene, :final reframe) => _camera.focus(
+          scene,
+          reframe: reframe,
+        ),
       };
     }
     if (_closed) return;

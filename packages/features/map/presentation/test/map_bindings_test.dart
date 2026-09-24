@@ -13,6 +13,7 @@ import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_state.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
+import 'package:map_presentation/src/map/models/location_tracking_status.dart';
 import 'package:map_presentation/src/map/pages/map_view.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -83,7 +84,9 @@ void main() {
         ),
       ),
     ).called(1);
-    states.add(loaded.copyWith(locating: true));
+    states.add(
+      loaded.copyWith(locationStatus: LocationTrackingStatus.acquiring),
+    );
     await tester.pump();
     // Loading messages should not schedule another native data update.
     verifyNever(() => canvas.add(any()));

@@ -1,1 +1,1 @@
-enum MapCameraFocus { places, userLocation }
+enum MapCameraFocus { places, userLocation, free }

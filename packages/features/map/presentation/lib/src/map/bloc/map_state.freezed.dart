@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MapState {
 
- MapLayer? get layer; LocationFix? get location; bool get loadingLayer; bool get locating; Failure? get layerFailure; Failure? get locationFailure; String? get settingsMessage;
+ MapLayer? get layer; LocationFix? get location; bool get loadingLayer; LocationTrackingStatus get locationStatus; Failure? get layerFailure; Failure? get locationFailure; String? get settingsMessage;
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $MapStateCopyWith<MapState> get copyWith => _$MapStateCopyWithImpl<MapState>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as MapState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapState&&(identical(other.layer, _this.layer) || other.layer == _this.layer)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.loadingLayer, _this.loadingLayer) || other.loadingLayer == _this.loadingLayer)&&(identical(other.locating, _this.locating) || other.locating == _this.locating)&&(identical(other.layerFailure, _this.layerFailure) || other.layerFailure == _this.layerFailure)&&(identical(other.locationFailure, _this.locationFailure) || other.locationFailure == _this.locationFailure)&&(identical(other.settingsMessage, _this.settingsMessage) || other.settingsMessage == _this.settingsMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapState&&(identical(other.layer, _this.layer) || other.layer == _this.layer)&&(identical(other.location, _this.location) || other.location == _this.location)&&(identical(other.loadingLayer, _this.loadingLayer) || other.loadingLayer == _this.loadingLayer)&&(identical(other.locationStatus, _this.locationStatus) || other.locationStatus == _this.locationStatus)&&(identical(other.layerFailure, _this.layerFailure) || other.layerFailure == _this.layerFailure)&&(identical(other.locationFailure, _this.locationFailure) || other.locationFailure == _this.locationFailure)&&(identical(other.settingsMessage, _this.settingsMessage) || other.settingsMessage == _this.settingsMessage));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MapState;
-  return Object.hash(runtimeType,_this.layer,_this.location,_this.loadingLayer,_this.locating,_this.layerFailure,_this.locationFailure,_this.settingsMessage);
+  return Object.hash(runtimeType,_this.layer,_this.location,_this.loadingLayer,_this.locationStatus,_this.layerFailure,_this.locationFailure,_this.settingsMessage);
 }
 
 @override
 String toString() {
   final _this = this as MapState;
-  return 'MapState(layer: ${_this.layer}, location: ${_this.location}, loadingLayer: ${_this.loadingLayer}, locating: ${_this.locating}, layerFailure: ${_this.layerFailure}, locationFailure: ${_this.locationFailure}, settingsMessage: ${_this.settingsMessage})';
+  return 'MapState(layer: ${_this.layer}, location: ${_this.location}, loadingLayer: ${_this.loadingLayer}, locationStatus: ${_this.locationStatus}, layerFailure: ${_this.layerFailure}, locationFailure: ${_this.locationFailure}, settingsMessage: ${_this.settingsMessage})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $MapStateCopyWith<$Res>  {
   factory $MapStateCopyWith(MapState value, $Res Function(MapState) _then) = _$MapStateCopyWithImpl;
 @useResult
 $Res call({
- MapLayer? layer, LocationFix? location, bool loadingLayer, bool locating, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
+ MapLayer? layer, LocationFix? location, bool loadingLayer, LocationTrackingStatus locationStatus, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
 });
 
 
@@ -68,13 +68,13 @@ class _$MapStateCopyWithImpl<$Res>
 
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locating = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locationStatus = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
   return _then(MapState(
 layer: freezed == layer ? _self.layer : layer // ignore: cast_nullable_to_non_nullable
 as MapLayer?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as LocationFix?,loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
-as bool,locating: null == locating ? _self.locating : locating // ignore: cast_nullable_to_non_nullable
-as bool,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
+as bool,locationStatus: null == locationStatus ? _self.locationStatus : locationStatus // ignore: cast_nullable_to_non_nullable
+as LocationTrackingStatus,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,locationFailure: freezed == locationFailure ? _self.locationFailure : locationFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,settingsMessage: freezed == settingsMessage ? _self.settingsMessage : settingsMessage // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -162,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  LocationTrackingStatus locationStatus,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MapState() when $default != null:
-return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locationStatus,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   return orElse();
 
 }
@@ -183,10 +183,10 @@ return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  LocationTrackingStatus locationStatus,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)  $default,) {final _that = this;
 switch (_that) {
 case _MapState():
-return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locationStatus,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +203,10 @@ return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  bool locating,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MapLayer? layer,  LocationFix? location,  bool loadingLayer,  LocationTrackingStatus locationStatus,  Failure? layerFailure,  Failure? locationFailure,  String? settingsMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _MapState() when $default != null:
-return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
+return $default(_that.layer,_that.location,_that.loadingLayer,_that.locationStatus,_that.layerFailure,_that.locationFailure,_that.settingsMessage);case _:
   return null;
 
 }
@@ -218,13 +218,13 @@ return $default(_that.layer,_that.location,_that.loadingLayer,_that.locating,_th
 
 
 class _MapState extends MapState {
-  const _MapState({this.layer, this.location, this.loadingLayer = true, this.locating = false, this.layerFailure, this.locationFailure, this.settingsMessage}): super._();
+  const _MapState({this.layer, this.location, this.loadingLayer = true, this.locationStatus = LocationTrackingStatus.idle, this.layerFailure, this.locationFailure, this.settingsMessage}): super._();
   
 
 @override final  MapLayer? layer;
 @override final  LocationFix? location;
 @override@JsonKey() final  bool loadingLayer;
-@override@JsonKey() final  bool locating;
+@override@JsonKey() final  LocationTrackingStatus locationStatus;
 @override final  Failure? layerFailure;
 @override final  Failure? locationFailure;
 @override final  String? settingsMessage;
@@ -239,18 +239,18 @@ _$MapStateCopyWith<_MapState> get copyWith => __$MapStateCopyWithImpl<_MapState>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapState&&(identical(other.layer, layer) || other.layer == layer)&&(identical(other.location, location) || other.location == location)&&(identical(other.loadingLayer, loadingLayer) || other.loadingLayer == loadingLayer)&&(identical(other.locating, locating) || other.locating == locating)&&(identical(other.layerFailure, layerFailure) || other.layerFailure == layerFailure)&&(identical(other.locationFailure, locationFailure) || other.locationFailure == locationFailure)&&(identical(other.settingsMessage, settingsMessage) || other.settingsMessage == settingsMessage));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapState&&(identical(other.layer, layer) || other.layer == layer)&&(identical(other.location, location) || other.location == location)&&(identical(other.loadingLayer, loadingLayer) || other.loadingLayer == loadingLayer)&&(identical(other.locationStatus, locationStatus) || other.locationStatus == locationStatus)&&(identical(other.layerFailure, layerFailure) || other.layerFailure == layerFailure)&&(identical(other.locationFailure, locationFailure) || other.locationFailure == locationFailure)&&(identical(other.settingsMessage, settingsMessage) || other.settingsMessage == settingsMessage));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,layer,location,loadingLayer,locating,layerFailure,locationFailure,settingsMessage);
+    return Object.hash(runtimeType,layer,location,loadingLayer,locationStatus,layerFailure,locationFailure,settingsMessage);
 }
 
 @override
 String toString() {
-    return 'MapState(layer: $layer, location: $location, loadingLayer: $loadingLayer, locating: $locating, layerFailure: $layerFailure, locationFailure: $locationFailure, settingsMessage: $settingsMessage)';
+    return 'MapState(layer: $layer, location: $location, loadingLayer: $loadingLayer, locationStatus: $locationStatus, layerFailure: $layerFailure, locationFailure: $locationFailure, settingsMessage: $settingsMessage)';
 }
 
 
@@ -261,7 +261,7 @@ abstract mixin class _$MapStateCopyWith<$Res> implements $MapStateCopyWith<$Res>
   factory _$MapStateCopyWith(_MapState value, $Res Function(_MapState) _then) = __$MapStateCopyWithImpl;
 @override @useResult
 $Res call({
- MapLayer? layer, LocationFix? location, bool loadingLayer, bool locating, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
+ MapLayer? layer, LocationFix? location, bool loadingLayer, LocationTrackingStatus locationStatus, Failure? layerFailure, Failure? locationFailure, String? settingsMessage
 });
 
 
@@ -278,13 +278,13 @@ class __$MapStateCopyWithImpl<$Res>
 
 /// Create a copy of MapState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locating = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? layer = freezed,Object? location = freezed,Object? loadingLayer = null,Object? locationStatus = null,Object? layerFailure = freezed,Object? locationFailure = freezed,Object? settingsMessage = freezed,}) {
   return _then(_MapState(
 layer: freezed == layer ? _self.layer : layer // ignore: cast_nullable_to_non_nullable
 as MapLayer?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as LocationFix?,loadingLayer: null == loadingLayer ? _self.loadingLayer : loadingLayer // ignore: cast_nullable_to_non_nullable
-as bool,locating: null == locating ? _self.locating : locating // ignore: cast_nullable_to_non_nullable
-as bool,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
+as bool,locationStatus: null == locationStatus ? _self.locationStatus : locationStatus // ignore: cast_nullable_to_non_nullable
+as LocationTrackingStatus,layerFailure: freezed == layerFailure ? _self.layerFailure : layerFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,locationFailure: freezed == locationFailure ? _self.locationFailure : locationFailure // ignore: cast_nullable_to_non_nullable
 as Failure?,settingsMessage: freezed == settingsMessage ? _self.settingsMessage : settingsMessage // ignore: cast_nullable_to_non_nullable
 as String?,

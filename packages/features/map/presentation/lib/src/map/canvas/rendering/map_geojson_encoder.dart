@@ -23,7 +23,7 @@ Map<String, dynamic> locationGeoJson(LocationFix? location) => {
     if (location != null)
       {
         'type': 'Feature',
-        'properties': <String, dynamic>{},
+        'properties': <String, dynamic>{'bearing': location.bearing?.degrees},
         'geometry': {
           'type': 'Point',
           'coordinates': [location.point.longitude, location.point.latitude],

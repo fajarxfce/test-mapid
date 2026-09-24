@@ -25,8 +25,8 @@ flowchart LR
 | Component | Responsibility |
 | --- | --- |
 | `core_location_domain` | Location fixes, repository contract, and use cases. |
-| `core_location_data` | Geolocator, foreground permission checks, GPS access, and settings launches. |
-| `MapBloc` | Fetching layer/location data, retries, and location recovery actions. |
+| `core_location_data` | Geolocator and compass adapters, foreground lifecycle, permissions, and settings launches. |
+| `MapBloc` | Fetching layer data, observing live location, retries, and location recovery actions. |
 | `MapState` | Screen data and presentation messages; the source of loaded data. |
 | `MapBindings` | Forwarding changed `MapContent` snapshots as canvas events. |
 | `MapCanvasBloc` | Desired scene, camera intent, selection, and renderer status in UI state. |
@@ -86,6 +86,37 @@ MapLibre GL 0.27.1 exposes a style-ready callback but no widget-level style-erro
 callback. A 25-second session timer reports stalled loading through the typed
 `MapRenderStatus` stream. Reloading starts a new timeout; successful style loading
 or session closure cancels it. UI error text belongs to `MapCanvasState`.
+
+## Foreground location and bearing
+
+`WatchLocation` exposes one cancellable stream through `LocationRepository`.
+The data layer combines the GPS and compass sources with RxDart. Android requests
+high-accuracy updates at a one-second interval and zero distance filter; the OS
+controls actual delivery. The first fix races a 20-second deadline. Once a fix
+arrives, that deadline is cancelled, so stationary tracking never times out.
+Stream errors become typed failures and close the watch, allowing explicit retry.
+
+The shared data layer observes application visibility. Backgrounding cancels
+both sensor subscriptions; resuming creates fresh subscriptions. Inactive states
+such as permission dialogs do not interrupt the request. Cancelling the consumer
+also removes the lifecycle observer. `MapBloc` uses `emit.forEach` with a
+`droppable` location event: repeated button taps cannot create duplicate watches.
+Closing the route releases the subscription automatically.
+
+`LocationBearing` distinguishes magnetic compass heading from GPS movement
+direction. Valid compass readings take priority, are rounded to one degree,
+and are limited to ten updates per second. Without a reliable compass reading,
+GPS course is used only at speeds of at least 0.5 m/s. When neither is available,
+the arrow is hidden. Compass quality depends on calibration and nearby magnetic
+interference.
+
+The MapLibre symbol rotates relative to the map using a bearing property in the
+location source. Its image and layer are recreated after style replacement.
+`diffMapScene` treats heading changes separately from coordinate changes, so
+turning the phone does not move the camera. GPS follow preserves the current
+zoom. Pointer movement dispatches `MapCanvasPanned`, switching camera intent to
+`free`; GPS and compass updates continue until the route closes or app hides.
+An explicit location action restores follow. Widgets only render and dispatch.
 
 ## Validation
 

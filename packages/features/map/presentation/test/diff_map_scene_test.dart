@@ -1,3 +1,5 @@
+import 'package:core_common/core_common.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
@@ -13,6 +15,69 @@ void main() {
   final located = places.copyWith(
     content: places.content.copyWith(location: sampleLocation),
   );
+
+  test('turning the phone updates the arrow without moving the camera', () {
+    final before = located.copyWith(focus: MapCameraFocus.userLocation);
+    final after = before.copyWith(
+      content: before.content.copyWith(
+        location: LocationFix(
+          point: GeoPoint(
+            latitude: sampleLocation.point.latitude,
+            longitude: sampleLocation.point.longitude,
+          ),
+          accuracyMeters: 12,
+          bearing: const LocationBearing(
+            degrees: 90,
+            source: LocationBearingSource.compass,
+          ),
+        ),
+      ),
+    );
+    expect(diffMapScene(before, after), [isA<MapLocationChanged>()]);
+  });
+
+  test('a new GPS position follows without resetting the zoom', () {
+    final before = located.copyWith(focus: MapCameraFocus.userLocation);
+    final after = before.copyWith(
+      content: before.content.copyWith(
+        location: const LocationFix(
+          point: GeoPoint(latitude: -6.21, longitude: 106.8),
+          accuracyMeters: 12,
+        ),
+      ),
+    );
+    expect(diffMapScene(before, after), [
+      isA<MapLocationChanged>(),
+      isA<MapCameraChanged>().having(
+        (change) => change.reframe,
+        'reframe',
+        false,
+      ),
+    ]);
+  });
+
+  test('new timestamps and accuracy alone require no native redraw', () {
+    final next = located.copyWith(
+      content: located.content.copyWith(
+        location: LocationFix(
+          point: GeoPoint(
+            latitude: sampleLocation.point.latitude,
+            longitude: sampleLocation.point.longitude,
+          ),
+          accuracyMeters: 15,
+          timestamp: DateTime.utc(2026),
+        ),
+      ),
+    );
+    expect(diffMapScene(located, next), isEmpty);
+  });
+
+  test('free camera keeps updating location without following it', () {
+    final before = places.copyWith(focus: MapCameraFocus.free);
+    expect(diffMapScene(before, located.copyWith(focus: MapCameraFocus.free)), [
+      isA<MapLocationChanged>(),
+    ]);
+  });
 
   test(
     'an unknown native baseline replaces both sources, even with empty data',

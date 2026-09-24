@@ -7,21 +7,22 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
 import 'package:map_presentation/src/map/models/location_action.dart';
+import 'package:map_presentation/src/map/models/location_tracking_status.dart';
 
 /// Loads screen data. Native map lifecycle and interaction belong to the canvas.
 @injectable
 class MapBloc extends Bloc<MapEvent, MapState> {
-  MapBloc(this._loadLayer, this._getLocation, this._openSettings)
+  MapBloc(this._loadLayer, this._watchLocation, this._openSettings)
     : super(const MapState()) {
     on<MapLayerRequested>(_loadMapLayer, transformer: restartable());
-    on<MapLocationRequested>(_getCurrentLocation, transformer: droppable());
+    on<MapLocationRequested>(_onLocationRequested, transformer: droppable());
     on<MapLocationActionRequested>(
       _handleLocationAction,
       transformer: droppable(),
     );
   }
   final LoadMapLayer _loadLayer;
-  final GetCurrentLocation _getLocation;
+  final WatchLocation _watchLocation;
   final OpenLocationSettings _openSettings;
 
   Future<void> _loadMapLayer(
@@ -43,26 +44,36 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     });
   }
 
-  Future<void> _getCurrentLocation(
+  Future<void> _onLocationRequested(
     MapLocationRequested event,
     Emitter<MapState> emit,
   ) async {
     emit(
       state.copyWith(
-        locating: true,
+        locationStatus: LocationTrackingStatus.acquiring,
         locationFailure: null,
         settingsMessage: null,
       ),
     );
-    final result = await _getLocation();
-    if (emit.isDone) return;
-    emit(switch (result) {
-      Success(:final value) => state.copyWith(location: value, locating: false),
-      FailureResult(:final failure) => state.copyWith(
-        locating: false,
-        locationFailure: failure,
-      ),
-    });
+    await emit.forEach(
+      _watchLocation(),
+      onData: (result) => switch (result) {
+        Success(:final value) => state.copyWith(
+          location: value,
+          locationStatus: LocationTrackingStatus.live,
+          locationFailure: null,
+          settingsMessage: null,
+        ),
+        FailureResult(:final failure) => state.copyWith(
+          locationStatus: failure.kind == FailureKind.cancelled
+              ? LocationTrackingStatus.paused
+              : LocationTrackingStatus.failed,
+          locationFailure: failure.kind == FailureKind.cancelled
+              ? null
+              : failure,
+        ),
+      },
+    );
   }
 
   Future<void> _handleLocationAction(

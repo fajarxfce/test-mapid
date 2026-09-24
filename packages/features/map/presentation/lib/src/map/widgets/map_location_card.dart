@@ -35,6 +35,10 @@ class MapLocationCard extends StatelessWidget {
               const SizedBox(height: 8),
               AppText(state.locationMessage!, variant: AppTextVariant.caption),
             ],
+            if (state.bearingLabel != null) ...[
+              const SizedBox(height: 4),
+              AppText(state.bearingLabel!, variant: AppTextVariant.caption),
+            ],
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,

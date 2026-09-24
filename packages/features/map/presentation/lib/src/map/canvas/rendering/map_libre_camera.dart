@@ -11,14 +11,16 @@ class MapLibreCamera {
   const MapLibreCamera(this._controller);
   final MapLibreMapController _controller;
 
-  Future<void> focus(MapScene scene) async {
+  Future<void> focus(MapScene scene, {bool reframe = false}) async {
     switch (scene.focus) {
       case MapCameraFocus.places:
         if (scene.content.layer case final layer?) await _fitPlaces(layer);
       case MapCameraFocus.userLocation:
         if (scene.content.location case final location?) {
-          await _centerOn(location);
+          await _centerOn(location, reframe: reframe);
         }
+      case MapCameraFocus.free:
+        break;
     }
   }
 
@@ -47,12 +49,16 @@ class MapLibreCamera {
     );
   }
 
-  Future<void> _centerOn(LocationFix location) async {
+  Future<void> _centerOn(LocationFix location, {required bool reframe}) async {
     await _controller.animateCamera(
-      CameraUpdate.newLatLngZoom(
-        LatLng(location.point.latitude, location.point.longitude),
-        15,
-      ),
+      reframe
+          ? CameraUpdate.newLatLngZoom(
+              LatLng(location.point.latitude, location.point.longitude),
+              15,
+            )
+          : CameraUpdate.newLatLng(
+              LatLng(location.point.latitude, location.point.longitude),
+            ),
     );
   }
 

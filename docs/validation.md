@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 182 tests.
+  dependency boundaries, architecture rules, static analysis, and 200 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev debug and release builds: passed. The release APK signature was
   verified with Android SDK `apksigner`.
@@ -17,6 +17,8 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 
 Coverage includes GeoJSON parsing and coordinate validation, HTTP failures,
 credential-safe logging, shared location permissions and service failures,
+successive GPS fixes, compass fallback and throttling, first-fix timeout,
+background cancellation and resumption, heading-only updates, and camera follow,
 typed canvas handlers, pure scene diffing, UI event bindings, style restoration,
 serialized native rendering, partial write rollback, stale feature picks,
 controller replacement, disposal during native operations, popup content, and
@@ -28,8 +30,11 @@ The API key is absent from tracked source and local commit history. The root
 
 ## Android device verification
 
-The release APK was installed and tested on a Samsung Galaxy A72 running
-Android 16 on 24 September 2026.
+Baseline map interactions were verified with release `c49dffc` on a Samsung
+Galaxy A72 running Android 16 on 24 September 2026. The updated APK builds and
+passes automated tracking and bearing tests. Physical movement and compass
+rotation checks for the new continuous-tracking implementation are pending an
+unlocked device.
 
 | Scenario | Observed result |
 | --- | --- |

@@ -23,14 +23,14 @@ class MapPresentationPackageModule extends _i526.MicroPackageModule {
   // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) {
-    gh.factory<_i432.MapRenderer>(() => _i173.MapLibreRenderer());
     gh.factory<_i1021.MapBloc>(
       () => _i1021.MapBloc(
         gh<_i774.LoadMapLayer>(),
-        gh<_i1025.GetCurrentLocation>(),
+        gh<_i1025.WatchLocation>(),
         gh<_i1025.OpenLocationSettings>(),
       ),
     );
+    gh.factory<_i432.MapRenderer>(() => _i173.MapLibreRenderer());
     gh.lazySingleton<_i318.MapRouter>(() => _i318.MapRouter(gh<_i174.GetIt>()));
     gh.factory<_i242.MapCanvasBloc>(
       () => _i242.MapCanvasBloc(gh<_i432.MapRenderer>()),
