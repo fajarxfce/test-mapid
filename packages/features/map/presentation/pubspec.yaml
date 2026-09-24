@@ -9,6 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   core_common: any
+  core_location_domain: any
   core_design_system: any
   map_domain: any
   maplibre_gl: any

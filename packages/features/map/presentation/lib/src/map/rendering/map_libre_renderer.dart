@@ -1,10 +1,11 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:injectable/injectable.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/rendering/map_style.dart';
-import 'package:maplibre_gl/maplibre_gl.dart' hide UserLocation;
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// Presentation adapter for the native map. The widget owns controller disposal.
 /// MapBloc serializes scene updates and owns data, selection and camera intent.
@@ -51,7 +52,7 @@ class MapLibreRenderer {
     }
   }
 
-  Future<void> renderLocation(UserLocation location) async {
+  Future<void> renderLocation(LocationFix location) async {
     final controller = _controller;
     if (controller == null || controller.isDisposed) return;
     final data = <String, dynamic>{
@@ -128,7 +129,7 @@ class MapLibreRenderer {
     );
   }
 
-  Future<void> focusLocation(UserLocation location) async {
+  Future<void> focusLocation(LocationFix location) async {
     final controller = _controller;
     if (controller == null || controller.isDisposed) return;
     await controller.animateCamera(

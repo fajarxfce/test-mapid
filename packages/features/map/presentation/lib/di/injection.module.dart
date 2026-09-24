@@ -6,6 +6,7 @@
 
 import 'dart:async' as _i687;
 
+import 'package:core_location_domain/core_location_domain.dart' as _i1025;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:map_domain/map_domain.dart' as _i774;
@@ -22,8 +23,8 @@ class MapPresentationPackageModule extends _i526.MicroPackageModule {
     gh.factory<_i1021.MapBloc>(
       () => _i1021.MapBloc(
         gh<_i774.LoadMapLayer>(),
-        gh<_i774.LocateUser>(),
-        gh<_i774.OpenLocationSettings>(),
+        gh<_i1025.GetCurrentLocation>(),
+        gh<_i1025.OpenLocationSettings>(),
         gh<_i242.MapLibreRenderer>(),
       ),
     );

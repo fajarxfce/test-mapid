@@ -1,5 +1,5 @@
-name: map_data
-description: GEO MAPID transport and layer data adapters.
+name: core_location_data
+description: Geolocator adapter for shared foreground location access.
 version: 0.1.0
 publish_to: none
 resolution: workspace
@@ -9,17 +9,12 @@ dependencies:
   flutter:
     sdk: flutter
   core_common: any
-  core_network: any
-  map_domain: any
-  dio: any
+  core_location_domain: any
+  geolocator: any
   injectable: any
-  retrofit: any
-  json_annotation: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
   build_runner: any
   injectable_generator: any
-  json_serializable: any
-  retrofit_generator: any
   mocktail: any

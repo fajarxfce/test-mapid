@@ -1,12 +1,13 @@
 import 'dart:async';
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart';
+import 'package:core_location_data/src/dto/location_fix_dto.dart';
+import 'package:core_location_data/src/repositories/device_location_repository.dart';
+import 'package:core_location_domain/core_location_domain.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:map_data/src/datasources/local/geolocator_location_data_source.dart';
-import 'package:map_data/src/dto/user_location_dto.dart';
-import 'package:map_data/src/repositories/device_user_location_repository.dart';
-import 'package:map_domain/map_domain.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Geolocator extends Mock implements GeolocatorPlatform {}
@@ -41,8 +42,8 @@ void main() {
     );
   });
   test('maps a real platform fix into the domain with accuracy', () async {
-    final repository = DeviceUserLocationRepository(source);
-    final result = await repository.locate() as Success<UserLocation>;
+    final repository = DeviceLocationRepository(source);
+    final result = await repository.locate() as Success<LocationFix>;
     expect(result.value.point.latitude, -7.8);
     expect(result.value.point.longitude, 110.36);
     expect(result.value.accuracyMeters, 12);
@@ -53,7 +54,7 @@ void main() {
         .thenAnswer((_) async => LocationPermission.denied);
     when(platform.requestPermission)
         .thenAnswer((_) async => LocationPermission.whileInUse);
-    expect(await source.locate(), isA<Success<UserLocationDto>>());
+    expect(await source.locate(), isA<Success<LocationFixDto>>());
     verify(platform.requestPermission).called(1);
   });
   test('denial does not query the GPS position', () async {
@@ -61,7 +62,7 @@ void main() {
         .thenAnswer((_) async => LocationPermission.denied);
     when(platform.requestPermission)
         .thenAnswer((_) async => LocationPermission.denied);
-    final result = await source.locate() as FailureResult<UserLocationDto>;
+    final result = await source.locate() as FailureResult<LocationFixDto>;
     expect(result.failure.kind, FailureKind.permissionDenied);
     verifyNever(
       () => platform.getCurrentPosition(
@@ -72,27 +73,27 @@ void main() {
   test('permanent denial offers an application-settings recovery', () async {
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.deniedForever);
-    final result = await source.locate() as FailureResult<UserLocationDto>;
+    final result = await source.locate() as FailureResult<LocationFixDto>;
     expect(result.failure.kind, FailureKind.permissionPermanentlyDenied);
     verifyNever(platform.requestPermission);
     when(platform.openAppSettings).thenAnswer((_) async => true);
     expect(
-      await DeviceUserLocationRepository(source)
+      await DeviceLocationRepository(source)
           .openSettings(LocationSettingsTarget.application),
-      isTrue,
+      isA<Success<void>>(),
     );
     verify(platform.openAppSettings).called(1);
   });
   test('disabled GPS is distinct from denied permission', () async {
     when(platform.isLocationServiceEnabled).thenAnswer((_) async => false);
-    final result = await source.locate() as FailureResult<UserLocationDto>;
+    final result = await source.locate() as FailureResult<LocationFixDto>;
     expect(result.failure.kind, FailureKind.serviceDisabled);
     verifyNever(platform.checkPermission);
     when(platform.openLocationSettings).thenAnswer((_) async => true);
     expect(
-      await DeviceUserLocationRepository(source)
+      await DeviceLocationRepository(source)
           .openSettings(LocationSettingsTarget.device),
-      isTrue,
+      isA<Success<void>>(),
     );
   });
   test('a GPS timeout is recoverable', () async {
@@ -101,8 +102,28 @@ void main() {
         locationSettings: any(named: 'locationSettings'),
       ),
     ).thenThrow(TimeoutException('private'));
-    final result = await source.locate() as FailureResult<UserLocationDto>;
+    final result = await source.locate() as FailureResult<LocationFixDto>;
     expect(result.failure.kind, FailureKind.timeout);
     expect(result.failure.message, isNot(contains('private')));
+  });
+  test(
+    'a settings launch failure is returned through the shared result',
+    () async {
+      when(platform.openAppSettings).thenAnswer((_) async => false);
+      final result = await source.openSettings(
+        LocationSettingsTarget.application,
+      );
+      expect(result, isA<FailureResult<void>>());
+    },
+  );
+  test('platform errors opening settings do not escape the adapter', () async {
+    when(platform.openLocationSettings).thenThrow(
+      PlatformException(code: 'unavailable', message: 'private device details'),
+    );
+    final result = await source.openSettings(
+      LocationSettingsTarget.device,
+    ) as FailureResult<void>;
+    expect(result.failure.kind, FailureKind.unexpected);
+    expect(result.failure.message, isNot(contains('private device details')));
   });
 }

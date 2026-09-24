@@ -1,8 +1,9 @@
 import 'dart:math';
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:maplibre_gl/maplibre_gl.dart' hide UserLocation;
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 sealed class MapEvent {
   const MapEvent();
@@ -50,7 +51,7 @@ final class MapLayerReceived extends MapSceneEvent {
 
 final class MapLocationReceived extends MapSceneEvent {
   const MapLocationReceived(this.result, {required this.focus});
-  final Result<UserLocation> result;
+  final Result<LocationFix> result;
   final bool focus;
 }
 

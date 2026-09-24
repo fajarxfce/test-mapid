@@ -10,6 +10,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
+import 'package:core_location_data/core_location_data.dart' as _i276;
 import 'package:core_network/core_network.dart' as _i309;
 import 'package:dio/dio.dart' as _i361;
 import 'package:fluent_starter/config/app_config.dart' as _i209;
@@ -28,6 +29,7 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     await _i309.CoreNetworkPackageModule().init(gh);
+    await _i276.CoreLocationDataPackageModule().init(gh);
     await _i301.MapDataPackageModule().init(gh);
     await _i275.MapPresentationPackageModule().init(gh);
     final appModule = _$AppModule();

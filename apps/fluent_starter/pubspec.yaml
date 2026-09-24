@@ -11,6 +11,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   core_network: any
+  core_location_data: any
   core_design_system: any
   map_data: any
   map_presentation: any
@@ -29,5 +30,6 @@ dev_dependencies:
   injectable_generator: any
   flutter_flavorizr: any
   map_domain: any
+  core_location_domain: any
 flutter:
   uses-material-design: true

@@ -1,4 +1,4 @@
-import 'package:map_domain/src/entities/geo_point.dart';
+import 'package:core_common/core_common.dart';
 
 final class MapPlace {
   const MapPlace({

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core_common/core_common.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
@@ -25,7 +26,7 @@ final layer = MapLayer(
     ),
   ],
 );
-const location = UserLocation(
+const location = LocationFix(
   point: GeoPoint(latitude: -6.2, longitude: 106.8),
   accuracyMeters: 12,
 );
@@ -36,15 +37,15 @@ class _MapRepository implements MapRepository {
   Future<Result<MapLayer>> loadLayer() => response();
 }
 
-class _LocationRepository implements UserLocationRepository {
-  Result<UserLocation> result = const Success(location);
+class _LocationRepository implements LocationRepository {
+  Result<LocationFix> result = const Success(location);
   LocationSettingsTarget? opened;
   @override
-  Future<Result<UserLocation>> locate() async => result;
+  Future<Result<LocationFix>> locate() async => result;
   @override
-  Future<bool> openSettings(LocationSettingsTarget target) async {
+  Future<Result<void>> openSettings(LocationSettingsTarget target) async {
     opened = target;
-    return true;
+    return const Success(null);
   }
 }
 
@@ -57,7 +58,7 @@ class _Renderer extends MapLibreRenderer {
   }
 
   @override
-  Future<void> renderLocation(UserLocation location) async {
+  Future<void> renderLocation(LocationFix location) async {
     calls.add('location');
   }
 
@@ -67,7 +68,7 @@ class _Renderer extends MapLibreRenderer {
   }
 
   @override
-  Future<void> focusLocation(UserLocation location) async {
+  Future<void> focusLocation(LocationFix location) async {
     calls.add('focus-location');
   }
 
@@ -90,7 +91,7 @@ void main() {
   late _Renderer renderer;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
-    LocateUser(locations),
+    GetCurrentLocation(locations),
     OpenLocationSettings(locations),
     renderer,
   );

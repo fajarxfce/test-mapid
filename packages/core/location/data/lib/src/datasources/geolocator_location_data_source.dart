@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_data/src/datasources/location_data_source.dart';
+import 'package:core_location_data/src/dto/location_fix_dto.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
-import 'package:map_data/src/datasources/local/location_data_source.dart';
-import 'package:map_data/src/dto/user_location_dto.dart';
 
 /// Owns OS permission prompts and translates platform failures at the I/O boundary.
 @LazySingleton(as: LocationDataSource)
@@ -14,13 +15,13 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
   final GeolocatorPlatform _platform;
 
   @override
-  Future<Result<UserLocationDto>> locate() async {
+  Future<Result<LocationFixDto>> locate() async {
     try {
       if (!await _platform.isLocationServiceEnabled()) {
         return const FailureResult(
           Failure(
             FailureKind.serviceDisabled,
-            'Aktifkan GPS untuk menampilkan lokasi kamu.',
+            'Location services are disabled.',
           ),
         );
       }
@@ -32,7 +33,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
         return const FailureResult(
           Failure(
             FailureKind.permissionPermanentlyDenied,
-            'Izin lokasi perlu diaktifkan melalui pengaturan aplikasi.',
+            'Location permission is permanently denied.',
           ),
         );
       }
@@ -41,7 +42,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
         return const FailureResult(
           Failure(
             FailureKind.permissionDenied,
-            'Izin lokasi belum diberikan. Peta wisata tetap bisa digunakan.',
+            'Location permission was denied.',
           ),
         );
       }
@@ -54,7 +55,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
           )
           .timeout(const Duration(seconds: 20));
       return Success(
-        UserLocationDto(
+        LocationFixDto(
           latitude: position.latitude,
           longitude: position.longitude,
           accuracy: position.accuracy,
@@ -62,34 +63,48 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
       );
     } on TimeoutException {
       return const FailureResult(
-        Failure(
-          FailureKind.timeout,
-          'Lokasi belum ditemukan. Coba lagi di area terbuka.',
-        ),
+        Failure(FailureKind.timeout, 'The location request timed out.'),
       );
     } on LocationServiceDisabledException {
       return const FailureResult(
-        Failure(FailureKind.serviceDisabled, 'GPS sedang nonaktif.'),
+        Failure(FailureKind.serviceDisabled, 'Location services are disabled.'),
       );
     } on PermissionDeniedException {
       return const FailureResult(
         Failure(
           FailureKind.permissionDenied,
-          'Akses lokasi ditolak oleh perangkat.',
+          'Location permission was denied by the device.',
         ),
       );
     } on PlatformException {
       return const FailureResult(
-        Failure(
-          FailureKind.unexpected,
-          'Lokasi perangkat belum dapat diakses. Coba lagi.',
-        ),
+        Failure(FailureKind.unexpected, 'The device location is unavailable.'),
       );
     }
   }
 
   @override
-  Future<bool> openAppSettings() => _platform.openAppSettings();
-  @override
-  Future<bool> openLocationSettings() => _platform.openLocationSettings();
+  Future<Result<void>> openSettings(LocationSettingsTarget target) async {
+    try {
+      final opened = await switch (target) {
+        LocationSettingsTarget.application => _platform.openAppSettings(),
+        LocationSettingsTarget.device => _platform.openLocationSettings(),
+      };
+      return opened
+          ? const Success(null)
+          : const FailureResult(
+              Failure(
+                FailureKind.unexpected,
+                'Location settings could not be opened.',
+              ),
+            );
+    } on PlatformException {
+      return const FailureResult(
+        Failure(
+          FailureKind.unexpected,
+          'Location settings are unavailable on this device.',
+        ),
+      );
+    }
+  }
 }

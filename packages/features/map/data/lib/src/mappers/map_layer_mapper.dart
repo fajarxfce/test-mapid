@@ -1,3 +1,4 @@
+import 'package:core_common/core_common.dart';
 import 'package:map_data/src/dto/map_layer_response.dart';
 import 'package:map_data/src/dto/place_feature_dto.dart';
 import 'package:map_domain/map_domain.dart';

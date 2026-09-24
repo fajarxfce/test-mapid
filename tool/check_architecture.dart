@@ -12,11 +12,20 @@ const allowed = <String, Set<String>>{
   'core_common': {},
   'core_network': {'core_common'},
   'core_design_system': {},
+  'core_location_domain': {'core_common'},
+  'core_location_data': {'core_common', 'core_location_domain'},
   'map_domain': {'core_common'},
   'map_data': {'map_domain', 'core_common', 'core_network'},
-  'map_presentation': {'map_domain', 'core_common', 'core_design_system'},
+  'map_presentation': {
+    'map_domain',
+    'core_common',
+    'core_design_system',
+    'core_location_domain',
+  },
   'fluent_starter': {
     'core_network',
+    'core_location_domain',
+    'core_location_data',
     'core_design_system',
     'map_domain',
     'map_data',
@@ -214,7 +223,12 @@ List<String> checkArchitecture(Directory root) {
             '$name: service locator belongs to app composition or feature route/DI composition',
           );
         }
-        if (!{'map_data', 'map_presentation', 'core_network'}.contains(name) &&
+        if (!{
+              'map_data',
+              'map_presentation',
+              'core_network',
+              'core_location_data',
+            }.contains(name) &&
             uris.any((uri) => uri.startsWith('package:injectable/'))) {
           errors.add(
             '$name: Injectable annotations are not allowed in this layer',

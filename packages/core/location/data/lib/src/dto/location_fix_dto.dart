@@ -1,5 +1,5 @@
-final class UserLocationDto {
-  const UserLocationDto({
+final class LocationFixDto {
+  const LocationFixDto({
     required this.latitude,
     required this.longitude,
     required this.accuracy,

@@ -1,3 +1,4 @@
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:core_network/core_network.dart';
 import 'package:dio/dio.dart';
 import 'package:fluent_starter/config/app_config.dart';
@@ -22,7 +23,7 @@ void main() {
       );
       addTearDown(container.reset);
       expect(container<LoadMapLayer>(), isA<LoadMapLayer>());
-      expect(container<LocateUser>(), isA<LocateUser>());
+      expect(container<GetCurrentLocation>(), isA<GetCurrentLocation>());
       expect(container<OpenLocationSettings>(), isA<OpenLocationSettings>());
       final dio = container<Dio>(instanceName: mapidApi);
       expect(dio.options.baseUrl, 'https://geoserver.mapid.io');

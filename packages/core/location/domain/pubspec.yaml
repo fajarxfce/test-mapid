@@ -1,5 +1,5 @@
-name: map_domain
-description: Map layer entities and repository contracts.
+name: core_location_domain
+description: Shared foreground location contracts and use cases.
 version: 0.1.0
 publish_to: none
 resolution: workspace

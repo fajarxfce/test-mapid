@@ -1,3 +1,4 @@
+import 'package:core_location_data/core_location_data.dart';
 import 'package:core_network/core_network.dart';
 import 'package:dio/dio.dart';
 import 'package:fluent_starter/config/app_config.dart';
@@ -12,6 +13,7 @@ import 'package:map_presentation/map_presentation.dart';
   ignoreUnregisteredTypes: [AppConfig, GetIt],
   externalPackageModulesBefore: [
     ExternalModule(CoreNetworkPackageModule),
+    ExternalModule(CoreLocationDataPackageModule),
     ExternalModule(MapDataPackageModule),
     ExternalModule(MapPresentationPackageModule),
   ],

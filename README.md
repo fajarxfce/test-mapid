@@ -43,6 +43,8 @@ VS Code and Zed configurations include run, debug, build, and maintenance tasks.
 - `packages/features/map/domain`: entities, repository contracts, and use cases.
 - `packages/features/map/data`: API services, DTOs, data sources, and repositories.
 - `packages/features/map/presentation`: Bloc, MapLibre renderer, routes, and UI.
+- `packages/core/location/{domain,data}`: shared location contracts, use cases,
+  permissions, and the Geolocator adapter.
 - `packages/core`: shared results, error handling, networking, and design system.
 
 ## Map and location

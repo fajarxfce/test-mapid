@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:core_common/core_common.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:map_domain/map_domain.dart';
@@ -24,11 +25,11 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<MapSceneEvent>(_onSceneEvent, transformer: sequential());
   }
   final LoadMapLayer _loadLayer;
-  final LocateUser _locateUser;
+  final GetCurrentLocation _locateUser;
   final OpenLocationSettings _openSettings;
   final MapLibreRenderer _renderer;
   MapLayer? _layer;
-  UserLocation? _location;
+  LocationFix? _location;
   Timer? _styleTimeout;
   bool _focusUser = false;
 
@@ -71,7 +72,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(
         state.copyWith(
           locationAction: LocationAction.locate,
-          locationMessage: opened
+          locationMessage: opened is Success<void>
               ? 'Setelah mengaktifkan lokasi, ketuk Lokasi saya.'
               : 'Buka pengaturan lokasi perangkat, lalu coba lagi.',
         ),
@@ -165,7 +166,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
               emit(
                 state.copyWith(
                   locating: false,
-                  locationMessage: failure.message,
+                  locationMessage: switch (failure.kind) {
+                    FailureKind.permissionDenied => 'Izin lokasi belum diberikan. Peta wisata tetap bisa digunakan.',
+                    FailureKind.permissionPermanentlyDenied => 'Izin lokasi perlu diaktifkan melalui pengaturan aplikasi.',
+                    FailureKind.serviceDisabled =>
+                      'Aktifkan GPS untuk menampilkan lokasi kamu.',
+                    FailureKind.timeout =>
+                      'Lokasi belum ditemukan. Coba lagi di area terbuka.',
+                    _ => 'Lokasi perangkat belum dapat diakses. Coba lagi.',
+                  },
                   locationAction: switch (failure.kind) {
                     FailureKind.permissionPermanentlyDenied =>
                       LocationAction.appSettings,
