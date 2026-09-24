@@ -17,6 +17,7 @@ dependencies:
   flutter_bloc: any
   bloc_concurrency: any
   synchronized: any
+  rxdart: any
   freezed_annotation: any
   injectable: any
   get_it: any
@@ -26,6 +27,7 @@ dev_dependencies:
     sdk: flutter
   bloc_test: any
   mocktail: any
+  fake_async: any
   build_runner: any
   freezed: any
   auto_route_generator: any

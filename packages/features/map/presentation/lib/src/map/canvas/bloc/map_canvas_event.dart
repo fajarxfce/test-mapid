@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
-import 'package:maplibre_gl/maplibre_gl.dart';
 
 sealed class MapCanvasEvent {
   const MapCanvasEvent();
@@ -12,13 +11,8 @@ final class MapCanvasPanned extends MapCanvasEvent {
   const MapCanvasPanned();
 }
 
-final class MapCanvasAttached extends MapCanvasEvent {
-  const MapCanvasAttached(this.controller);
-  final MapLibreMapController controller;
-}
-
-final class MapCanvasStyleLoaded extends MapCanvasEvent {
-  const MapCanvasStyleLoaded();
+final class MapCanvasStarted extends MapCanvasEvent {
+  const MapCanvasStarted();
 }
 
 final class MapCanvasStyleReloadRequested extends MapCanvasEvent {

@@ -6,6 +6,7 @@ import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_factory.dart';
 import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_observer.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_libre_renderer.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
@@ -30,9 +31,9 @@ class MapCanvas extends StatelessWidget {
       compassViewPosition: CompassViewPosition.bottomRight,
       compassViewMargins: const Point(16, 16),
       onMapCreated: (controller) =>
-          context.read<MapCanvasBloc>().add(MapCanvasAttached(controller)),
+          context.read<MapLibreRenderer>().attach(controller),
       onStyleLoadedCallback: () =>
-          context.read<MapCanvasBloc>().add(const MapCanvasStyleLoaded()),
+          context.read<MapLibreRenderer>().styleLoaded(),
       onMapClick: (point, coordinates) =>
           context.read<MapCanvasBloc>().add(MapCanvasTapped(point)),
     ),

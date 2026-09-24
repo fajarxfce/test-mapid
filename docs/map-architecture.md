@@ -13,7 +13,10 @@ flowchart LR
     APIs[Map and location use cases] --> Data[MapBloc]
     Data --> Binding[MapBindings]
     Binding --> Canvas[MapCanvasBloc]
-    Input[Native callbacks and user events] --> Canvas
+    Input[Gestures and user events] --> Canvas
+    Native[SDK lifecycle callbacks] --> Adapter
+    Adapter --> Status[Render status stream]
+    Status --> Canvas
     Canvas --> Scene[Immutable MapScene]
     Canvas --> View[Canvas state and popup]
     Scene --> Port[MapRenderer]
@@ -29,14 +32,14 @@ flowchart LR
 | Component | Responsibility |
 | --- | --- |
 | `core_location_domain` | Location fixes, repository contract, and use cases. |
-| `core_location_data` | Geolocator and compass adapters, foreground lifecycle, permissions, and settings launches. |
+| `core_location_data` | Raw OS adapters and DTOs; repository orchestration, entity mapping, typed failures, and foreground recovery. |
 | `MapBloc` | Fetching layer data, observing live location, retries, and location recovery actions. |
 | `MapState` | Screen data and presentation messages; the source of loaded data. |
 | `MapBindings` | Forwarding changed `MapContent` snapshots as canvas events. |
 | `MapCanvasBloc` | Desired scene, camera intent, selection, and renderer status in UI state. |
 | `MapScene` | Immutable content and camera focus to display. |
-| `MapRenderer` | Presentation rendering contract; native attachment exposes the SDK controller. |
-| `MapLibreRenderer` | Retaining the latest scene and replacing native sessions on attachment. |
+| `MapRenderer` | SDK-free presentation commands and render status; no controller, attachment, or disposal API. |
+| `MapLibreRenderer` | Route-owned adapter retaining the desired scene and replaying status across native session replacement. |
 | `MapLibreRenderSession` | One controller's style readiness, operation queue, timeout, and applied scene. |
 | `MapRenderBaseline` | Independently confirmed source content and camera intent. |
 | `diffMapScene` | Pure calculation of changed sources and required camera movement. |
@@ -55,15 +58,22 @@ rendering contract boundary and rejects feature dependencies from shared locatio
 
 ## Lifecycle and ordering
 
-Injectable creates a renderer for each route's canvas Bloc. On native attachment,
-the adapter creates a session bound permanently to that controller and closes
-the previous session. Commands already issued to an old controller cannot be
-redirected to a replacement. `MapLibreMap` owns native controller disposal;
-the session owns its timeout, status stream, and queued work.
+The route creates one `MapLibreRenderer` through Injectable and owns its disposal.
+The widget binds SDK creation/style callbacks directly to this adapter. Injectable
+passes the same instance to `MapCanvasBloc` as a `MapRenderer` factory parameter;
+no native controller crosses the Bloc, event, state, or renderer-contract boundary.
+On native attachment the adapter creates a session bound to that controller,
+cancels observation of the old session, and closes it. Commands already issued
+to an old controller cannot be redirected to a replacement. `MapLibreMap` owns
+native controller disposal; the session owns its timeout, status stream, and
+queued work.
 
 Every canvas event has its own typed `on<Event>` registration and named handler.
-The Bloc observes renderer status through `emit.forEach`; closing the Bloc or
-reattaching cancels that subscription. Asynchronous feature picks use
+The Bloc observes the adapter's stable status stream through `emit.forEach`;
+closing the Bloc cancels that observation. Controller replacement is handled
+inside the adapter, without restarting the Bloc subscription. New observers
+receive the latest status. Closing the route releases the adapter's stream,
+native-session subscription, and session timeout. Asynchronous feature picks use
 `restartable()` so an earlier tap cannot overwrite a later one. A dismissed
 popup or replaced dataset also invalidates a pending pick.
 
@@ -120,11 +130,19 @@ or session closure cancels it. UI error text belongs to `MapCanvasState`.
 ## Foreground location and bearing
 
 `WatchLocation` exposes one cancellable stream through `LocationRepository`.
-The data layer combines the GPS and compass sources with RxDart. Android requests
-high-accuracy updates at a one-second interval and zero distance filter; the OS
-controls actual delivery. The first fix races a 20-second deadline. Once a fix
+Datasources expose raw DTOs, native settings-launch booleans, and technical
+exceptions. The permission adapter retains the OS denial result in a technical
+exception so the repository can distinguish permanent denial. DTOs do not import
+domain types; `mapLocationFix` translates sensor values at the repository boundary.
+The repository combines GPS and compass with RxDart and converts synchronous,
+asynchronous, and stream exceptions into domain failures. Compass failure is an
+explicit optional-sensor fallback: the repository records diagnostics and retains
+GPS course, while the datasource leaves the original exception intact.
+Android requests high-accuracy updates at a one-second interval and zero distance
+filter; the OS controls actual delivery. The first fix races a 20-second deadline. Once a fix
 arrives, that deadline is cancelled, so stationary tracking never times out.
-Stream errors become typed failures and release both sensor subscriptions.
+The repository maps GPS stream errors to typed failures and releases both sensor
+subscriptions.
 The lifecycle observer remains active so permission or GPS changes in Android
 Settings can recover without another location-button tap.
 

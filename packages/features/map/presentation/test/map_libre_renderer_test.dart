@@ -22,6 +22,7 @@ void main() {
   late MapLibreRenderer renderer;
   late NativeMapHarness native;
   late List<MapRenderStatus> statuses;
+  StreamSubscription<MapRenderStatus>? statusSubscription;
   final scene = MapScene(
     content: MapContent(layer: sampleLayer, location: sampleLocation),
   );
@@ -36,14 +37,16 @@ void main() {
     renderer = MapLibreRenderer();
     native = NativeMapHarness();
     statuses = [];
+    statusSubscription = null;
   });
   tearDown(() => renderer.close());
 
   void attach([NativeMapHarness? target]) {
-    final subscription = renderer
-        .attach((target ?? native).controller)
-        .listen(statuses.add);
-    addTearDown(subscription.cancel);
+    if (statusSubscription == null) {
+      statusSubscription = renderer.statuses.listen(statuses.add);
+      addTearDown(() => statusSubscription?.cancel());
+    }
+    renderer.attach((target ?? native).controller);
   }
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
@@ -65,7 +68,10 @@ void main() {
       renderer.render(scene);
       await settle();
       expect(native.operations, isEmpty);
-      expect(statuses, [MapRenderStatus.loadingStyle]);
+      expect(statuses, [
+        MapRenderStatus.waitingForMap,
+        MapRenderStatus.loadingStyle,
+      ]);
       renderer.styleLoaded();
       await settle();
       expect(native.operations, [
@@ -303,32 +309,4 @@ void main() {
       expect(statuses, hasLength(statusCount));
     },
   );
-
-  testWidgets(
-    'style timeout recovers and successful reload cancels its timer',
-    (tester) async {
-      // Attach inside the widget test's clock so the timer is deterministic.
-      attach();
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 26));
-      expect(statuses.last, MapRenderStatus.styleTimeout);
-      renderer.reloadStyle();
-      await tester.pump();
-      expect(statuses.last, MapRenderStatus.loadingStyle);
-      renderer.styleLoaded();
-      await tester.pump();
-      expect(statuses.last, MapRenderStatus.ready);
-      await tester.pump(const Duration(seconds: 26));
-      expect(statuses.last, MapRenderStatus.ready);
-      await renderer.close();
-    },
-  );
-
-  testWidgets('close cancels a pending style timeout', (tester) async {
-    attach();
-    await tester.pump();
-    await renderer.close();
-    await tester.pump(const Duration(seconds: 26));
-    expect(statuses, [MapRenderStatus.loadingStyle]);
-  });
 }

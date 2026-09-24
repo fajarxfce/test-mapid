@@ -12,7 +12,6 @@ import 'package:map_presentation/src/map/models/map_content.dart';
 
 import 'support/fake_map_renderer.dart';
 import 'support/map_fixtures.dart';
-import 'support/mock_map_controller.dart';
 
 void main() {
   late FakeMapRenderer renderer;
@@ -21,7 +20,10 @@ void main() {
     renderer = FakeMapRenderer();
     bloc = MapCanvasBloc(renderer);
   });
-  tearDown(() => bloc.close());
+  tearDown(() async {
+    await bloc.close();
+    await renderer.close();
+  });
 
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
@@ -59,34 +61,33 @@ void main() {
   test(
     'native status changes preserve current content, focus and popup',
     () async {
-      bloc.add(MapCanvasAttached(TestMapController()));
+      bloc.add(const MapCanvasStarted());
       await selectPlace();
       bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
       await settle();
       final scene = bloc.state.scene;
-      renderer.attachments.single.add(MapRenderStatus.renderingFailure);
+      renderer.updates.add(MapRenderStatus.renderingFailure);
       await settle();
       expect(bloc.state.scene, scene);
       expect(bloc.state.selected?.name, 'Museum');
       expect(bloc.state.errorMessage, isNotNull);
-      renderer.attachments.single.add(MapRenderStatus.ready);
+      renderer.updates.add(MapRenderStatus.ready);
       await settle();
       expect(bloc.state.ready, isTrue);
       expect(bloc.state.errorMessage, isNull);
     },
   );
 
-  test('reattachment cancels the old status subscription', () async {
-    bloc.add(MapCanvasAttached(TestMapController()));
+  test('starting twice keeps one status observer', () async {
+    bloc.add(const MapCanvasStarted());
+    bloc.add(const MapCanvasStarted());
     await settle();
-    final old = renderer.attachments.single;
-    bloc.add(MapCanvasAttached(TestMapController()));
-    await settle();
-    expect(old.hasListener, isFalse);
-    old.add(MapRenderStatus.styleTimeout);
-    renderer.attachments.last.add(MapRenderStatus.ready);
+    renderer.updates.add(MapRenderStatus.ready);
     await settle();
     expect(bloc.state.ready, isTrue);
+    await bloc.close();
+    expect(renderer.updates.hasListener, isFalse);
+    expect(renderer.closed, isFalse, reason: 'The route owns adapter disposal');
   });
 
   test(
@@ -235,21 +236,18 @@ void main() {
     },
   );
 
-  test(
-    'close cancels watches and pending picks before releasing the renderer',
-    () async {
-      bloc.add(MapCanvasAttached(TestMapController()));
-      await selectPlace();
-      final pending = Completer<Result<String?>>();
-      renderer.pick = (_) => pending.future;
-      bloc.add(const MapCanvasTapped(Point(20, 20)));
-      await settle();
-      await bloc.close();
-      expect(renderer.closed, isTrue);
-      expect(renderer.attachments.single.hasListener, isFalse);
-      pending.complete(const Success(null));
-      await settle();
-      expect(bloc.state.selected?.name, 'Museum');
-    },
-  );
+  test('close cancels observation and pending picks without disposing the route adapter', () async {
+    bloc.add(const MapCanvasStarted());
+    await selectPlace();
+    final pending = Completer<Result<String?>>();
+    renderer.pick = (_) => pending.future;
+    bloc.add(const MapCanvasTapped(Point(20, 20)));
+    await settle();
+    await bloc.close();
+    expect(renderer.closed, isFalse);
+    expect(renderer.updates.hasListener, isFalse);
+    pending.complete(const Success(null));
+    await settle();
+    expect(bloc.state.selected?.name, 'Museum');
+  });
 }

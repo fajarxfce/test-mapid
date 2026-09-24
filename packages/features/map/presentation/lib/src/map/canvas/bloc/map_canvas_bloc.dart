@@ -11,9 +11,8 @@ import 'package:map_presentation/src/map/models/place_details.dart';
 /// Owns user intent and selection. The renderer owns native resources and work.
 @injectable
 class MapCanvasBloc extends Bloc<MapCanvasEvent, MapCanvasState> {
-  MapCanvasBloc(this._renderer) : super(const MapCanvasState()) {
-    on<MapCanvasAttached>(_onAttached, transformer: restartable());
-    on<MapCanvasStyleLoaded>(_onStyleLoaded);
+  MapCanvasBloc(@factoryParam this._renderer) : super(const MapCanvasState()) {
+    on<MapCanvasStarted>(_onStarted, transformer: droppable());
     on<MapCanvasStyleReloadRequested>(_onStyleReloadRequested);
     on<MapCanvasContentChanged>(_onContentChanged);
     on<MapCanvasTapped>(_onTapped, transformer: restartable());
@@ -32,18 +31,13 @@ class MapCanvasBloc extends Bloc<MapCanvasEvent, MapCanvasState> {
     _renderer.render(state.scene);
   }
 
-  Future<void> _onAttached(
-    MapCanvasAttached event,
+  Future<void> _onStarted(
+    MapCanvasStarted event,
     Emitter<MapCanvasState> emit,
   ) => emit.forEach(
-    _renderer.attach(event.controller),
+    _renderer.statuses,
     onData: (status) => state.copyWith(renderStatus: status),
   );
-
-  void _onStyleLoaded(
-    MapCanvasStyleLoaded event,
-    Emitter<MapCanvasState> emit,
-  ) => _renderer.styleLoaded();
 
   void _onStyleReloadRequested(
     MapCanvasStyleReloadRequested event,
@@ -109,10 +103,4 @@ class MapCanvasBloc extends Bloc<MapCanvasEvent, MapCanvasState> {
     MapCanvasZoomRequested event,
     Emitter<MapCanvasState> emit,
   ) => _renderer.zoomBy(event.amount);
-
-  @override
-  Future<void> close() async {
-    await super.close();
-    await _renderer.close();
-  }
 }

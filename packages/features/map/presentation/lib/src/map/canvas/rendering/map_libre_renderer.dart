@@ -8,21 +8,35 @@ import 'package:map_presentation/src/map/canvas/rendering/map_libre_render_sessi
 import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' show MapLibreMapController;
+import 'package:rxdart/rxdart.dart';
 
 /// Retains the desired scene across native creation and style replacement.
-@Injectable(as: MapRenderer)
+@injectable
 final class MapLibreRenderer implements MapRenderer {
   MapScene _scene = const MapScene();
   MapLibreRenderSession? _session;
+  StreamSubscription<MapRenderStatus>? _statusSubscription;
+  final _statuses = BehaviorSubject<MapRenderStatus>.seeded(
+    MapRenderStatus.waitingForMap,
+  );
 
   @override
-  Stream<MapRenderStatus> attach(MapLibreMapController controller) {
+  Stream<MapRenderStatus> get statuses => _statuses.stream.distinct();
+
+  /// Native widget binding; never part of the Bloc-facing contract.
+  void attach(MapLibreMapController controller) {
+    if (_statuses.isClosed || controller.isDisposed) return;
+    unawaited(_statusSubscription?.cancel());
     unawaited(_session?.close());
-    _session = MapLibreRenderSession(controller);
-    return _session!.statuses;
+    final session = MapLibreRenderSession(controller);
+    _session = session;
+    _statusSubscription = session.statuses.listen((status) {
+      if (!_statuses.isClosed && identical(session, _session)) {
+        _statuses.add(status);
+      }
+    });
   }
 
-  @override
   void styleLoaded() => _session?.styleLoaded(_scene);
 
   @override
@@ -47,9 +61,14 @@ final class MapLibreRenderer implements MapRenderer {
   Future<Result<String?>> placeAt(Point<double> point) =>
       _session?.placeAt(point) ?? Future.value(const Success(null));
 
-  @override
+  /// The route owns this adapter; the SDK widget owns its native controller.
   Future<void> close() async {
-    await _session?.close();
+    if (_statuses.isClosed) return;
+    await Future.wait<void>([
+      _statuses.close(),
+      if (_statusSubscription != null) _statusSubscription!.cancel(),
+      if (_session != null) _session!.close(),
+    ]);
     _session = null;
   }
 }

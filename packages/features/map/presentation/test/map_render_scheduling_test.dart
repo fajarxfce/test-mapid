@@ -44,9 +44,8 @@ void main() {
     renderer = MapLibreRenderer();
     native = NativeMapHarness();
     statuses = [];
-    final subscription = renderer
-        .attach(native.controller)
-        .listen(statuses.add);
+    final subscription = renderer.statuses.listen(statuses.add);
+    renderer.attach(native.controller);
     addTearDown(() async {
       await renderer.close();
       await subscription.cancel();
