@@ -8,6 +8,9 @@ import 'package:yaml/yaml.dart';
 import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
+// Reviewed utilities with no Flutter or platform I/O dependency.
+const purePackages = {'core_common', 'collection'};
+
 const allowed = <String, Set<String>>{
   'core_common': {},
   'core_network': {'core_common'},
@@ -65,9 +68,9 @@ List<String> checkArchitecture(Directory root) {
         errors.add('$name: forbidden dependency $dep');
       }
     }
-    if (pure && dependencies.keys.any((key) => key != 'core_common')) {
+    if (pure && dependencies.keys.any((key) => !purePackages.contains(key))) {
       errors.add(
-        '$name: domain/common may depend only on Dart SDK and core_common',
+        '$name: domain/common may depend only on Dart SDK and approved pure Dart packages',
       );
     }
     final lib = Directory(p.join(package.directory, 'lib'));
@@ -193,7 +196,7 @@ List<String> checkArchitecture(Directory root) {
               !(allowed[name]?.contains(target) ?? false)) {
             errors.add('$name: forbidden import $uri');
           }
-          if (pure && target != name && target != 'core_common') {
+          if (pure && target != name && !purePackages.contains(target)) {
             errors.add('$name: impure domain import $uri');
           }
         } else {

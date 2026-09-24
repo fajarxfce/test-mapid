@@ -28,6 +28,24 @@ void main() {
         .writeAsStringSync("import 'package:core_common/core_common.dart';");
     expect(checkArchitecture(root), isEmpty);
   });
+  test('permits pure collection utilities but still rejects transport dependencies', () {
+    final spec = File(p.join(root.path, 'domain/pubspec.yaml'));
+    final source = File(p.join(root.path, 'domain/lib/domain.dart'));
+    spec.writeAsStringSync(
+      'name: map_domain\ndependencies: {core_common: any, collection: any}\n',
+    );
+    source.writeAsStringSync("import 'package:collection/collection.dart';");
+    expect(checkArchitecture(root), isEmpty);
+    spec.writeAsStringSync(
+      'name: map_domain\ndependencies: {core_common: any, dio: any}\n',
+    );
+    source.writeAsStringSync("import 'package:dio/dio.dart';");
+    expect(
+      checkArchitecture(root),
+      contains(contains('approved pure Dart packages')),
+    );
+    expect(checkArchitecture(root), contains(contains('impure domain import')));
+  });
   test('shared location cannot depend on a feature', () {
     File(p.join(root.path, 'pubspec.yaml'))
         .writeAsStringSync('workspace: [common, domain, location]\n');

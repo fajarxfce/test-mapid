@@ -4,6 +4,10 @@ Screen data, user intent, and native rendering have separate owners. Device
 location is a shared capability under `core/location`, so another feature can
 use it without importing the map feature.
 
+Domain packages remain independent of Flutter, transport clients, and platform
+I/O. The dependency checker explicitly permits the pure Dart `collection`
+utilities used for value equality; UI and Bloc ownership rules still apply.
+
 ```mermaid
 flowchart LR
     APIs[Map and location use cases] --> Data[MapBloc]
