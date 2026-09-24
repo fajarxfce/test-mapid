@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
@@ -103,6 +104,16 @@ List<String> checkArchitecture(Directory root) {
               .any({'pages', 'views', 'widgets'}.contains);
       final generated = RegExp(r'\.(g|gr|freezed|config|module)\.dart$')
           .hasMatch(file.path);
+      final rawData =
+          name.endsWith('_data') &&
+          p.posix.split(relativePath).any({'datasources', 'dto'}.contains);
+      if (rawData && !generated) {
+        unit.accept(
+          _RawDataVisitor(
+            (message) => errors.add('$name/$relativePath: $message'),
+          ),
+        );
+      }
       if (relativePath == '$name.dart' &&
           (unit.declarations.isNotEmpty ||
               unit.directives.any(
@@ -156,8 +167,38 @@ List<String> checkArchitecture(Directory root) {
         }
       }
       for (final uri in uris) {
+        if (rawData &&
+            Uri.parse(uri).pathSegments.firstOrNull?.endsWith('_domain') ==
+                true) {
+          errors.add(
+            '$name/$relativePath: datasource/DTO must not depend on domain; map values in the repository boundary',
+          );
+        }
+        if (name.endsWith('_presentation') &&
+            p.posix.split(relativePath).contains('bloc') &&
+            (uri.startsWith('dart:io') ||
+                uri.startsWith('dart:ui') ||
+                {
+                  'dio',
+                  'geolocator',
+                  'flutter_compass',
+                  'maplibre_gl',
+                  'flutter',
+                }.contains(Uri.parse(uri).pathSegments.firstOrNull))) {
+          errors.add(
+            '$name/$relativePath: Bloc, event and state must not import UI or platform SDKs',
+          );
+        }
+        if (name.endsWith('_data') &&
+            p.posix.split(relativePath).contains('repositories') &&
+            uri.startsWith('package:flutter/')) {
+          errors.add(
+            '$name/$relativePath: repository must use platform adapters, not Flutter UI/lifecycle APIs',
+          );
+        }
         if (name == 'map_presentation' &&
-            relativePath == 'src/map/canvas/bloc/map_canvas_bloc.dart' &&
+            (relativePath.startsWith('src/map/canvas/bloc/') ||
+                relativePath == 'src/map/canvas/rendering/map_renderer.dart') &&
             (uri.startsWith('package:maplibre_gl/') ||
                 uri.startsWith('package:synchronized/') ||
                 uri.contains('/rendering/map_libre_'))) {
@@ -277,6 +318,36 @@ List<String> checkArchitecture(Directory root) {
     visit(name);
   }
   return errors;
+}
+
+class _RawDataVisitor extends RecursiveAstVisitor<void> {
+  _RawDataVisitor(this.report);
+  final void Function(String) report;
+
+  @override
+  void visitNamedType(NamedType node) {
+    if ({
+      'Result',
+      'Failure',
+      'FailureResult',
+      'Success',
+    }.contains(node.name.lexeme)) {
+      report(
+        'datasource/DTO must expose raw values and technical errors; Result/Failure belongs to the repository',
+      );
+    }
+    super.visitNamedType(node);
+  }
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    if ({'Result', 'Failure', 'FailureResult', 'Success'}.contains(node.name)) {
+      report(
+        'datasource/DTO must expose raw values and technical errors; Result/Failure belongs to the repository',
+      );
+    }
+    super.visitSimpleIdentifier(node);
+  }
 }
 
 bool _isSealedFamily(CompilationUnit unit, int publicTypeCount) {

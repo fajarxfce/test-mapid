@@ -114,6 +114,60 @@ void main() {
       );
     }
   });
+  test(
+    'canvas events and renderer contracts cannot expose SDK dependencies',
+    () {
+      File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+        'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
+      );
+      for (final path in [
+        'src/map/canvas/bloc/map_canvas_event.dart',
+        'src/map/canvas/rendering/map_renderer.dart',
+      ]) {
+        final file = File(p.join(root.path, 'domain/lib', path));
+        file.parent.createSync(recursive: true);
+        file.writeAsStringSync(
+          "import 'package:maplibre_gl/maplibre_gl.dart';",
+        );
+        expect(
+          checkArchitecture(root),
+          contains(contains('canvas Bloc must use the renderer contract')),
+        );
+        file.deleteSync();
+      }
+    },
+  );
+
+  test('datasource and DTO boundaries reject domain models and Result wrappers', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_data\ndependencies: {core_common: any, map_domain: any}\n',
+    );
+    for (final path in [
+      'src/datasources/source.dart',
+      'src/dto/fix_dto.dart',
+    ]) {
+      final file = File(p.join(root.path, 'domain/lib', path));
+      file.parent.createSync(recursive: true);
+      file.writeAsStringSync("import 'package:map_domain/map_domain.dart';");
+      expect(
+        checkArchitecture(root),
+        contains(contains('datasource/DTO must not depend on domain')),
+      );
+      file.writeAsStringSync(
+        "import 'package:core_common/core_common.dart'; Result<double>? fix;",
+      );
+      expect(
+        checkArchitecture(root),
+        contains(contains('Result/Failure belongs to the repository')),
+      );
+      file.writeAsStringSync(
+        'class FixDto { const FixDto(this.latitude); final double latitude; }',
+      );
+      expect(checkArchitecture(root), isEmpty);
+      file.deleteSync();
+    }
+  });
+
   test('presentation accepts feature sources under src and DI beside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any}\n',

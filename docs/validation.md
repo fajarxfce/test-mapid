@@ -7,10 +7,11 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 224 tests.
+  dependency boundaries, architecture rules, static analysis, and 234 tests.
 - Flavor generation and native scheme checks: passed.
-- Android dev debug and release builds: passed. The release APK signature was
-  verified with Android SDK `apksigner`.
+- Android dev universal release and staging ARM64 release builds: passed. Both
+  APK signatures were verified with Android SDK `apksigner`. Earlier debug-build
+  device verification is recorded below.
 - The configured GEO MAPID endpoint returned 10 point features in the
   `Pariwisata Jogja` layer. The committed test fixture contains two features and
   excludes API credentials and response user metadata.
@@ -27,6 +28,26 @@ and lifecycle decisions.
 
 The API key is absent from tracked source and local commit history. The root
 `.env` and generated submission artifacts are ignored by Git.
+
+## Clean Architecture boundary regressions
+
+- Location datasources expose DTOs and preserve technical exceptions. Tests
+  verify that synchronous, asynchronous, and stream failures become domain
+  failures in the repository, including permanent permission denial.
+- Compass failure preserves GPS tracking and falls back to movement bearing.
+  Permission recovery, passive resume, and sensor cancellation remain covered.
+- The production AutoRoute configuration and generated Injectable registrations
+  create a shared route-owned renderer. Its native callbacks make the canvas
+  ready, late observers receive the latest status, and removing the route closes
+  the Bloc and renderer. Only the native platform surface/controller is mocked.
+- Renderer tests cover controller replacement and independent session cleanup.
+  Session timeout tests advance a controlled clock and check timer cancellation.
+- Architecture checks reject domain imports and Result/Failure wrappers in raw
+  datasources/DTOs, and SDK imports in Bloc events, states, and the renderer port.
+
+The boundary refactor passed all 234 automated tests and both release builds.
+It has not been retested on the physical phone because the device remained
+locked. The device observations below describe earlier builds.
 
 ## Map audit regressions
 
