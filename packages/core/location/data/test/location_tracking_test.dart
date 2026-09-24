@@ -5,6 +5,8 @@ import 'package:core_location_data/src/datasources/compass_data_source.dart';
 import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart';
 import 'package:core_location_data/src/datasources/location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
+import 'package:core_location_data/src/exceptions/location_permission_exception.dart';
+import 'package:core_location_data/src/mappers/map_location_fix.dart';
 import 'package:core_location_data/src/repositories/device_location_repository.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:fake_async/fake_async.dart';
@@ -63,18 +65,13 @@ void main() {
   test(
     'one GPS stream emits successive fixes and cancellation releases it',
     () async {
-      final fixes = <Result<LocationFixDto>>[];
+      final fixes = <LocationFixDto>[];
       final subscription = source.watch().listen(fixes.add);
       await settle();
       positions.add(position());
       positions.add(position(latitude: -7.81));
       await settle();
-      expect(
-        fixes.whereType<Success<LocationFixDto>>().map(
-          (fix) => fix.value.latitude,
-        ),
-        [-7.8, -7.81],
-      );
+      expect(fixes.map((fix) => fix.latitude), [-7.8, -7.81]);
       final settings =
           verify(
                 () => platform.getPositionStream(
@@ -98,10 +95,15 @@ void main() {
   test('denied permission never starts the GPS stream', () async {
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.deniedForever);
-    final results = await source.watch().toList();
-    expect(
-      (results.single as FailureResult).failure.kind,
-      FailureKind.permissionPermanentlyDenied,
+    await expectLater(
+      source.watch(),
+      emitsError(
+        isA<LocationPermissionException>().having(
+          (error) => error.permission,
+          'permission',
+          LocationPermission.deniedForever,
+        ),
+      ),
     );
     verifyNever(
       () => platform.getPositionStream(
@@ -113,10 +115,15 @@ void main() {
   test('a passive permission check never opens a permission dialog', () async {
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.denied);
-    final results = await source.watch(requestPermission: false).toList();
-    expect(
-      (results.single as FailureResult).failure.kind,
-      FailureKind.permissionDenied,
+    await expectLater(
+      source.watch(requestPermission: false),
+      emitsError(
+        isA<LocationPermissionException>().having(
+          (error) => error.permission,
+          'permission',
+          LocationPermission.denied,
+        ),
+      ),
     );
     verifyNever(platform.requestPermission);
     verifyNever(
@@ -256,23 +263,19 @@ void main() {
     },
   );
 
-  test(
-    'a platform stream failure emits a typed failure and closes tracking',
-    () async {
-      final result = source.watch().toList();
-      await settle();
-      positions.add(position());
-      positions.addError(const LocationServiceDisabledException());
-      final values = await result;
-      expect(values, hasLength(2));
-      expect(
-        (values.last as FailureResult).failure.kind,
-        FailureKind.serviceDisabled,
-      );
-      await settle();
-      expect(positions.hasListener, isFalse);
-    },
-  );
+  test('raw platform stream errors reach the caller unchanged', () async {
+    const error = LocationServiceDisabledException();
+    final result = expectLater(
+      source.watch(),
+      emitsInOrder([isA<LocationFixDto>(), emitsError(same(error))]),
+    );
+    await settle();
+    positions.add(position());
+    positions.addError(error);
+    await result;
+    await settle();
+    expect(positions.hasListener, isFalse);
+  });
 
   test(
     'cancelling during a permission prompt cannot start GPS later',
@@ -298,13 +301,13 @@ void main() {
     'only the first fix has a timeout; stationary tracking stays active',
     () {
       fakeAsync((clock) {
-        final results = <Result<LocationFixDto>>[];
+        final results = <LocationFixDto>[];
         final subscription = source.watch().listen(results.add);
         clock.flushMicrotasks();
         positions.add(position());
         clock.flushMicrotasks();
         clock.elapse(const Duration(minutes: 2));
-        expect(results.single, isA<Success<LocationFixDto>>());
+        expect(results.single, isA<LocationFixDto>());
         expect(positions.hasListener, isTrue);
         unawaited(subscription.cancel());
         clock.flushMicrotasks();
@@ -315,14 +318,14 @@ void main() {
 
   test('first-fix timeout cancels the native stream', () {
     fakeAsync((clock) {
-      final results = <Result<LocationFixDto>>[];
-      final subscription = source.watch().listen(results.add);
+      final errors = <Object>[];
+      final subscription = source.watch().listen(
+        (_) => fail('Unexpected fix'),
+        onError: errors.add,
+      );
       clock.flushMicrotasks();
       clock.elapse(const Duration(seconds: 21));
-      expect(
-        (results.single as FailureResult).failure.kind,
-        FailureKind.timeout,
-      );
+      expect(errors.single, isA<TimeoutException>());
       expect(positions.hasListener, isFalse);
       unawaited(subscription.cancel());
       clock.flushMicrotasks();
@@ -333,22 +336,26 @@ void main() {
     'bearing distinguishes compass, moving GPS course, and stationary GPS',
     () {
       final moving = LocationFixDto.fromPosition(position());
-      expect(moving.toEntity().bearing?.source, LocationBearingSource.movement);
-      expect(moving.toEntity().bearing?.degrees, 90);
       expect(
-        moving.toEntity(compassHeading: 15).bearing?.source,
+        mapLocationFix(moving).bearing?.source,
+        LocationBearingSource.movement,
+      );
+      expect(mapLocationFix(moving).bearing?.degrees, 90);
+      expect(
+        mapLocationFix(moving, compassHeading: 15).bearing?.source,
         LocationBearingSource.compass,
       );
-      expect(moving.toEntity(compassHeading: 15).bearing?.degrees, 15);
+      expect(mapLocationFix(moving, compassHeading: 15).bearing?.degrees, 15);
       expect(
-        LocationFixDto.fromPosition(position(speed: 0)).toEntity().bearing,
+        mapLocationFix(LocationFixDto.fromPosition(position(speed: 0))).bearing,
         isNull,
       );
       expect(
-        LocationFixDto.fromPosition(position(heading: -1)).toEntity().bearing,
+        mapLocationFix(LocationFixDto.fromPosition(position(heading: -1)))
+            .bearing,
         isNull,
       );
-      expect(moving.toEntity().timestamp, DateTime.utc(2026));
+      expect(mapLocationFix(moving).timestamp, DateTime.utc(2026));
     },
   );
 
@@ -360,12 +367,12 @@ void main() {
       );
       final local = _Locations();
       final compass = _Compass();
-      final gpsStreams = <StreamController<Result<LocationFixDto>>>[];
+      final gpsStreams = <StreamController<LocationFixDto>>[];
       final compassStreams = <StreamController<double?>>[];
       when(
         () => local.watch(requestPermission: any(named: 'requestPermission')),
       ).thenAnswer((_) {
-        final stream = StreamController<Result<LocationFixDto>>();
+        final stream = StreamController<LocationFixDto>();
         gpsStreams.add(stream);
         return stream.stream;
       });
@@ -381,7 +388,7 @@ void main() {
         compass,
       ).watch().listen(results.add);
       await settle();
-      gpsStreams.single.add(Success(LocationFixDto.fromPosition(position())));
+      gpsStreams.single.add(LocationFixDto.fromPosition(position()));
       await settle();
       compassStreams.single.add(180);
       await settle();
@@ -424,7 +431,7 @@ void main() {
       await settle();
       expect(gpsStreams, hasLength(2));
       gpsStreams.last.add(
-        Success(LocationFixDto.fromPosition(position(latitude: -7.81))),
+        LocationFixDto.fromPosition(position(latitude: -7.81)),
       );
       await settle();
       expect(
@@ -448,7 +455,7 @@ void main() {
       );
       final local = _Locations();
       final compass = _Compass();
-      final gps = StreamController<Result<LocationFixDto>>();
+      final gps = StreamController<LocationFixDto>();
       final headings = StreamController<double?>()..add(null);
       when(
         () => local.watch(requestPermission: any(named: 'requestPermission')),
@@ -461,11 +468,7 @@ void main() {
         compass,
       ).watch().listen(results.add, onDone: () => done = true);
       await settle();
-      gps.add(
-        const FailureResult(
-          Failure(FailureKind.serviceDisabled, 'GPS disabled'),
-        ),
-      );
+      gps.addError(const LocationServiceDisabledException());
       await settle();
       expect(done, isFalse);
       expect(headings.hasListener, isFalse);

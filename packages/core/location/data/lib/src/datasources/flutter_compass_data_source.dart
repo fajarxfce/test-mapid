@@ -25,7 +25,6 @@ final class FlutterCompassDataSource implements CompassDataSource {
               ? (event.heading!.roundToDouble() % 360)
               : null,
         )
-        .onErrorReturn(null)
         .throttleTime(const Duration(milliseconds: 100), trailing: true)
         .startWith(null)
         .distinct();

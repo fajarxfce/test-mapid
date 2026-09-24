@@ -1,11 +1,10 @@
-import 'package:core_common/core_common.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
-import 'package:core_location_domain/core_location_domain.dart';
 
 abstract interface class LocationDataSource {
-  Future<Result<LocationFixDto>> locate();
+  Future<LocationFixDto> locate();
 
-  /// Passive resume checks access without opening another permission dialog.
-  Stream<Result<LocationFixDto>> watch({bool requestPermission = true});
-  Future<Result<void>> openSettings(LocationSettingsTarget target);
+  /// Emits raw fixes or technical errors. Passive resume never opens a dialog.
+  Stream<LocationFixDto> watch({bool requestPermission = true});
+  Future<bool> openAppSettings();
+  Future<bool> openLocationSettings();
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_data/src/exceptions/location_permission_exception.dart';
 import 'package:geolocator/geolocator.dart';
 
 /// Platform errors are translated once, before crossing the data boundary.
@@ -13,7 +14,12 @@ Failure mapLocationException(Object error) => switch (error) {
     FailureKind.serviceDisabled,
     'Location services are disabled.',
   ),
-  PermissionDeniedException() => const Failure(
+  LocationPermissionException(permission: LocationPermission.deniedForever) =>
+    const Failure(
+      FailureKind.permissionPermanentlyDenied,
+      'Location permission is permanently denied.',
+    ),
+  LocationPermissionException() || PermissionDeniedException() => const Failure(
     FailureKind.permissionDenied,
     'Location permission was denied by the device.',
   ),

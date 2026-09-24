@@ -59,20 +59,33 @@ void main() {
     },
   );
 
-  test('sensor failure degrades to no compass heading', () async {
-    final headings = <double?>[];
-    final subscription = const FlutterCompassDataSource().watch().listen(
-      headings.add,
-    );
-    await settle();
-    TestDefaultBinaryMessengerBinding.instance.channelBuffers.push(
-      channel.name,
-      codec.encodeErrorEnvelope(code: 'NO_SENSOR'),
-      (_) {},
-    );
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    expect(headings, [null]);
-    await subscription.cancel();
-    await settle();
-  });
+  test(
+    'sensor failure reaches the repository as its original platform error',
+    () async {
+      final headings = <double?>[];
+      final errors = <Object>[];
+      final subscription = const FlutterCompassDataSource().watch().listen(
+        headings.add,
+        onError: errors.add,
+      );
+      await settle();
+      TestDefaultBinaryMessengerBinding.instance.channelBuffers.push(
+        channel.name,
+        codec.encodeErrorEnvelope(code: 'NO_SENSOR'),
+        (_) {},
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(headings, [null]);
+      expect(
+        errors.single,
+        isA<PlatformException>().having(
+          (error) => error.code,
+          'code',
+          'NO_SENSOR',
+        ),
+      );
+      await subscription.cancel();
+      await settle();
+    },
+  );
 }

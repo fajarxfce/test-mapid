@@ -4,6 +4,7 @@ import 'package:core_common/core_common.dart';
 import 'package:core_location_data/src/datasources/compass_data_source.dart';
 import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
+import 'package:core_location_data/src/exceptions/location_permission_exception.dart';
 import 'package:core_location_data/src/repositories/device_location_repository.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
@@ -57,7 +58,7 @@ void main() {
         .thenAnswer((_) async => LocationPermission.denied);
     when(platform.requestPermission)
         .thenAnswer((_) async => LocationPermission.whileInUse);
-    expect(await source.locate(), isA<Success<LocationFixDto>>());
+    expect(await source.locate(), isA<LocationFixDto>());
     verify(platform.requestPermission).called(1);
   });
   test('denial does not query the GPS position', () async {
@@ -65,8 +66,16 @@ void main() {
         .thenAnswer((_) async => LocationPermission.denied);
     when(platform.requestPermission)
         .thenAnswer((_) async => LocationPermission.denied);
-    final result = await source.locate() as FailureResult<LocationFixDto>;
-    expect(result.failure.kind, FailureKind.permissionDenied);
+    await expectLater(
+      source.locate(),
+      throwsA(
+        isA<LocationPermissionException>().having(
+          (error) => error.permission,
+          'permission',
+          LocationPermission.denied,
+        ),
+      ),
+    );
     verifyNever(
       () => platform.getCurrentPosition(
         locationSettings: any(named: 'locationSettings'),
@@ -76,8 +85,16 @@ void main() {
   test('permanent denial offers an application-settings recovery', () async {
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.deniedForever);
-    final result = await source.locate() as FailureResult<LocationFixDto>;
-    expect(result.failure.kind, FailureKind.permissionPermanentlyDenied);
+    await expectLater(
+      source.locate(),
+      throwsA(
+        isA<LocationPermissionException>().having(
+          (error) => error.permission,
+          'permission',
+          LocationPermission.deniedForever,
+        ),
+      ),
+    );
     verifyNever(platform.requestPermission);
     when(platform.openAppSettings).thenAnswer((_) async => true);
     expect(
@@ -91,8 +108,10 @@ void main() {
   });
   test('disabled GPS is distinct from denied permission', () async {
     when(platform.isLocationServiceEnabled).thenAnswer((_) async => false);
-    final result = await source.locate() as FailureResult<LocationFixDto>;
-    expect(result.failure.kind, FailureKind.serviceDisabled);
+    await expectLater(
+      source.locate(),
+      throwsA(isA<LocationServiceDisabledException>()),
+    );
     verifyNever(platform.checkPermission);
     when(platform.openLocationSettings).thenAnswer((_) async => true);
     expect(
@@ -109,7 +128,10 @@ void main() {
         locationSettings: any(named: 'locationSettings'),
       ),
     ).thenThrow(TimeoutException('private'));
-    final result = await source.locate() as FailureResult<LocationFixDto>;
+    await expectLater(source.locate(), throwsA(isA<TimeoutException>()));
+    final result =
+        await DeviceLocationRepository(source, _Compass()).locate()
+            as FailureResult<LocationFix>;
     expect(result.failure.kind, FailureKind.timeout);
     expect(result.failure.message, isNot(contains('private')));
   });
@@ -117,20 +139,33 @@ void main() {
     'a settings launch failure is returned through the shared result',
     () async {
       when(platform.openAppSettings).thenAnswer((_) async => false);
-      final result = await source.openSettings(
-        LocationSettingsTarget.application,
-      );
+      expect(await source.openAppSettings(), isFalse);
+      final result = await DeviceLocationRepository(
+        source,
+        _Compass(),
+      ).openSettings(LocationSettingsTarget.application);
       expect(result, isA<FailureResult<void>>());
     },
   );
-  test('platform errors opening settings do not escape the adapter', () async {
-    when(platform.openLocationSettings).thenThrow(
-      PlatformException(code: 'unavailable', message: 'private device details'),
-    );
-    final result = await source.openSettings(
-      LocationSettingsTarget.device,
-    ) as FailureResult<void>;
-    expect(result.failure.kind, FailureKind.unexpected);
-    expect(result.failure.message, isNot(contains('private device details')));
-  });
+  test(
+    'datasource preserves platform errors; repository translates them',
+    () async {
+      when(platform.openLocationSettings).thenThrow(
+        PlatformException(
+          code: 'unavailable',
+          message: 'private device details',
+        ),
+      );
+      await expectLater(
+        source.openLocationSettings,
+        throwsA(isA<PlatformException>()),
+      );
+      final result = await DeviceLocationRepository(
+        source,
+        _Compass(),
+      ).openSettings(LocationSettingsTarget.device) as FailureResult<void>;
+      expect(result.failure.kind, FailureKind.unexpected);
+      expect(result.failure.message, isNot(contains('private device details')));
+    },
+  );
 }
