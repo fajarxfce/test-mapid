@@ -4,5 +4,6 @@ import 'package:core_location_domain/core_location_domain.dart';
 
 abstract interface class LocationDataSource {
   Future<Result<LocationFixDto>> locate();
+  Stream<Result<LocationFixDto>> watch();
   Future<Result<void>> openSettings(LocationSettingsTarget target);
 }

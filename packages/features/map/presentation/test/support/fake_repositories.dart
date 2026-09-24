@@ -21,6 +21,13 @@ class FakeLocationRepository implements LocationRepository {
   Result<void> settingsResult = const Success(null);
   LocationSettingsTarget? opened;
   int calls = 0;
+  Stream<Result<LocationFix>> Function()? updates;
+  @override
+  Stream<Result<LocationFix>> watch() {
+    calls++;
+    return updates?.call() ?? Stream.fromFuture(response());
+  }
+
   @override
   Future<Result<LocationFix>> locate() {
     calls++;

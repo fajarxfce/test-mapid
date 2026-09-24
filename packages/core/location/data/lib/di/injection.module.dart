@@ -7,6 +7,10 @@
 import 'dart:async' as _i687;
 
 import 'package:core_location_data/di/injection.dart' as _i953;
+import 'package:core_location_data/src/datasources/compass_data_source.dart'
+    as _i468;
+import 'package:core_location_data/src/datasources/flutter_compass_data_source.dart'
+    as _i310;
 import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart'
     as _i998;
 import 'package:core_location_data/src/datasources/location_data_source.dart'
@@ -25,16 +29,26 @@ class CoreLocationDataPackageModule extends _i526.MicroPackageModule {
     gh.lazySingleton<_i699.GeolocatorPlatform>(
       () => coreLocationDataModule.geolocator(),
     );
+    gh.lazySingleton<_i468.CompassDataSource>(
+      () => const _i310.FlutterCompassDataSource(),
+    );
     gh.lazySingleton<_i633.LocationDataSource>(
       () => _i998.GeolocatorLocationDataSource(gh<_i699.GeolocatorPlatform>()),
     );
     gh.lazySingleton<_i1025.LocationRepository>(
-      () => _i391.DeviceLocationRepository(gh<_i633.LocationDataSource>()),
+      () => _i391.DeviceLocationRepository(
+        gh<_i633.LocationDataSource>(),
+        gh<_i468.CompassDataSource>(),
+      ),
     );
     gh.factory<_i1025.GetCurrentLocation>(
       () => coreLocationDataModule.getCurrentLocation(
         gh<_i1025.LocationRepository>(),
       ),
+    );
+    gh.factory<_i1025.WatchLocation>(
+      () =>
+          coreLocationDataModule.watchLocation(gh<_i1025.LocationRepository>()),
     );
     gh.factory<_i1025.OpenLocationSettings>(
       () => coreLocationDataModule.openLocationSettings(

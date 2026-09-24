@@ -3,10 +3,13 @@ import 'dart:async';
 import 'package:core_common/core_common.dart';
 import 'package:core_location_data/src/datasources/location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
+import 'package:core_location_data/src/mappers/map_location_exception.dart';
 import 'package:core_location_domain/core_location_domain.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
+import 'package:rxdart/rxdart.dart';
 
 /// Owns OS permission prompts and translates platform failures at the I/O boundary.
 @LazySingleton(as: LocationDataSource)
@@ -14,8 +17,7 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
   const GeolocatorLocationDataSource(this._platform);
   final GeolocatorPlatform _platform;
 
-  @override
-  Future<Result<LocationFixDto>> locate() async {
+  Future<Result<void>> _requestAccess() async {
     try {
       if (!await _platform.isLocationServiceEnabled()) {
         return const FailureResult(
@@ -29,23 +31,33 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
       if (permission == LocationPermission.denied) {
         permission = await _platform.requestPermission();
       }
-      if (permission == LocationPermission.deniedForever) {
-        return const FailureResult(
+      return switch (permission) {
+        LocationPermission.always ||
+        LocationPermission.whileInUse => const Success(null),
+        LocationPermission.deniedForever => const FailureResult(
           Failure(
             FailureKind.permissionPermanentlyDenied,
             'Location permission is permanently denied.',
           ),
-        );
-      }
-      if (permission != LocationPermission.always &&
-          permission != LocationPermission.whileInUse) {
-        return const FailureResult(
+        ),
+        _ => const FailureResult(
           Failure(
             FailureKind.permissionDenied,
             'Location permission was denied.',
           ),
-        );
-      }
+        ),
+      };
+    } on Exception catch (error) {
+      return FailureResult(mapLocationException(error));
+    }
+  }
+
+  @override
+  Future<Result<LocationFixDto>> locate() async {
+    if (await _requestAccess() case FailureResult(:final failure)) {
+      return FailureResult(failure);
+    }
+    try {
       final position = await _platform
           .getCurrentPosition(
             locationSettings: const LocationSettings(
@@ -54,34 +66,52 @@ final class GeolocatorLocationDataSource implements LocationDataSource {
             ),
           )
           .timeout(const Duration(seconds: 20));
-      return Success(
-        LocationFixDto(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          accuracy: position.accuracy,
-        ),
-      );
-    } on TimeoutException {
-      return const FailureResult(
-        Failure(FailureKind.timeout, 'The location request timed out.'),
-      );
-    } on LocationServiceDisabledException {
-      return const FailureResult(
-        Failure(FailureKind.serviceDisabled, 'Location services are disabled.'),
-      );
-    } on PermissionDeniedException {
-      return const FailureResult(
-        Failure(
-          FailureKind.permissionDenied,
-          'Location permission was denied by the device.',
-        ),
-      );
-    } on PlatformException {
-      return const FailureResult(
-        Failure(FailureKind.unexpected, 'The device location is unavailable.'),
-      );
+      return Success(LocationFixDto.fromPosition(position));
+    } on Exception catch (error) {
+      return FailureResult(mapLocationException(error));
     }
   }
+
+  @override
+  Stream<Result<LocationFixDto>> watch() => Rx.defer(
+    () => Stream.fromFuture(_requestAccess()).switchMap(
+      (access) => switch (access) {
+        FailureResult(:final failure) => Stream.value(
+          FailureResult<LocationFixDto>(failure),
+        ),
+        Success() => Rx.race<Result<LocationFixDto>>([
+          Rx.defer(
+                () => _platform.getPositionStream(
+                  locationSettings:
+                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                      ? AndroidSettings(
+                          accuracy: LocationAccuracy.high,
+                          distanceFilter: 0,
+                          intervalDuration: const Duration(seconds: 1),
+                        )
+                      : const LocationSettings(
+                          accuracy: LocationAccuracy.high,
+                          distanceFilter: 0,
+                        ),
+                ),
+              )
+              .map<Result<LocationFixDto>>(
+                (position) => Success(LocationFixDto.fromPosition(position)),
+              )
+              .onErrorReturnWith(
+                (error, _) => FailureResult(mapLocationException(error)),
+              ),
+          // The first fix cancels this deadline. Standing still never times out.
+          Rx.timer(
+            const FailureResult<LocationFixDto>(
+              Failure(FailureKind.timeout, 'The first location fix timed out.'),
+            ),
+            const Duration(seconds: 20),
+          ),
+        ]).takeWhileInclusive((result) => result is Success<LocationFixDto>),
+      },
+    ),
+  );
 
   @override
   Future<Result<void>> openSettings(LocationSettingsTarget target) async {

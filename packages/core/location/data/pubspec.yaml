@@ -11,8 +11,11 @@ dependencies:
   core_common: any
   core_location_domain: any
   geolocator: any
+  flutter_compass: any
+  rxdart: any
   injectable: any
 dev_dependencies:
+  fake_async: any
   flutter_test:
     sdk: flutter
   build_runner: any

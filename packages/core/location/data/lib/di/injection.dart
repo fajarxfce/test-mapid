@@ -15,6 +15,10 @@ abstract class CoreLocationDataModule {
       GetCurrentLocation(repository);
 
   @injectable
+  WatchLocation watchLocation(LocationRepository repository) =>
+      WatchLocation(repository);
+
+  @injectable
   OpenLocationSettings openLocationSettings(LocationRepository repository) =>
       OpenLocationSettings(repository);
 }

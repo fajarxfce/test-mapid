@@ -24,6 +24,7 @@ void main() {
       addTearDown(container.reset);
       expect(container<LoadMapLayer>(), isA<LoadMapLayer>());
       expect(container<GetCurrentLocation>(), isA<GetCurrentLocation>());
+      expect(container<WatchLocation>(), isA<WatchLocation>());
       expect(container<OpenLocationSettings>(), isA<OpenLocationSettings>());
       final dio = container<Dio>(instanceName: mapidApi);
       expect(dio.options.baseUrl, 'https://geoserver.mapid.io');

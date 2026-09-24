@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_data/src/datasources/compass_data_source.dart';
 import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
 import 'package:core_location_data/src/repositories/device_location_repository.dart';
@@ -11,6 +12,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _Geolocator extends Mock implements GeolocatorPlatform {}
+
+class _Compass extends Mock implements CompassDataSource {}
 
 void main() {
   late _Geolocator platform;
@@ -42,7 +45,7 @@ void main() {
     );
   });
   test('maps a real platform fix into the domain with accuracy', () async {
-    final repository = DeviceLocationRepository(source);
+    final repository = DeviceLocationRepository(source, _Compass());
     final result = await repository.locate() as Success<LocationFix>;
     expect(result.value.point.latitude, -7.8);
     expect(result.value.point.longitude, 110.36);
@@ -78,8 +81,10 @@ void main() {
     verifyNever(platform.requestPermission);
     when(platform.openAppSettings).thenAnswer((_) async => true);
     expect(
-      await DeviceLocationRepository(source)
-          .openSettings(LocationSettingsTarget.application),
+      await DeviceLocationRepository(
+        source,
+        _Compass(),
+      ).openSettings(LocationSettingsTarget.application),
       isA<Success<void>>(),
     );
     verify(platform.openAppSettings).called(1);
@@ -91,8 +96,10 @@ void main() {
     verifyNever(platform.checkPermission);
     when(platform.openLocationSettings).thenAnswer((_) async => true);
     expect(
-      await DeviceLocationRepository(source)
-          .openSettings(LocationSettingsTarget.device),
+      await DeviceLocationRepository(
+        source,
+        _Compass(),
+      ).openSettings(LocationSettingsTarget.device),
       isA<Success<void>>(),
     );
   });
