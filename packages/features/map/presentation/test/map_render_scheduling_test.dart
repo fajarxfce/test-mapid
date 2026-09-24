@@ -90,15 +90,15 @@ void main() {
       expect(native.operations, [
         MapStyle.locationSource,
         'camera',
-        MapStyle.locationSource,
         'camera',
+        MapStyle.locationSource,
       ]);
       expect(native.cameraMoves, [
-        ['zoomBy', 1.0],
         [
           'newLatLng',
           [closeTo(-6.212, 1e-9), closeTo(106.8, 1e-9)],
         ],
+        ['zoomBy', 1.0],
       ]);
       final feature =
           (native.sources[MapStyle.locationSource]!['features'] as List).single
@@ -107,6 +107,27 @@ void main() {
         106.8,
         closeTo(-6.212, 1e-9),
       ]);
+    },
+  );
+
+  test(
+    'camera keeps following when every write receives a newer fix',
+    () async {
+      var arrivals = 0;
+      native.onWrite = (id, _) async {
+        if (id == MapStyle.locationSource && arrivals < 5) {
+          arrivals++;
+          renderer.render(sceneAt(-6.21 - arrivals / 1000));
+        }
+      };
+      renderer.render(sceneAt(-6.21));
+      await Future<void>.delayed(Duration.zero);
+      expect(native.cameraMoves.length, greaterThan(1));
+      expect(native.cameraMoves.last, [
+        'newLatLng',
+        [closeTo(-6.215, 1e-9), closeTo(106.8, 1e-9)],
+      ]);
+      expect(statuses.last, MapRenderStatus.ready);
     },
   );
 

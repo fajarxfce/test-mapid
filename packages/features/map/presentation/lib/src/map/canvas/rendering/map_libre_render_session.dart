@@ -129,35 +129,50 @@ final class MapLibreRenderSession {
   }
 
   Future<void> _draw(MapScene scene, {required bool refocus}) async {
-    for (final change in diffMapScene(_applied, scene, refocus: refocus)) {
-      if (_closed || !_styleReady) return;
-      if (change is MapCameraChanged && _pending != null) {
-        // A pan or newer position supersedes the camera intent captured above.
-        final next = _pending!;
-        _pending = (
-          scene: next.scene,
-          refocus: next.refocus || (refocus && next.scene.focus == scene.focus),
-        );
-        return;
-      }
-      final result = await switch (change) {
-        MapPlacesChanged(:final layer) => _execute(
-          MapNativeOperation.sources,
-          () => _layers.showPlaces(layer),
-        ),
-        MapLocationChanged(:final location) => _execute(
-          MapNativeOperation.sources,
-          () => _layers.showLocation(location),
-        ),
-        MapCameraChanged(:final reframe) => _execute(
-          MapNativeOperation.camera,
-          () => _camera.focus(scene, reframe: reframe),
-        ),
-      };
-      if (_closed || !_styleReady || result is FailureResult<void>) return;
-      _applied = _applied.afterSuccess(change);
+    for (final change in diffMapScene(
+      _applied,
+      scene,
+    ).where((change) => change is! MapCameraChanged)) {
+      if (!await _apply(change)) return;
+    }
+
+    // Read current intent after I/O, including a pan or a newer GPS fix.
+    // Camera progress must not wait for a continuous sensor stream to become idle.
+    final pending = _pending;
+    final target = pending?.scene ?? scene;
+    final focusRequested = pending == null
+        ? refocus
+        : pending.refocus || (refocus && pending.scene.focus == scene.focus);
+    if (pending != null) _pending = (scene: pending.scene, refocus: false);
+    for (final change in diffMapScene(
+      _applied,
+      target,
+      refocus: focusRequested,
+    ).whereType<MapCameraChanged>()) {
+      if (!await _apply(change)) return;
     }
     if (!_closed && _styleReady) _statuses.add(MapRenderStatus.ready);
+  }
+
+  Future<bool> _apply(MapSceneChange change) async {
+    if (_closed || !_styleReady) return false;
+    final result = await switch (change) {
+      MapPlacesChanged(:final layer) => _execute(
+        MapNativeOperation.sources,
+        () => _layers.showPlaces(layer),
+      ),
+      MapLocationChanged(:final location) => _execute(
+        MapNativeOperation.sources,
+        () => _layers.showLocation(location),
+      ),
+      MapCameraChanged(:final scene, :final reframe) => _execute(
+        MapNativeOperation.camera,
+        () => _camera.focus(scene, reframe: reframe),
+      ),
+    };
+    if (_closed || !_styleReady || result is FailureResult<void>) return false;
+    _applied = _applied.afterSuccess(change);
+    return true;
   }
 
   Future<Result<T>> _execute<T>(

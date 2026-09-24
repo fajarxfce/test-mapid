@@ -70,9 +70,11 @@ popup or replaced dataset also invalidates a pending pick.
 The session serializes native operations with one `synchronized` lock. One
 pending scene replaces older waiting scenes. After a draw, any newer scene is
 scheduled behind explicit commands such as zoom, so continuous sensor updates
-cannot starve those commands. Before issuing a camera movement, the session
-checks whether a newer scene superseded that intent; a pan while a source write
-is pending therefore prevents the old follow command. An explicit focus request
+cannot starve those commands. After writing sources, the session reads the
+newest camera intent before issuing movement; a pan while a source write is
+pending therefore prevents the old follow command. The camera can follow the
+newest fix while its source update waits for the next draw, so continuous input
+does not require the renderer to become idle. An explicit focus request
 survives coalescing only while its focus still matches the newest scene.
 
 Applying `sequential()` separately to Bloc event types would not serialize
