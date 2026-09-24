@@ -5,10 +5,14 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
 import 'package:map_presentation/src/map/canvas/rendering/diff_map_scene.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_render_baseline.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_scene_change.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
 
 import 'support/map_fixtures.dart';
+
+MapRenderBaseline baseline(MapScene? scene) =>
+    MapRenderBaseline(content: scene?.content, camera: scene);
 
 void main() {
   final places = MapScene(content: MapContent(layer: sampleLayer));
@@ -33,7 +37,7 @@ void main() {
         ),
       ),
     );
-    expect(diffMapScene(before, after), [isA<MapLocationChanged>()]);
+    expect(diffMapScene(baseline(before), after), [isA<MapLocationChanged>()]);
   });
 
   test('a new GPS position follows without resetting the zoom', () {
@@ -46,7 +50,7 @@ void main() {
         ),
       ),
     );
-    expect(diffMapScene(before, after), [
+    expect(diffMapScene(baseline(before), after), [
       isA<MapLocationChanged>(),
       isA<MapCameraChanged>().having(
         (change) => change.reframe,
@@ -69,20 +73,24 @@ void main() {
         ),
       ),
     );
-    expect(diffMapScene(located, next), isEmpty);
+    expect(diffMapScene(baseline(located), next), isEmpty);
   });
 
   test('free camera keeps updating location without following it', () {
     final before = places.copyWith(focus: MapCameraFocus.free);
-    expect(diffMapScene(before, located.copyWith(focus: MapCameraFocus.free)), [
-      isA<MapLocationChanged>(),
-    ]);
+    expect(
+      diffMapScene(
+        baseline(before),
+        located.copyWith(focus: MapCameraFocus.free),
+      ),
+      [isA<MapLocationChanged>()],
+    );
   });
 
   test(
     'an unknown native baseline replaces both sources, even with empty data',
     () {
-      final changes = diffMapScene(null, const MapScene());
+      final changes = diffMapScene(baseline(null), const MapScene());
       expect(changes, [
         isA<MapPlacesChanged>().having(
           (change) => change.layer,
@@ -99,12 +107,14 @@ void main() {
     },
   );
   test('an unchanged scene performs no native work', () {
-    expect(diffMapScene(located, located), isEmpty);
+    expect(diffMapScene(baseline(located), located), isEmpty);
   });
   test(
     'GPS arriving while places are focused only updates the location source',
     () {
-      expect(diffMapScene(places, located), [isA<MapLocationChanged>()]);
+      expect(diffMapScene(baseline(places), located), [
+        isA<MapLocationChanged>(),
+      ]);
     },
   );
   test(
@@ -112,7 +122,7 @@ void main() {
     () {
       final waiting = places.copyWith(focus: MapCameraFocus.userLocation);
       final ready = located.copyWith(focus: MapCameraFocus.userLocation);
-      expect(diffMapScene(waiting, ready), [
+      expect(diffMapScene(baseline(waiting), ready), [
         isA<MapLocationChanged>(),
         isA<MapCameraChanged>(),
       ]);
@@ -127,25 +137,25 @@ void main() {
           layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
         ),
       );
-      expect(diffMapScene(before, after), [isA<MapPlacesChanged>()]);
+      expect(diffMapScene(baseline(before), after), [isA<MapPlacesChanged>()]);
     },
   );
   test('changing focus moves the camera without rewriting sources', () {
     expect(
       diffMapScene(
-        located,
+        baseline(located),
         located.copyWith(focus: MapCameraFocus.userLocation),
       ),
       [isA<MapCameraChanged>()],
     );
   });
   test('an explicit focus command recenters the same scene', () {
-    expect(diffMapScene(located, located, refocus: true), [
+    expect(diffMapScene(baseline(located), located, refocus: true), [
       isA<MapCameraChanged>(),
     ]);
   });
   test('removing content clears native data', () {
-    final changes = diffMapScene(located, const MapScene());
+    final changes = diffMapScene(baseline(located), const MapScene());
     expect(changes, [
       isA<MapPlacesChanged>().having((change) => change.layer, 'layer', isNull),
       isA<MapLocationChanged>().having(

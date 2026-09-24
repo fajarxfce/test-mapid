@@ -34,6 +34,7 @@ flowchart LR
 | `MapRenderer` | Presentation rendering contract; native attachment exposes the SDK controller. |
 | `MapLibreRenderer` | Retaining the latest scene and replacing native sessions on attachment. |
 | `MapLibreRenderSession` | One controller's style readiness, operation queue, timeout, and applied scene. |
+| `MapRenderBaseline` | Independently confirmed source content and camera intent. |
 | `diffMapScene` | Pure calculation of changed sources and required camera movement. |
 | `MapLibreLayers` | Native source/layer updates and feature hit testing. |
 | GeoJSON encoders | Pure conversion of domain data to GeoJSON. |
@@ -59,10 +60,17 @@ reattaching cancels that subscription. Asynchronous feature picks use
 `restartable()` so an earlier tap cannot overwrite a later one. A dismissed
 popup or replaced dataset also invalidates a pending pick.
 
-The session serializes native operations with one `synchronized` lock. Applying
-`sequential()` separately to Bloc event types would not serialize source updates
-against camera commands. Closing a session cancels its timeout and prevents
-queued operations, subsequent scene changes, and late status publication.
+The session serializes native operations with one `synchronized` lock. One
+pending scene replaces older waiting scenes. After a draw, any newer scene is
+scheduled behind explicit commands such as zoom, so continuous sensor updates
+cannot starve those commands. Before issuing a camera movement, the session
+checks whether a newer scene superseded that intent; a pan while a source write
+is pending therefore prevents the old follow command. An explicit focus request
+survives coalescing only while its focus still matches the newest scene.
+
+Applying `sequential()` separately to Bloc event types would not serialize
+source updates against camera commands. Closing a session cancels its timeout
+and prevents queued operations, subsequent changes, and late status publication.
 An already-issued platform call can finish; the widget owns native disposal.
 
 The renderer retains the latest scene even before a controller exists. A session
@@ -70,11 +78,18 @@ writes no sources until `onStyleLoadedCallback` fires. Loading or replacing a
 style restores both sources and the current camera intent, because MapLibre
 removes custom sources and layers during style replacement.
 
-`diffMapScene` compares the last completely applied scene with the desired one.
+`diffMapScene` compares the confirmed source and camera baselines with the desired
+scene. Each successful operation advances only its corresponding baseline.
+Source failures invalidate source content; camera failures retain confirmed
+sources and the last successful camera intent for retry. Read-only hit-test
+failures return a typed failure without invalidating either baseline or changing
+render status. Native exceptions and stack traces are retained in the internal
+`map.renderer` diagnostic log.
+
 Unchanged content requires no native writes. Removing content clears its source.
-A partial native failure invalidates the baseline, ensuring a retry or rollback
-reconciles all sources. Source and layer existence are checked independently so
-a failed layer creation can recover even when its source already exists.
+Source and layer existence are checked independently so a failed layer creation
+can recover even when its source already exists. Replacing the style invalidates
+both baselines and restores the newest desired scene.
 
 Camera focus is explicit scene state. Late GPS data updates the location marker
 without overriding a newer request to show the tourism layer. Refreshing the

@@ -38,6 +38,7 @@ class NativeMapHarness {
       final command = (call.positionalArguments[0] as CameraUpdate).toJson();
       operations.add('camera');
       cameraMoves.add(command);
+      await onCamera?.call();
       return true;
     });
     when(() => controller.addImage(any(), any())).thenAnswer((_) async {});
@@ -76,6 +77,7 @@ class NativeMapHarness {
   final cameraMoves = <dynamic>[];
   Future<void> Function(String, Map<String, dynamic>)? onWrite;
   Future<List<dynamic>> Function()? onQuery;
+  Future<void> Function()? onCamera;
 
   Future<void> _write(String id, Map<String, dynamic> data) async {
     operations.add(id);

@@ -102,7 +102,7 @@ void main() {
     renderer.focus(places);
     renderer.render(scene);
     await settle();
-    expect(native.operations, ['camera', MapStyle.locationSource]);
+    expect(native.operations, [MapStyle.locationSource, 'camera']);
     expect(native.cameraMoves.single, [
       'newLatLngZoom',
       [-7.8, closeTo(110.36, 1e-9)],
@@ -211,25 +211,21 @@ void main() {
     },
   );
 
-  test(
-    'feature query failures return a typed failure and rendering status',
-    () async {
-      await ready();
-      native.onQuery = () async =>
-          throw PlatformException(code: 'query-failed');
-      final result = await renderer.placeAt(const Point(10, 20));
-      await settle();
-      expect(
-        result,
-        isA<FailureResult<String?>>().having(
-          (result) => result.failure.kind,
-          'kind',
-          FailureKind.unexpected,
-        ),
-      );
-      expect(statuses.last, MapRenderStatus.renderingFailure);
-    },
-  );
+  test('feature query failures return a typed failure without changing render status', () async {
+    await ready();
+    native.onQuery = () async => throw PlatformException(code: 'query-failed');
+    final result = await renderer.placeAt(const Point(10, 20));
+    await settle();
+    expect(
+      result,
+      isA<FailureResult<String?>>().having(
+        (result) => result.failure.kind,
+        'kind',
+        FailureKind.unexpected,
+      ),
+    );
+    expect(statuses.last, MapRenderStatus.ready);
+  });
 
   test('querying before style readiness performs no native work', () async {
     attach();
