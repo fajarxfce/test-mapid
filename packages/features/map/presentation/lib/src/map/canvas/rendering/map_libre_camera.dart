@@ -50,15 +50,18 @@ class MapLibreCamera {
   }
 
   Future<void> _centerOn(LocationFix location, {required bool reframe}) async {
-    await _controller.animateCamera(
-      reframe
-          ? CameraUpdate.newLatLngZoom(
-              LatLng(location.point.latitude, location.point.longitude),
-              15,
-            )
-          : CameraUpdate.newLatLng(
-              LatLng(location.point.latitude, location.point.longitude),
-            ),
+    final target = LatLng(location.point.latitude, location.point.longitude);
+    if (reframe) {
+      await _controller.animateCamera(CameraUpdate.newLatLngZoom(target, 15));
+      return;
+    }
+    // Android animateCamera uses flyTo, dipping zoom across tile boundaries on
+    // every GPS fix and making labels blink (maplibre-native#2477). Following
+    // changes only the center, with no flight or zoom excursion.
+    await _controller.easeCamera(
+      CameraUpdate.newLatLng(target),
+      duration: const Duration(milliseconds: 800),
+      interpolation: CameraAnimationInterpolation.linear,
     );
   }
 

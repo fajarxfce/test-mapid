@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 217 tests.
+  dependency boundaries, architecture rules, static analysis, and 224 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev debug and release builds: passed. The release APK signature was
   verified with Android SDK `apksigner`.
@@ -92,3 +92,28 @@ across an HTTP refresh were therefore not reverified on this build's device run;
 the new equality and selection behavior is covered by the regression tests above.
 The earlier successful tourism checks remain baseline evidence, not a claim
 that the final device run loaded that dataset.
+
+### Permission recovery and label stability
+
+The permission-recovery changes were verified on the same Galaxy A72 using an
+ARM64 staging release. The device's existing dev installation used a different
+signing certificate, so staging was installed separately.
+
+- With location permanently denied, Liberty and all 10 tourism features loaded;
+  no basemap or tourism connection warning was displayed.
+- The recovery button opened Android application settings. While settings were
+  foreground, foreground location permission was granted with ADB. Returning to
+  the app resumed GPS and compass automatically, without another location tap.
+  The Android process ID remained unchanged and the tourism layer was retained.
+- The earlier data error was a connection timeout followed by a successful HTTP
+  200. Location permission and map network loading are independent; timeouts were
+  not increased or suppressed.
+- A 12-second screen recording reproduced repeated road/building label fades
+  during GPS follow in the existing dev build. A second recording of the staging
+  release showed stable labels after changing follow updates to `easeCamera`.
+  GPS and compass remained active throughout the comparison. Initial camera
+  transitions and ordinary position drift are separate from the repeated fades.
+
+Regression tests cover passive permission checks, recovery after permanent
+denial and disabled GPS, repeated resumes without new permission prompts,
+explicit retry cancellation, and center-only camera easing during GPS follow.

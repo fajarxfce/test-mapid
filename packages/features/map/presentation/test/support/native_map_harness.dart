@@ -41,6 +41,19 @@ class NativeMapHarness {
       await onCamera?.call();
       return true;
     });
+    when(
+      () => controller.easeCamera(
+        any(),
+        duration: any(named: 'duration'),
+        interpolation: any(named: 'interpolation'),
+      ),
+    ).thenAnswer((call) async {
+      final command = (call.positionalArguments[0] as CameraUpdate).toJson();
+      operations.add('camera');
+      cameraMoves.add(command);
+      await onCamera?.call();
+      return true;
+    });
     when(() => controller.addImage(any(), any())).thenAnswer((_) async {});
     when(
       () => controller.addSymbolLayer(

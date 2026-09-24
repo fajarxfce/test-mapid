@@ -149,8 +149,13 @@ location source. Its image and layer are recreated after style replacement.
 The image is rasterized at the native display's pixel ratio; the web SDK uses
 1x image pixels. This keeps the arrow's size consistent with the location dot.
 `diffMapScene` treats heading changes separately from coordinate changes, so
-turning the phone does not move the camera. GPS follow preserves the current
-zoom. A gesture observer dispatches `MapCanvasPanned` once pointer displacement
+turning the phone does not move the camera. GPS follow uses a center-only
+`easeCamera` update over 800 ms, preserving zoom throughout the animation.
+Android's `animateCamera` uses a flight path that briefly zooms out; at integer
+zooms this crosses tile boundaries and repeatedly replaces road/building labels
+([MapLibre Native #2477](https://github.com/maplibre/maplibre-native/issues/2477)).
+Explicit recentering can still animate to street-level zoom. A gesture observer
+dispatches `MapCanvasPanned` once pointer displacement
 exceeds Flutter's device-aware pan slop, switching camera intent to `free`.
 Small tap movements preserve follow. The observer immediately declines the
 gesture arena and continues listening to pointer events, leaving native taps
