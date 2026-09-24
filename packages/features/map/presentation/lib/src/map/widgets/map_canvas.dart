@@ -4,15 +4,21 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
+import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_factory.dart';
+import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_observer.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class MapCanvas extends StatelessWidget {
   const MapCanvas({super.key});
   @override
-  Widget build(BuildContext context) => Listener(
-    onPointerMove: (_) =>
-        context.read<MapCanvasBloc>().add(const MapCanvasPanned()),
+  Widget build(BuildContext context) => RawGestureDetector(
+    excludeFromSemantics: true,
+    gestures: {
+      MapPanGestureObserver: MapPanGestureFactory(
+        onPan: () => context.read<MapCanvasBloc>().add(const MapCanvasPanned()),
+      ),
+    },
     child: MapLibreMap(
       styleString: MapStyle.liberty,
       annotationOrder: const [],

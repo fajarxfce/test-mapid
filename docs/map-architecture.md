@@ -137,9 +137,14 @@ The image is rasterized at the native display's pixel ratio; the web SDK uses
 1x image pixels. This keeps the arrow's size consistent with the location dot.
 `diffMapScene` treats heading changes separately from coordinate changes, so
 turning the phone does not move the camera. GPS follow preserves the current
-zoom. Pointer movement dispatches `MapCanvasPanned`, switching camera intent to
-`free`; GPS and compass updates continue until the route closes or app hides.
-An explicit location action restores follow. Widgets only render and dispatch.
+zoom. A gesture observer dispatches `MapCanvasPanned` once pointer displacement
+exceeds Flutter's device-aware pan slop, switching camera intent to `free`.
+Small tap movements preserve follow. The observer immediately declines the
+gesture arena and continues listening to pointer events, leaving native taps
+and drags to MapLibre. `RawGestureDetector` owns its lifecycle; cancellation and
+disposal release pointer tracking. GPS and compass updates continue until the
+route closes or app hides. An explicit location action restores follow.
+Widgets only render and dispatch.
 
 ## Validation
 

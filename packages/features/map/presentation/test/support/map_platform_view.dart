@@ -5,6 +5,8 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// Replaces only the native surface; MapCanvas and the SDK widget still build.
 class TestMapPlatformView extends MapLibrePlatform {
+  TestMapPlatformView({this.surface = const SizedBox.expand()});
+  final Widget surface;
   Map<String, dynamic>? creationParams;
 
   @override
@@ -14,7 +16,7 @@ class TestMapPlatformView extends MapLibrePlatform {
     Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers,
   ) {
     this.creationParams = creationParams;
-    return const SizedBox.expand();
+    return surface;
   }
 
   @override
