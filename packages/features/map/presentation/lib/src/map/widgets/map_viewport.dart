@@ -14,6 +14,9 @@ class MapViewport extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<MapCanvasBloc, MapCanvasState>(
+        buildWhen: (before, after) =>
+            before.renderStatus != after.renderStatus ||
+            before.selected != after.selected,
         builder: (context, state) => LayoutBuilder(
           builder: (context, constraints) => Stack(
             children: [

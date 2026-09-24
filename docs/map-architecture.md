@@ -41,6 +41,9 @@ flowchart LR
 | `MapLibreCamera` | Native camera updates, bounds, and padding. |
 
 Widgets render state and dispatch events. Neither Bloc depends on the other.
+Header and viewport builders subscribe only to changes in their displayed
+fields. Location updates do not rebuild the layer header or unrelated canvas
+overlays; the location card rebuilds when its displayed status or bearing changes.
 `MapBloc` imports no map SDK and owns no native resources. `MapCanvasBloc` has
 one injected dependency, `MapRenderer`; it has no native controller field, timer,
 lock, or manual stream subscription. The architecture checker enforces the

@@ -12,6 +12,19 @@ class MapLocationCard extends StatelessWidget {
   const MapLocationCard({super.key});
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
+    buildWhen: (before, after) =>
+        (
+          before.locationMessage,
+          before.bearingLabel,
+          before.locationLabel,
+          before.locating,
+        ) !=
+        (
+          after.locationMessage,
+          after.bearingLabel,
+          after.locationLabel,
+          after.locating,
+        ),
     builder: (context, state) => AppCard(
       backgroundColor: FluentTheme.of(context)
           .resources

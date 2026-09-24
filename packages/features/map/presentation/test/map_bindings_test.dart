@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core_design_system/core_design_system.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
@@ -12,9 +14,13 @@ import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_state.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
+import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/models/location_tracking_status.dart';
+import 'package:map_presentation/src/map/models/place_details.dart';
 import 'package:map_presentation/src/map/pages/map_view.dart';
+import 'package:map_presentation/src/map/widgets/map_controls.dart';
+import 'package:map_presentation/src/map/widgets/place_popup.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'support/map_fixtures.dart';
@@ -122,4 +128,90 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets(
+    'compass updates leave header and overlays intact while relevant changes render',
+    (tester) async {
+      final data = MockMapBloc();
+      final canvas = MockCanvasBloc();
+      final dataStates = StreamController<MapState>.broadcast();
+      final canvasStates = StreamController<MapCanvasState>.broadcast();
+      addTearDown(dataStates.close);
+      addTearDown(canvasStates.close);
+      final initial = MapState(
+        layer: sampleLayer,
+        location: sampleLocation,
+        loadingLayer: false,
+        locationStatus: LocationTrackingStatus.live,
+      );
+      final initialCanvas = MapCanvasState(
+        renderStatus: MapRenderStatus.ready,
+        scene: MapScene(content: initial.content),
+      );
+      whenListen(data, dataStates.stream, initialState: initial);
+      whenListen(canvas, canvasStates.stream, initialState: initialCanvas);
+      await tester.pumpWidget(
+        FluentApp(
+          theme: AppTheme.light(),
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<MapBloc>.value(value: data),
+              BlocProvider<MapCanvasBloc>.value(value: canvas),
+            ],
+            child: const MapView(canvas: ColoredBox(color: Colors.white)),
+          ),
+        ),
+      );
+      final header = tester.widget<AppText>(
+        find.byWidgetPredicate(
+          (widget) => widget is AppText && widget.data == sampleLayer.name,
+        ),
+      );
+      final controls = tester.widget<MapControls>(find.byType(MapControls));
+      for (var i = 0; i < 10; i++) {
+        final state = initial.copyWith(
+          location: LocationFix(
+            point: sampleLocation.point,
+            accuracyMeters: 12,
+            bearing: LocationBearing(
+              degrees: i.toDouble(),
+              source: LocationBearingSource.compass,
+            ),
+          ),
+        );
+        dataStates.add(state);
+        canvasStates.add(
+          initialCanvas.copyWith(scene: MapScene(content: state.content)),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<AppText>(
+            find.byWidgetPredicate(
+              (widget) => widget is AppText && widget.data == sampleLayer.name,
+            ),
+          ),
+          same(header),
+        );
+        expect(
+          tester.widget<MapControls>(find.byType(MapControls)),
+          same(controls),
+        );
+      }
+      expect(find.text('Arah hadap · 9°'), findsOneWidget);
+      dataStates.add(
+        initial.copyWith(
+          layer: MapLayer(name: 'Updated layer', places: [samplePlace]),
+        ),
+      );
+      canvasStates.add(
+        initialCanvas.copyWith(selected: PlaceDetails.fromPlace(samplePlace)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Updated layer'), findsOneWidget);
+      expect(find.byType(PlacePopup), findsOneWidget);
+      expect(find.text('Museum'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 }

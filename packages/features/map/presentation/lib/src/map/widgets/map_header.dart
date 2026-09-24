@@ -9,6 +9,19 @@ class MapHeader extends StatelessWidget {
   const MapHeader({super.key});
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
+    buildWhen: (before, after) =>
+        (
+          before.layerName,
+          before.layerCaption,
+          before.loadingLayer,
+          before.layerError,
+        ) !=
+        (
+          after.layerName,
+          after.layerCaption,
+          after.loadingLayer,
+          after.layerError,
+        ),
     builder: (context, state) => Column(
       children: [
         Padding(
