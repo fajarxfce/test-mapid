@@ -9,6 +9,7 @@ import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
 const allowed = <String, Set<String>>{
+  'map_presentation': {'map_domain', 'core_common', 'core_design_system'},
   'map_domain': {'core_common'},
   'map_data': {'map_domain', 'core_common', 'core_network'},
   'core_common': {},
@@ -233,6 +234,8 @@ List<String> checkArchitecture(Directory root) {
           );
         }
         if (!{
+              'map_data',
+              'map_presentation',
               'core_network',
               'identity_data',
               'auth_presentation',
@@ -275,19 +278,31 @@ bool _isSealedFamily(CompilationUnit unit, int publicTypeCount) {
       .where((node) => !node.namePart.typeName.lexeme.startsWith('_'))
       .toList();
   if (classes.length != publicTypeCount) return false;
-  final roots = classes.where((node) => node.sealedKeyword != null).toList();
+  final byName = {
+    for (final node in classes) node.namePart.typeName.lexeme: node,
+  };
+  Iterable<String> parents(ClassDeclaration node) => [
+    if (node.extendsClause case final clause?) clause.superclass,
+    ...?node.implementsClause?.interfaces,
+  ].where((type) => type.importPrefix == null).map((type) => type.name.lexeme);
+  final roots = classes
+      .where(
+        (node) =>
+            node.sealedKeyword != null &&
+            !parents(node).any(byName.containsKey),
+      )
+      .toList();
   if (roots.length != 1) return false;
-  final root = roots.single;
-  final rootName = root.namePart.typeName.lexeme;
-  bool inheritsRoot(NamedType type) =>
-      type.importPrefix == null && type.name.lexeme == rootName;
-  return classes.every(
-    (node) =>
-        identical(node, root) ||
-        (node.extendsClause != null &&
-            inheritsRoot(node.extendsClause!.superclass)) ||
-        (node.implementsClause?.interfaces.any(inheritsRoot) ?? false),
-  );
+  final rootName = roots.single.namePart.typeName.lexeme;
+  bool reachesRoot(String name, Set<String> visited) {
+    if (name == rootName) return true;
+    if (!visited.add(name)) return false;
+    final node = byName[name];
+    return node != null &&
+        parents(node).any((parent) => reachesRoot(parent, {...visited}));
+  }
+
+  return byName.keys.every((name) => reachesRoot(name, {}));
 }
 
 void main() {

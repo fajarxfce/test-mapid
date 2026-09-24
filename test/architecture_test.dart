@@ -99,6 +99,16 @@ final class LoginCancelled implements LoginEvent {}
 ''');
     expect(checkArchitecture(root), isEmpty);
   });
+  test('accepts one sealed event family with a nested scene family', () {
+    File(p.join(root.path, 'domain/lib/map_event.dart')).writeAsStringSync('''
+sealed class MapEvent {}
+final class LayerRequested extends MapEvent {}
+sealed class SceneEvent extends MapEvent {}
+final class StyleLoaded extends SceneEvent {}
+final class MapTapped extends SceneEvent {}
+''');
+    expect(checkArchitecture(root), isEmpty);
+  });
   test('sealed family exception still rejects unrelated public types', () {
     for (final unrelated in [
       'class LoginRepository {}',

@@ -1,0 +1,32 @@
+name: map_presentation
+description: MapLibre scene, feature Bloc and Fluent map UI.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  core_common: any
+  core_design_system: any
+  map_domain: any
+  maplibre_gl: any
+  fluent_ui: any
+  flutter_bloc: any
+  bloc_concurrency: any
+  freezed_annotation: any
+  injectable: any
+  get_it: any
+  auto_route: any
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  bloc_test: any
+  mocktail: any
+  build_runner: any
+  freezed: any
+  auto_route_generator: any
+  injectable_generator: any
+flutter:
+  uses-material-design: true
