@@ -1,0 +1,17 @@
+enum FailureKind {
+  unauthorized,
+  forbidden,
+  notFound,
+  validation,
+  conflict,
+  rateLimited,
+  request,
+  network,
+  security,
+  timeout,
+  server,
+  cancelled,
+  invalidResponse,
+  storage,
+  unexpected,
+}

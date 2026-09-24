@@ -1,0 +1,17 @@
+name: settings_data
+description: Settings data module for Fluent Starter.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  core_common: any
+  settings_domain: any
+  injectable: any
+dev_dependencies:
+  get_it: any
+  build_runner: any
+  injectable_generator: any
+  core_testing: any
+  test: any

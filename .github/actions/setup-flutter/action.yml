@@ -1,0 +1,31 @@
+name: Set up pinned Flutter
+description: Install the exact SDK tag declared by the workspace.
+runs:
+  using: composite
+  steps:
+    - name: Read SDK version
+      id: sdk
+      shell: bash
+      run: |
+        python -c 'import json,os; v=json.load(open(".fvmrc"))["flutter"]; print("version="+v, file=open(os.environ["GITHUB_OUTPUT"], "a"))'
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ${{ runner.temp }}/fluent-flutter
+          ~/.pub-cache
+        key: flutter-${{ runner.os }}-${{ steps.sdk.outputs.version }}-${{ hashFiles('pubspec.lock') }}
+    - name: Install SDK
+      shell: bash
+      env:
+        FLUENT_FLUTTER_VERSION: ${{ steps.sdk.outputs.version }}
+      run: |
+        if [ ! -d "$RUNNER_TEMP/fluent-flutter/.git" ]; then
+          git clone --depth 1 --branch "$FLUENT_FLUTTER_VERSION" https://github.com/flutter/flutter.git "$RUNNER_TEMP/fluent-flutter"
+        fi
+        echo "$RUNNER_TEMP/fluent-flutter/bin" >> "$GITHUB_PATH"
+    - name: Resolve workspace
+      shell: bash
+      run: |
+        flutter --version
+        flutter pub get --enforce-lockfile
+        dart run melos bootstrap

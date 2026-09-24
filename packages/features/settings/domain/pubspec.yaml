@@ -1,0 +1,11 @@
+name: settings_domain
+description: Settings domain module for Fluent Starter.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  core_common: any
+dev_dependencies:
+  test: any

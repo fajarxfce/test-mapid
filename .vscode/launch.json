@@ -1,0 +1,329 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug | dev | Android via WireGuard",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "dev",
+        "--dart-define=FLAVOR=dev",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "10.77.77.3:5555"
+    },
+    {
+      "name": "Debug | staging | Android via WireGuard",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "staging",
+        "--dart-define=FLAVOR=staging",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "10.77.77.3:5555"
+    },
+    {
+      "name": "Debug | prod | Android via WireGuard",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "prod",
+        "--dart-define=FLAVOR=prod",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "10.77.77.3:5555"
+    },
+    {
+      "name": "Debug | dev | Android via SSH tunnel",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "dev",
+        "--dart-define=FLAVOR=dev",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "127.0.0.1:15555"
+    },
+    {
+      "name": "Debug | staging | Android via SSH tunnel",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "staging",
+        "--dart-define=FLAVOR=staging",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "127.0.0.1:15555"
+    },
+    {
+      "name": "Debug | prod | Android via SSH tunnel",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "prod",
+        "--dart-define=FLAVOR=prod",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "127.0.0.1:15555"
+    },
+    {
+      "name": "Debug | dev | Android",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "dev",
+        "--dart-define=FLAVOR=dev",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "${input:androidDeviceId}"
+    },
+    {
+      "name": "Debug | staging | Android",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "staging",
+        "--dart-define=FLAVOR=staging",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "${input:androidDeviceId}"
+    },
+    {
+      "name": "Debug | prod | Android",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "prod",
+        "--dart-define=FLAVOR=prod",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "${input:androidDeviceId}"
+    },
+    {
+      "name": "Debug | dev | native",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "dev",
+        "--dart-define=FLAVOR=dev",
+        "--dart-define=BACKEND=demo"
+      ]
+    },
+    {
+      "name": "Debug | dev | web",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=FLAVOR=dev",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Debug | staging | native",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "staging",
+        "--dart-define=FLAVOR=staging",
+        "--dart-define=BACKEND=demo"
+      ]
+    },
+    {
+      "name": "Debug | staging | web",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=FLAVOR=staging",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Debug | prod | native",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "prod",
+        "--dart-define=FLAVOR=prod",
+        "--dart-define=BACKEND=demo"
+      ]
+    },
+    {
+      "name": "Debug | prod | web",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=FLAVOR=prod",
+        "--dart-define=BACKEND=demo"
+      ],
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Profile | native | choose flavor",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "profile",
+      "toolArgs": [
+        "--flavor",
+        "${input:flavor}",
+        "--dart-define=FLAVOR=${input:flavor}",
+        "--dart-define=BACKEND=demo"
+      ]
+    },
+    {
+      "name": "Release | native | choose flavor",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "release",
+      "toolArgs": [
+        "--flavor",
+        "${input:flavor}",
+        "--dart-define=FLAVOR=${input:flavor}",
+        "--dart-define=BACKEND=demo"
+      ]
+    },
+    {
+      "name": "Debug API | native | choose flavor",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--flavor",
+        "${input:flavor}",
+        "--dart-define=FLAVOR=${input:flavor}",
+        "--dart-define=BACKEND=api",
+        "--dart-define=API_BASE_URL=${input:apiBaseUrl}"
+      ]
+    },
+    {
+      "name": "Debug API | web | choose flavor",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define=FLAVOR=${input:flavor}",
+        "--dart-define=BACKEND=api",
+        "--dart-define=API_BASE_URL=${input:apiBaseUrl}"
+      ],
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Attach | running Flutter VM",
+      "type": "dart",
+      "request": "attach",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/lib/main.dart",
+      "vmServiceUri": "${input:vmServiceUri}"
+    },
+    {
+      "name": "Debug tests | app",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/fluent_starter",
+      "program": "${workspaceFolder}/apps/fluent_starter/test"
+    },
+    {
+      "name": "Debug tests | workspace tooling",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/test"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "flavor",
+      "type": "pickString",
+      "description": "Flutter flavor (native and Dart configuration stay aligned)",
+      "options": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "default": "dev"
+    },
+    {
+      "id": "apiBaseUrl",
+      "type": "promptString",
+      "description": "API HTTPS origin, without path/query (for example https://api.your-company.com)"
+    },
+    {
+      "id": "vmServiceUri",
+      "type": "promptString",
+      "description": "Full Dart VM service URI printed by the running Flutter app"
+    },
+    {
+      "id": "androidDeviceId",
+      "type": "promptString",
+      "description": "Android device ID from flutter devices. emulator- selects a single running Android emulator; enter the exact ID for a phone or multiple emulators.",
+      "default": "emulator-"
+    }
+  ]
+}

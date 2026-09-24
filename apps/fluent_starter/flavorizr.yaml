@@ -1,0 +1,64 @@
+instructions:
+  - assets:download
+  - assets:extract
+  - android:androidManifest
+  - android:flavorizrGradle
+  - android:buildGradle
+  - android:dummyAssets
+  - ios:xcconfig
+  - ios:buildTargets
+  - ios:schema
+  - ios:dummyAssets
+  - ios:plist
+  - ios:launchScreen
+  - macos:xcconfig
+  - macos:configs
+  - macos:buildTargets
+  - macos:schema
+  - macos:dummyAssets
+  - macos:plist
+  - linux:cmake
+  - linux:runnerCmake
+  - linux:myApplication
+  - windows:mainCppTemplate
+  - windows:runnerRcTemplate
+  - windows:cmake
+  - windows:dummyAssets
+  - assets:clean
+flavors:
+  dev:
+    app:
+      name: Fluent Starter Dev
+    android:
+      applicationId: dev.example.fluentstarter.dev
+    ios:
+      bundleId: dev.example.fluentstarter.dev
+    macos:
+      bundleId: dev.example.fluentstarter.dev
+    linux:
+      applicationId: dev.example.fluentstarter.dev
+    windows: {}
+  staging:
+    app:
+      name: Fluent Starter Staging
+    android:
+      applicationId: dev.example.fluentstarter.staging
+    ios:
+      bundleId: dev.example.fluentstarter.staging
+    macos:
+      bundleId: dev.example.fluentstarter.staging
+    linux:
+      applicationId: dev.example.fluentstarter.staging
+    windows: {}
+  prod:
+    app:
+      name: Fluent Starter
+    android:
+      applicationId: dev.example.fluentstarter
+    ios:
+      bundleId: dev.example.fluentstarter
+    macos:
+      bundleId: dev.example.fluentstarter
+    linux:
+      applicationId: dev.example.fluentstarter
+    windows: {}

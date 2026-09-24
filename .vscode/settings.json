@@ -1,0 +1,15 @@
+{
+  "[dart]": {
+    "editor.defaultFormatter": "Dart-Code.dart-code",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "dart.flutterHotReloadOnSave": "manualIfDirty",
+  "search.exclude": {
+    "**/.dart_tool/**": true,
+    "**/build/**": true
+  }
+}

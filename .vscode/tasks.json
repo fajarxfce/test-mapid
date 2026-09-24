@@ -1,0 +1,489 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Android: Run | dev",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "android",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK debug | dev",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "dev",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK release | dev",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Run | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "android",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK debug | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "staging",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK release | staging",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "staging"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Run | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "android",
+        "prod"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK debug | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "prod",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Android: Build APK release | prod",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "android",
+        "prod"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Pub get (locked)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "pub",
+        "get",
+        "--enforce-lockfile"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/apps/fluent_starter"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "App: Clean",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "app:clean",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "App: Clean + pub get (locked)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "app:refresh",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Android: Reset build cache + pub get",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "tool/reset_android.dart"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    },
+    {
+      "label": "Workspace: Bootstrap",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "bootstrap"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Generate",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "generate",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Check",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "check",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Analyze",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "analyze",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Format",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "format",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Workspace: Test",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "test",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Workspace: Generate flavors",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "melos",
+        "run",
+        "flavors",
+        "--no-select"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Devices",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "devices"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Doctor",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "doctor",
+        "-v"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Integration: Linux (isolated keyring)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "tool/test_linux.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run (demo)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "${input:platform}",
+        "${input:flavor}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run API",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "run",
+        "${input:platform}",
+        "${input:flavor}",
+        "--api=${input:apiBaseUrl}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build release (demo)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "${input:platform}",
+        "${input:flavor}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build smoke (demo)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "${input:platform}",
+        "${input:flavor}",
+        "--smoke"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Flutter: Build release API",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "tool/app.dart",
+        "build",
+        "${input:platform}",
+        "${input:flavor}",
+        "--api=${input:apiBaseUrl}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "platform",
+      "type": "pickString",
+      "description": "Target platform (requires its native host/toolchain)",
+      "options": [
+        "linux",
+        "web",
+        "android",
+        "ios",
+        "macos",
+        "windows"
+      ],
+      "default": "linux"
+    },
+    {
+      "id": "flavor",
+      "type": "pickString",
+      "description": "Flutter flavor (native and Dart configuration stay aligned)",
+      "options": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "default": "dev"
+    },
+    {
+      "id": "apiBaseUrl",
+      "type": "promptString",
+      "description": "API HTTPS origin, without path/query (for example https://api.your-company.com)"
+    }
+  ]
+}

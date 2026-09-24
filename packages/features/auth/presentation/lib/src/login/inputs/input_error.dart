@@ -1,0 +1,1 @@
+enum InputError { empty, invalid }

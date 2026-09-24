@@ -1,0 +1,85 @@
+name: fluent_starter_workspace
+publish_to: none
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+workspace:
+  - apps/fluent_starter
+  - packages/core/common
+  - packages/core/data
+  - packages/core/network
+  - packages/core/design_system
+  - packages/core/testing
+  - packages/core/identity/domain
+  - packages/core/identity/data
+  - packages/features/auth/presentation
+  - packages/features/home/presentation
+  - packages/features/settings/domain
+  - packages/features/settings/data
+  - packages/features/settings/presentation
+dev_dependencies:
+  melos: any
+  flutter_lints: any
+  analyzer: any
+  path: any
+  yaml: any
+  test: any
+melos:
+  scripts:
+    pub:get:
+      description: Resolve locked workspace dependencies and regenerate app plugin files.
+      exec:
+        command: flutter pub get --enforce-lockfile
+        concurrency: 1
+      packageFilters:
+        scope: fluent_starter
+    app:clean:
+      description: Clean generated Flutter output in apps/fluent_starter.
+      exec:
+        command: flutter clean
+        concurrency: 1
+      packageFilters:
+        scope: fluent_starter
+    app:refresh:
+      description: Clean the app and restore locked dependencies in order.
+      steps:
+        - app:clean
+        - pub:get
+    android:reset:
+      description: Stop Gradle, clean the app, back up its Gradle cache, and restore dependencies.
+      run: dart tool/reset_android.dart
+    generate:
+      steps:
+        - generate:build
+        - format
+    generate:build:
+      exec:
+        command: dart run build_runner build
+        concurrency: 1
+        orderDependents: true
+      packageFilters:
+        dependsOn: build_runner
+    analyze:
+      run: flutter analyze --fatal-infos
+    format:
+      run: dart format apps packages tool test
+    format-check:
+      run: dart format --output=none --set-exit-if-changed apps packages tool test
+    architecture:
+      run: dart run tool/check_architecture.dart
+    dependencies:
+      run: dart run tool/check_dependencies.dart
+    test:
+      run: dart run tool/test_all.dart
+    check:
+      steps:
+        - format-check
+        - dependencies
+        - architecture
+        - analyze
+        - test
+    flavors:
+      run: dart run tool/flavors.dart
+    run:dev:
+      run: dart run tool/app.dart run linux dev
+    build:web:
+      run: dart run tool/app.dart build web dev --smoke

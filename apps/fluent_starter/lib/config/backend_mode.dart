@@ -1,0 +1,1 @@
+enum BackendMode { demo, api }

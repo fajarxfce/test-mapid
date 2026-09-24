@@ -1,0 +1,42 @@
+name: fluent_starter
+description: A strict modular Flutter starter with Microsoft Fluent UI.
+version: 0.1.0+1
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  core_common: any
+  core_data: any
+  core_network: any
+  core_design_system: any
+  identity_data: any
+  identity_domain: any
+  auth_presentation: any
+  home_presentation: any
+  settings_data: any
+  settings_presentation: any
+  cupertino_icons: any
+  auto_route: any
+  fluent_ui: any
+  flutter_bloc: any
+  get_it: any
+  injectable: any
+  dio: any
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: any
+  build_runner: any
+  auto_route_generator: any
+  injectable_generator: any
+  flutter_flavorizr: any
+  core_testing: any
+flutter:
+  uses-material-design: true

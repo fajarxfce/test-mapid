@@ -1,0 +1,19 @@
+name: core_network
+description: Internal core network module for Fluent Starter.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  injectable: any
+  core_common: any
+  dio: any
+  json_annotation: any
+dev_dependencies:
+  core_testing: any
+  get_it: any
+  build_runner: any
+  injectable_generator: any
+  flutter_lints: any
+  test: any

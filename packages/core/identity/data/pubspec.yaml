@@ -1,0 +1,31 @@
+name: identity_data
+description: Shared identity data module for Fluent Starter.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  async: any
+  rxdart: any
+  synchronized: any
+  flutter:
+    sdk: flutter
+  flutter_web_auth_2: any
+  crypto: any
+  injectable: any
+  identity_domain: any
+  core_common: any
+  core_network: any
+  dio: any
+  retrofit: any
+  json_annotation: any
+dev_dependencies:
+  get_it: any
+  injectable_generator: any
+  flutter_lints: any
+  test: any
+  build_runner: any
+  json_serializable: any
+  retrofit_generator: any
+  core_testing: any

@@ -1,0 +1,434 @@
+[
+  {
+    "label": "Debug | dev | Android via WireGuard",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "10.77.77.3:5555"
+    ]
+  },
+  {
+    "label": "Debug | staging | Android via WireGuard",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "10.77.77.3:5555"
+    ]
+  },
+  {
+    "label": "Debug | prod | Android via WireGuard",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "10.77.77.3:5555"
+    ]
+  },
+  {
+    "label": "Debug | dev | Android via SSH tunnel",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "127.0.0.1:15555"
+    ]
+  },
+  {
+    "label": "Debug | staging | Android via SSH tunnel",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "127.0.0.1:15555"
+    ]
+  },
+  {
+    "label": "Debug | prod | Android via SSH tunnel",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "127.0.0.1:15555"
+    ]
+  },
+  {
+    "label": "Debug | dev | Android emulator",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "emulator-"
+    ]
+  },
+  {
+    "label": "Debug | staging | Android emulator",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "emulator-"
+    ]
+  },
+  {
+    "label": "Debug | prod | Android emulator",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "emulator-"
+    ]
+  },
+  {
+    "label": "Debug | dev | linux",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "linux"
+    ]
+  },
+  {
+    "label": "Debug | dev | web",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "chrome"
+    ]
+  },
+  {
+    "label": "Debug | dev | macos",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "macos"
+    ]
+  },
+  {
+    "label": "Debug | dev | windows",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "windows"
+    ]
+  },
+  {
+    "label": "Debug | dev | native (auto device)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo"
+    ]
+  },
+  {
+    "label": "Debug | staging | linux",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "linux"
+    ]
+  },
+  {
+    "label": "Debug | staging | web",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "chrome"
+    ]
+  },
+  {
+    "label": "Debug | staging | macos",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "macos"
+    ]
+  },
+  {
+    "label": "Debug | staging | windows",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "windows"
+    ]
+  },
+  {
+    "label": "Debug | staging | native (auto device)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "staging",
+      "--dart-define=FLAVOR=staging",
+      "--dart-define=BACKEND=demo"
+    ]
+  },
+  {
+    "label": "Debug | prod | linux",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "linux"
+    ]
+  },
+  {
+    "label": "Debug | prod | web",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "chrome"
+    ]
+  },
+  {
+    "label": "Debug | prod | macos",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "macos"
+    ]
+  },
+  {
+    "label": "Debug | prod | windows",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "windows"
+    ]
+  },
+  {
+    "label": "Debug | prod | native (auto device)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "debug",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo"
+    ]
+  },
+  {
+    "label": "Profile | dev | linux",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "profile",
+    "toolArgs": [
+      "--flavor",
+      "dev",
+      "--dart-define=FLAVOR=dev",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "linux",
+      "--profile"
+    ]
+  },
+  {
+    "label": "Release | prod | linux",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "program": "$ZED_WORKTREE_ROOT/apps/fluent_starter/lib/main.dart",
+    "flutterMode": "release",
+    "toolArgs": [
+      "--flavor",
+      "prod",
+      "--dart-define=FLAVOR=prod",
+      "--dart-define=BACKEND=demo",
+      "-d",
+      "linux",
+      "--release"
+    ]
+  }
+]

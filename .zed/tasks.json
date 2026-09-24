@@ -1,0 +1,818 @@
+[
+  {
+    "label": "Android: Run | dev",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "android",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK release | dev",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK debug | dev",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "dev",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Run | staging",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "android",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK release | staging",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK debug | staging",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "staging",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Run | prod",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "android",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK release | prod",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Build APK debug | prod",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "android",
+      "prod",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Pub get (locked)",
+    "command": "flutter",
+    "args": [
+      "pub",
+      "get",
+      "--enforce-lockfile"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT/apps/fluent_starter",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "App: Clean",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "app:clean",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "App: Clean + pub get (locked)",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "app:refresh",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Android: Reset build cache + pub get",
+    "command": "dart",
+    "args": [
+      "tool/reset_android.dart"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Bootstrap",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "bootstrap"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Generate",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "generate",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Check",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "check",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Analyze",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "analyze",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Format",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "format",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Test",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "test",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Workspace: Generate flavors",
+    "command": "dart",
+    "args": [
+      "run",
+      "melos",
+      "run",
+      "flavors",
+      "--no-select"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Devices",
+    "command": "flutter",
+    "args": [
+      "devices"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Doctor",
+    "command": "flutter",
+    "args": [
+      "doctor",
+      "-v"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Integration: Linux (isolated keyring)",
+    "command": "bash",
+    "args": [
+      "tool/test_linux.sh"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | dev | linux | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "linux",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | dev | linux | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "linux",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | dev | web | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "web",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | dev | web | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "web",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | dev | ios | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "ios",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | dev | ios | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | dev | ios",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "dev",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | dev | macos | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "macos",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | dev | macos | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | dev | macos",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "dev",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | dev | windows | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "windows",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | dev | windows | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "windows",
+      "dev"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | staging | linux | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "linux",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | staging | linux | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "linux",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | staging | web | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "web",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | staging | web | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "web",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | staging | ios | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "ios",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | staging | ios | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | staging | ios",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "staging",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | staging | macos | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "macos",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | staging | macos | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | staging | macos",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "staging",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | staging | windows | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "windows",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | staging | windows | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "windows",
+      "staging"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | prod | linux | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "linux",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | prod | linux | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "linux",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | prod | web | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "web",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | prod | web | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "web",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | prod | ios | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "ios",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | prod | ios | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | prod | ios",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "ios",
+      "prod",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | prod | macos | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "macos",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | prod | macos | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build smoke | prod | macos",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "macos",
+      "prod",
+      "--smoke"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Run | prod | windows | demo",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "run",
+      "windows",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  },
+  {
+    "label": "Flutter: Build | prod | windows | release",
+    "command": "dart",
+    "args": [
+      "run",
+      "tool/app.dart",
+      "build",
+      "windows",
+      "prod"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "allow_concurrent_runs": false,
+    "save": "all"
+  }
+]
