@@ -17,4 +17,19 @@ final class MapPlace {
   final String district;
   final String period;
   final GeoPoint point;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MapPlace &&
+      id == other.id &&
+      name == other.name &&
+      address == other.address &&
+      city == other.city &&
+      district == other.district &&
+      period == other.period &&
+      point == other.point;
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, address, city, district, period, point);
 }

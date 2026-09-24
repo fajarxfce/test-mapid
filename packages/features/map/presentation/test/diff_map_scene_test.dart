@@ -109,6 +109,31 @@ void main() {
   test('an unchanged scene performs no native work', () {
     expect(diffMapScene(baseline(located), located), isEmpty);
   });
+  test('independently decoded identical data needs no write or camera fit', () {
+    final refreshed = MapLayer(
+      name: sampleLayer.name,
+      places: [copySamplePlace()],
+    );
+    expect(identical(refreshed.places.single, samplePlace), isFalse);
+    expect(refreshed.hashCode, sampleLayer.hashCode);
+    final next = places.copyWith(content: MapContent(layer: refreshed));
+    expect(diffMapScene(baseline(places), next), isEmpty);
+  });
+  test('changed place coordinates require a source update and new fit', () {
+    final changed = MapLayer(
+      name: sampleLayer.name,
+      places: [
+        copySamplePlace(
+          point: const GeoPoint(latitude: -7.9, longitude: 110.36),
+        ),
+      ],
+    );
+    final next = places.copyWith(content: MapContent(layer: changed));
+    expect(diffMapScene(baseline(places), next), [
+      isA<MapPlacesChanged>(),
+      isA<MapCameraChanged>(),
+    ]);
+  });
   test(
     'GPS arriving while places are focused only updates the location source',
     () {

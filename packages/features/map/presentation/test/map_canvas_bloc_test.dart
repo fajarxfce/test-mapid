@@ -156,24 +156,27 @@ void main() {
     expect(bloc.state.selected, isNull);
   });
 
-  test('a pending pick cannot select a replaced dataset', () async {
-    await selectPlace();
-    final pending = Completer<Result<String?>>();
-    renderer.pick = (_) => pending.future;
-    bloc.add(const MapCanvasTapped(Point(20, 20)));
-    await settle();
-    bloc.add(
-      MapCanvasContentChanged(
-        MapContent(
-          layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
+  test(
+    'removing a selected place clears it and invalidates a pending pick',
+    () async {
+      await selectPlace();
+      final pending = Completer<Result<String?>>();
+      renderer.pick = (_) => pending.future;
+      bloc.add(const MapCanvasTapped(Point(20, 20)));
+      await settle();
+      bloc.add(
+        MapCanvasContentChanged(
+          MapContent(
+            layer: MapLayer(name: 'Reloaded', places: []),
+          ),
         ),
-      ),
-    );
-    await settle();
-    pending.complete(const Success('place-1'));
-    await settle();
-    expect(bloc.state.selected, isNull);
-  });
+      );
+      await settle();
+      pending.complete(const Success('place-1'));
+      await settle();
+      expect(bloc.state.selected, isNull);
+    },
+  );
 
   test('a failed pick preserves the current selection', () async {
     await selectPlace();
@@ -184,6 +187,53 @@ void main() {
     await settle();
     expect(bloc.state.selected?.name, 'Museum');
   });
+
+  test(
+    'an identical refresh preserves the popup and pending selection',
+    () async {
+      await selectPlace();
+      final selected = bloc.state.selected;
+      final pending = Completer<Result<String?>>();
+      renderer.pick = (_) => pending.future;
+      bloc.add(const MapCanvasTapped(Point(20, 20)));
+      await settle();
+      bloc.add(
+        MapCanvasContentChanged(
+          MapContent(
+            layer: MapLayer(
+              name: sampleLayer.name,
+              places: [copySamplePlace()],
+            ),
+          ),
+        ),
+      );
+      await settle();
+      expect(bloc.state.selected, same(selected));
+      pending.complete(const Success('place-1'));
+      await settle();
+      expect(bloc.state.selected?.id, samplePlace.id);
+    },
+  );
+
+  test(
+    'refresh updates popup attributes by stable ID while it remains present',
+    () async {
+      await selectPlace();
+      bloc.add(
+        MapCanvasContentChanged(
+          MapContent(
+            layer: MapLayer(
+              name: sampleLayer.name,
+              places: [copySamplePlace(name: 'Renamed museum')],
+            ),
+          ),
+        ),
+      );
+      await settle();
+      expect(bloc.state.selected?.id, samplePlace.id);
+      expect(bloc.state.selected?.name, 'Renamed museum');
+    },
+  );
 
   test(
     'close cancels watches and pending picks before releasing the renderer',

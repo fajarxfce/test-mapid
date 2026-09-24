@@ -16,6 +16,7 @@ void main() {
           width: 360,
           child: PlacePopup(
             details: const PlaceDetails(
+              id: 'place-1',
               name: 'Museum Jogja',
               address: 'Jalan Museum 10',
               area: 'Yogyakarta',
@@ -49,6 +50,7 @@ void main() {
                 height: 290,
                 child: PlacePopup(
                   details: const PlaceDetails(
+                    id: 'place-1',
                     name: 'TAMAN TIMUR PASAR BERINGHARJO YOGYAKARTA',
                     address: 'Jalan Sriwedani, Ngupasan, Gondomanan, Yogyakarta, Daerah Istimewa Yogyakarta',
                     area: 'Gondomanan, Yogyakarta',

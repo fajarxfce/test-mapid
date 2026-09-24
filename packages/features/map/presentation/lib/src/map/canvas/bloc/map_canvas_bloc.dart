@@ -59,7 +59,10 @@ class MapCanvasBloc extends Bloc<MapCanvasEvent, MapCanvasState> {
         scene: state.scene.copyWith(content: event.content),
         selected: state.scene.content.layer == event.content.layer
             ? state.selected
-            : null,
+            : event.content.layer?.places
+                  .where((place) => place.id == state.selected?.id)
+                  .map(PlaceDetails.fromPlace)
+                  .firstOrNull,
       ),
     );
     _renderer.render(state.scene);

@@ -2,6 +2,7 @@ import 'package:map_domain/map_domain.dart';
 
 final class PlaceDetails {
   const PlaceDetails({
+    required this.id,
     required this.name,
     required this.address,
     required this.area,
@@ -9,6 +10,7 @@ final class PlaceDetails {
     required this.coordinates,
   });
   factory PlaceDetails.fromPlace(MapPlace place) => PlaceDetails(
+    id: place.id,
     name: place.name.trim().isEmpty ? 'Lokasi wisata' : place.name,
     address: place.address.trim().isEmpty
         ? 'Alamat belum tersedia'
@@ -21,6 +23,7 @@ final class PlaceDetails {
     coordinates:
         '${place.point.latitude.toStringAsFixed(5)}, ${place.point.longitude.toStringAsFixed(5)}',
   );
+  final String id;
   final String name;
   final String address;
   final String area;

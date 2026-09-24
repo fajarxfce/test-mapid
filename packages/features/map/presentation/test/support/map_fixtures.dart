@@ -12,6 +12,22 @@ const samplePlace = MapPlace(
   point: GeoPoint(latitude: -7.8, longitude: 110.36),
 );
 final sampleLayer = MapLayer(name: 'Jogja', places: [samplePlace]);
+
+MapPlace copySamplePlace({String? name, GeoPoint? point}) => MapPlace(
+  id: samplePlace.id,
+  name: name ?? samplePlace.name,
+  address: samplePlace.address,
+  city: samplePlace.city,
+  district: samplePlace.district,
+  period: samplePlace.period,
+  point:
+      point ??
+      GeoPoint(
+        latitude: samplePlace.point.latitude,
+        longitude: samplePlace.point.longitude,
+      ),
+);
+
 const sampleLocation = LocationFix(
   point: GeoPoint(latitude: -6.2, longitude: 106.8),
   accuracyMeters: 12,

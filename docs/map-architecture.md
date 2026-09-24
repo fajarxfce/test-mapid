@@ -97,6 +97,12 @@ layer while GPS is focused leaves the camera there. An explicit `focus(scene)`
 command recenters even if the scene is unchanged after a manual pan; no revision
 counter is needed. GPS updates preserve an open place popup.
 
+Layer identity is content-based: the layer name, ordered place values, and
+coordinates participate in equality. A refresh decoding identical content does
+not rewrite GeoJSON, refit the camera, or dismiss a popup. Selection retains the
+stable place ID; changed attributes update the popup, and removing that ID
+clears it. A pending hit test against changed content is still discarded.
+
 MapLibre GL 0.27.1 exposes a style-ready callback but no widget-level style-error
 callback. A 25-second session timer reports stalled loading through the typed
 `MapRenderStatus` stream. Reloading starts a new timeout; successful style loading
