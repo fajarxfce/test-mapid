@@ -112,6 +112,8 @@ interference.
 
 The MapLibre symbol rotates relative to the map using a bearing property in the
 location source. Its image and layer are recreated after style replacement.
+The image is rasterized at the native display's pixel ratio; the web SDK uses
+1x image pixels. This keeps the arrow's size consistent with the location dot.
 `diffMapScene` treats heading changes separately from coordinate changes, so
 turning the phone does not move the camera. GPS follow preserves the current
 zoom. Pointer movement dispatches `MapCanvasPanned`, switching camera intent to

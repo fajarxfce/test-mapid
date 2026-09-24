@@ -31,10 +31,10 @@ The API key is absent from tracked source and local commit history. The root
 ## Android device verification
 
 Baseline map interactions were verified with release `c49dffc` on a Samsung
-Galaxy A72 running Android 16 on 24 September 2026. The updated APK builds and
-passes automated tracking and bearing tests. Physical movement and compass
-rotation checks for the new continuous-tracking implementation are pending an
-unlocked device.
+Galaxy A72 running Android 16 on 24 September 2026. Continuous tracking and
+compass behavior were subsequently checked on the same device using `7d71ff1`.
+A follow-up release corrected the heading image's screen-density scaling and
+was installed for native marker and camera verification.
 
 | Scenario | Observed result |
 | --- | --- |
@@ -47,6 +47,13 @@ unlocked device.
 | Location denied | The tourism layer remained usable. The recovery button opened Android application settings. |
 | Permission restored | Location acquisition succeeded again after restoring foreground access. |
 | Overlay readability | Cards use solid Fluent surfaces and Android status icons remain visible against the light header. |
+| Continuous GPS | Android showed an active high-accuracy request at a one-second interval, with fresh native location snapshots in three successive samples. The app displayed the live location status. |
+| Rotation and movement | The device owner confirmed that rotating and moving the phone changed the displayed bearing and location point. No precise position or measured walking distance was recorded. |
+| Heading visibility | The corrected release displayed a distinct directional arrow outside the position dot on the device's high-density screen. |
+| Background and resume | Android released this app's GPS and compass subscriptions after backgrounding and registered both again when the app resumed, without another location request. |
+| Manual pan while tracking | After dragging the map, it stayed away from the position marker during seven seconds of live updates. **Lokasi saya** restored camera follow. |
+| Refresh while tracking | Refreshing the layer preserved the camera's focus on the live position. |
+| Runtime errors | No Flutter errors or Android fatal exceptions appeared in the app process log during the final marker and camera checks. |
 
 The selected point used for popup verification was **BENTARA BUDAYA
 YOGYAKARTA (BBY)**, with its address on **JL. SUROTO NO.2**. Native map rendering

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:core_location_domain/core_location_domain.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/rendering/draw_heading_image.dart';
 import 'package:map_presentation/src/map/canvas/rendering/map_geojson_encoder.dart';
@@ -42,7 +43,12 @@ class MapLibreLayers {
     if (_controller.isDisposed || layers.contains(MapStyle.headingLayer)) {
       return;
     }
-    final image = await drawHeadingImage();
+    // Native MapLibre interprets image bytes at screen density; web uses 1x.
+    final image = await drawHeadingImage(
+      pixelRatio: kIsWeb
+          ? 1
+          : PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1,
+    );
     if (_controller.isDisposed) return;
     await _controller.addImage(MapStyle.headingImage, image);
     if (_controller.isDisposed) return;
