@@ -10,8 +10,8 @@ import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'support/fake_surface.dart';
 import 'support/map_fixtures.dart';
+import 'support/mock_map_controller.dart';
 
 void main() {
   late TestMapController controller;

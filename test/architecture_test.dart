@@ -72,6 +72,30 @@ void main() {
       contains(contains('Blocs must not depend on another Bloc')),
     );
   });
+  test('canvas Bloc depends on the renderer contract, not native adapters', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any, synchronized: any}\n',
+    );
+    final file = File(
+      p.join(root.path, 'domain/lib/src/map/canvas/bloc/map_canvas_bloc.dart'),
+    );
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync(
+      "import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';",
+    );
+    expect(checkArchitecture(root), isEmpty);
+    for (final uri in [
+      'package:maplibre_gl/maplibre_gl.dart',
+      'package:synchronized/synchronized.dart',
+      'package:map_presentation/src/map/canvas/rendering/map_libre_render_session.dart',
+    ]) {
+      file.writeAsStringSync("import '$uri';");
+      expect(
+        checkArchitecture(root),
+        contains(contains('canvas Bloc must use the renderer contract')),
+      );
+    }
+  });
   test('presentation accepts feature sources under src and DI beside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any}\n',

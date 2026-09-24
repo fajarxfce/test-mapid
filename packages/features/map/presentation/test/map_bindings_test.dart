@@ -12,7 +12,7 @@ import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_state.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_canvas_status.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/pages/map_view.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -40,7 +40,7 @@ void main() {
     whenListen(
       canvas,
       const Stream<MapCanvasState>.empty(),
-      initialState: const MapCanvasState(status: MapCanvasStatus.ready),
+      initialState: const MapCanvasState(renderStatus: MapRenderStatus.ready),
     );
     await tester.pumpWidget(
       FluentApp(

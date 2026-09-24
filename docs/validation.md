@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 160 tests.
+  dependency boundaries, architecture rules, static analysis, and 182 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev debug and release builds: passed. The release APK signature was
   verified with Android SDK `apksigner`.
@@ -17,8 +17,9 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 
 Coverage includes GeoJSON parsing and coordinate validation, HTTP failures,
 credential-safe logging, shared location permissions and service failures,
-typed canvas handlers sharing a lock, UI event bindings, style restoration,
-partial layer retries, disposal during native operations, popup content, and
+typed canvas handlers, pure scene diffing, UI event bindings, style restoration,
+serialized native rendering, partial write rollback, stale feature picks,
+controller replacement, disposal during native operations, popup content, and
 constrained layouts. See [Map architecture](map-architecture.md) for boundaries
 and lifecycle decisions.
 
@@ -35,7 +36,7 @@ Android 16 on 24 September 2026.
 | Basemap and data | Liberty tiles and the 10-point tourism layer rendered. |
 | Point selection | Tapping a point displayed its name, address, area, period, and coordinates. |
 | Popup dismissal | Closing the popup restored the location card. |
-| Camera controls | Zoom and the layer control updated the map as expected. |
+| Camera controls | Zoom and the layer control updated the map; repeated focus requests recentered after manual panning. |
 | Refresh with GPS focus | Reloading tourism data preserved the camera focus on the user's position. |
 | Current location | Foreground location access produced a blue position marker; **Lokasi saya** centered the camera on it. |
 | Location denied | The tourism layer remained usable. The recovery button opened Android application settings. |

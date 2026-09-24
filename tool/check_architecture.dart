@@ -154,6 +154,15 @@ List<String> checkArchitecture(Directory root) {
       }
       for (final uri in uris) {
         if (name == 'map_presentation' &&
+            relativePath == 'src/map/canvas/bloc/map_canvas_bloc.dart' &&
+            (uri.startsWith('package:maplibre_gl/') ||
+                uri.startsWith('package:synchronized/') ||
+                uri.contains('/rendering/map_libre_'))) {
+          errors.add(
+            '$name/$relativePath: canvas Bloc must use the renderer contract; native resources belong to the adapter',
+          );
+        }
+        if (name == 'map_presentation' &&
             relativePath.startsWith('src/map/bloc/') &&
             (uri.startsWith('package:maplibre_gl/') ||
                 uri.contains('/src/map/canvas/') ||

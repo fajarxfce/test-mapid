@@ -12,7 +12,7 @@ class MapLibreLayers {
   const MapLibreLayers(this._controller);
   final MapLibreMapController _controller;
 
-  Future<void> showPlaces(MapLayer layer) => _replaceCircleData(
+  Future<void> showPlaces(MapLayer? layer) => _replaceCircleData(
     sourceId: MapStyle.placesSource,
     layerId: MapStyle.placesLayer,
     data: placesGeoJson(layer),
@@ -24,7 +24,7 @@ class MapLibreLayers {
     ),
   );
 
-  Future<void> showLocation(LocationFix location) => _replaceCircleData(
+  Future<void> showLocation(LocationFix? location) => _replaceCircleData(
     sourceId: MapStyle.locationSource,
     layerId: MapStyle.locationLayer,
     data: locationGeoJson(location),

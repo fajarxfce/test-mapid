@@ -21,10 +21,6 @@ final class MapCanvasStyleReloadRequested extends MapCanvasEvent {
   const MapCanvasStyleReloadRequested();
 }
 
-final class MapCanvasStyleTimedOut extends MapCanvasEvent {
-  const MapCanvasStyleTimedOut();
-}
-
 final class MapCanvasContentChanged extends MapCanvasEvent {
   const MapCanvasContentChanged(this.content);
   final MapContent content;

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MapCanvasState {
 
- MapContent get content; MapCanvasStatus get status; MapCameraFocus get focus; PlaceDetails? get selected; MapCanvasFailure? get failure;
+ MapScene get scene; MapRenderStatus get renderStatus; PlaceDetails? get selected;
 /// Create a copy of MapCanvasState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $MapCanvasStateCopyWith<MapCanvasState> get copyWith => _$MapCanvasStateCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as MapCanvasState;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapCanvasState&&(identical(other.content, _this.content) || other.content == _this.content)&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.focus, _this.focus) || other.focus == _this.focus)&&(identical(other.selected, _this.selected) || other.selected == _this.selected)&&(identical(other.failure, _this.failure) || other.failure == _this.failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapCanvasState&&(identical(other.scene, _this.scene) || other.scene == _this.scene)&&(identical(other.renderStatus, _this.renderStatus) || other.renderStatus == _this.renderStatus)&&(identical(other.selected, _this.selected) || other.selected == _this.selected));
 }
 
 
 @override
 int get hashCode {
   final _this = this as MapCanvasState;
-  return Object.hash(runtimeType,_this.content,_this.status,_this.focus,_this.selected,_this.failure);
+  return Object.hash(runtimeType,_this.scene,_this.renderStatus,_this.selected);
 }
 
 @override
 String toString() {
   final _this = this as MapCanvasState;
-  return 'MapCanvasState(content: ${_this.content}, status: ${_this.status}, focus: ${_this.focus}, selected: ${_this.selected}, failure: ${_this.failure})';
+  return 'MapCanvasState(scene: ${_this.scene}, renderStatus: ${_this.renderStatus}, selected: ${_this.selected})';
 }
 
 
@@ -51,11 +51,11 @@ abstract mixin class $MapCanvasStateCopyWith<$Res>  {
   factory $MapCanvasStateCopyWith(MapCanvasState value, $Res Function(MapCanvasState) _then) = _$MapCanvasStateCopyWithImpl;
 @useResult
 $Res call({
- MapContent content, MapCanvasStatus status, MapCameraFocus focus, PlaceDetails? selected, MapCanvasFailure? failure
+ MapScene scene, MapRenderStatus renderStatus, PlaceDetails? selected
 });
 
 
-$MapContentCopyWith<$Res> get content;
+$MapSceneCopyWith<$Res> get scene;
 
 }
 /// @nodoc
@@ -68,24 +68,22 @@ class _$MapCanvasStateCopyWithImpl<$Res>
 
 /// Create a copy of MapCanvasState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? content = null,Object? status = null,Object? focus = null,Object? selected = freezed,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? scene = null,Object? renderStatus = null,Object? selected = freezed,}) {
   return _then(MapCanvasState(
-content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as MapContent,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as MapCanvasStatus,focus: null == focus ? _self.focus : focus // ignore: cast_nullable_to_non_nullable
-as MapCameraFocus,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
-as PlaceDetails?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as MapCanvasFailure?,
+scene: null == scene ? _self.scene : scene // ignore: cast_nullable_to_non_nullable
+as MapScene,renderStatus: null == renderStatus ? _self.renderStatus : renderStatus // ignore: cast_nullable_to_non_nullable
+as MapRenderStatus,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
+as PlaceDetails?,
   ));
 }
 /// Create a copy of MapCanvasState
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$MapContentCopyWith<$Res> get content {
+$MapSceneCopyWith<$Res> get scene {
   
-  return $MapContentCopyWith<$Res>(_self.content, (value) {
-    return _then(_self.copyWith(content: value));
+  return $MapSceneCopyWith<$Res>(_self.scene, (value) {
+    return _then(_self.copyWith(scene: value));
   });
 }
 }
@@ -169,10 +167,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MapContent content,  MapCanvasStatus status,  MapCameraFocus focus,  PlaceDetails? selected,  MapCanvasFailure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( MapScene scene,  MapRenderStatus renderStatus,  PlaceDetails? selected)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _MapCanvasState() when $default != null:
-return $default(_that.content,_that.status,_that.focus,_that.selected,_that.failure);case _:
+return $default(_that.scene,_that.renderStatus,_that.selected);case _:
   return orElse();
 
 }
@@ -190,10 +188,10 @@ return $default(_that.content,_that.status,_that.focus,_that.selected,_that.fail
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MapContent content,  MapCanvasStatus status,  MapCameraFocus focus,  PlaceDetails? selected,  MapCanvasFailure? failure)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( MapScene scene,  MapRenderStatus renderStatus,  PlaceDetails? selected)  $default,) {final _that = this;
 switch (_that) {
 case _MapCanvasState():
-return $default(_that.content,_that.status,_that.focus,_that.selected,_that.failure);case _:
+return $default(_that.scene,_that.renderStatus,_that.selected);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -210,10 +208,10 @@ return $default(_that.content,_that.status,_that.focus,_that.selected,_that.fail
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MapContent content,  MapCanvasStatus status,  MapCameraFocus focus,  PlaceDetails? selected,  MapCanvasFailure? failure)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( MapScene scene,  MapRenderStatus renderStatus,  PlaceDetails? selected)?  $default,) {final _that = this;
 switch (_that) {
 case _MapCanvasState() when $default != null:
-return $default(_that.content,_that.status,_that.focus,_that.selected,_that.failure);case _:
+return $default(_that.scene,_that.renderStatus,_that.selected);case _:
   return null;
 
 }
@@ -225,14 +223,12 @@ return $default(_that.content,_that.status,_that.focus,_that.selected,_that.fail
 
 
 class _MapCanvasState extends MapCanvasState {
-  const _MapCanvasState({this.content = const MapContent(), this.status = MapCanvasStatus.waitingForMap, this.focus = MapCameraFocus.places, this.selected, this.failure}): super._();
+  const _MapCanvasState({this.scene = const MapScene(), this.renderStatus = MapRenderStatus.waitingForMap, this.selected}): super._();
   
 
-@override@JsonKey() final  MapContent content;
-@override@JsonKey() final  MapCanvasStatus status;
-@override@JsonKey() final  MapCameraFocus focus;
+@override@JsonKey() final  MapScene scene;
+@override@JsonKey() final  MapRenderStatus renderStatus;
 @override final  PlaceDetails? selected;
-@override final  MapCanvasFailure? failure;
 
 /// Create a copy of MapCanvasState
 /// with the given fields replaced by the non-null parameter values.
@@ -244,18 +240,18 @@ _$MapCanvasStateCopyWith<_MapCanvasState> get copyWith => __$MapCanvasStateCopyW
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapCanvasState&&(identical(other.content, content) || other.content == content)&&(identical(other.status, status) || other.status == status)&&(identical(other.focus, focus) || other.focus == focus)&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.failure, failure) || other.failure == failure));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _MapCanvasState&&(identical(other.scene, scene) || other.scene == scene)&&(identical(other.renderStatus, renderStatus) || other.renderStatus == renderStatus)&&(identical(other.selected, selected) || other.selected == selected));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,content,status,focus,selected,failure);
+    return Object.hash(runtimeType,scene,renderStatus,selected);
 }
 
 @override
 String toString() {
-    return 'MapCanvasState(content: $content, status: $status, focus: $focus, selected: $selected, failure: $failure)';
+    return 'MapCanvasState(scene: $scene, renderStatus: $renderStatus, selected: $selected)';
 }
 
 
@@ -266,11 +262,11 @@ abstract mixin class _$MapCanvasStateCopyWith<$Res> implements $MapCanvasStateCo
   factory _$MapCanvasStateCopyWith(_MapCanvasState value, $Res Function(_MapCanvasState) _then) = __$MapCanvasStateCopyWithImpl;
 @override @useResult
 $Res call({
- MapContent content, MapCanvasStatus status, MapCameraFocus focus, PlaceDetails? selected, MapCanvasFailure? failure
+ MapScene scene, MapRenderStatus renderStatus, PlaceDetails? selected
 });
 
 
-@override $MapContentCopyWith<$Res> get content;
+@override $MapSceneCopyWith<$Res> get scene;
 
 }
 /// @nodoc
@@ -283,14 +279,12 @@ class __$MapCanvasStateCopyWithImpl<$Res>
 
 /// Create a copy of MapCanvasState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? content = null,Object? status = null,Object? focus = null,Object? selected = freezed,Object? failure = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? scene = null,Object? renderStatus = null,Object? selected = freezed,}) {
   return _then(_MapCanvasState(
-content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as MapContent,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as MapCanvasStatus,focus: null == focus ? _self.focus : focus // ignore: cast_nullable_to_non_nullable
-as MapCameraFocus,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
-as PlaceDetails?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
-as MapCanvasFailure?,
+scene: null == scene ? _self.scene : scene // ignore: cast_nullable_to_non_nullable
+as MapScene,renderStatus: null == renderStatus ? _self.renderStatus : renderStatus // ignore: cast_nullable_to_non_nullable
+as MapRenderStatus,selected: freezed == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
+as PlaceDetails?,
   ));
 }
 
@@ -298,10 +292,10 @@ as MapCanvasFailure?,
 /// with the given fields replaced by the non-null parameter values.
 @override
 @pragma('vm:prefer-inline')
-$MapContentCopyWith<$Res> get content {
+$MapSceneCopyWith<$Res> get scene {
   
-  return $MapContentCopyWith<$Res>(_self.content, (value) {
-    return _then(_self.copyWith(content: value));
+  return $MapSceneCopyWith<$Res>(_self.scene, (value) {
+    return _then(_self.copyWith(scene: value));
   });
 }
 }

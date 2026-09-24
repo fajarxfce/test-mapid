@@ -1,263 +1,189 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/services.dart';
+import 'package:core_common/core_common.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_canvas_failure.dart';
-import 'package:map_presentation/src/map/canvas/models/map_canvas_status.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
 
-import 'support/fake_surface.dart';
+import 'support/fake_map_renderer.dart';
 import 'support/map_fixtures.dart';
+import 'support/mock_map_controller.dart';
 
 void main() {
-  late FakeSurfaceFactory factory;
+  late FakeMapRenderer renderer;
   late MapCanvasBloc bloc;
   setUp(() {
-    factory = FakeSurfaceFactory();
-    bloc = MapCanvasBloc(factory);
+    renderer = FakeMapRenderer();
+    bloc = MapCanvasBloc(renderer);
   });
-  tearDown(() async {
-    await bloc.close();
-  });
-  Future<void> attach() async {
-    final ready = bloc.stream.firstWhere((state) => state.ready);
-    bloc.add(MapCanvasAttached(TestMapController()));
-    bloc.add(const MapCanvasStyleLoaded());
-    await ready;
-  }
+  tearDown(() => bloc.close());
 
-  Future<void> settle() async {
-    await Future<void>.delayed(Duration.zero);
-  }
-
-  test(
-    'retains data before native creation and restores it after style load',
-    () async {
-      bloc.add(
-        MapCanvasContentChanged(
-          MapContent(layer: sampleLayer, location: sampleLocation),
-        ),
-      );
-      await settle();
-      expect(factory.surface.calls, isEmpty);
-      await attach();
-      expect(factory.surface.calls, ['places:Jogja', 'location', 'fit:Jogja']);
-    },
-  );
-
-  test(
-    'does not write sources between native creation and style readiness',
-    () async {
-      bloc.add(MapCanvasAttached(TestMapController()));
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await settle();
-      expect(bloc.state.content.layer, same(sampleLayer));
-      expect(factory.surface.calls, isEmpty);
-      final ready = bloc.stream.firstWhere((state) => state.ready);
-      bloc.add(const MapCanvasStyleLoaded());
-      await ready;
-      expect(factory.surface.calls, ['places:Jogja', 'fit:Jogja']);
-    },
-  );
-
-  test(
-    'style replacement restores sources and the latest camera focus',
-    () async {
-      bloc.add(
-        MapCanvasContentChanged(
-          MapContent(layer: sampleLayer, location: sampleLocation),
-        ),
-      );
-      await attach();
-      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
-      await settle();
-      factory.surface.calls.clear();
-      bloc.add(const MapCanvasStyleReloadRequested());
-      bloc.add(const MapCanvasStyleLoaded());
-      await settle();
-      expect(factory.surface.calls, [
-        'reload',
-        'places:Jogja',
-        'location',
-        'center',
-      ]);
-      expect(bloc.state.ready, isTrue);
-    },
-  );
-
-  test(
-    'late GPS data respects a newer request to show the tourism layer',
-    () async {
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await attach();
-      factory.surface.calls.clear();
-      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
-      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.places));
-      bloc.add(
-        MapCanvasContentChanged(
-          MapContent(layer: sampleLayer, location: sampleLocation),
-        ),
-      );
-      await settle();
-      expect(factory.surface.calls, ['fit:Jogja', 'location']);
-      expect(bloc.state.focus, MapCameraFocus.places);
-    },
-  );
-
-  test('selects, clears, and reselects the same feature', () async {
+  Future<void> settle() => Future<void>.delayed(Duration.zero);
+  Future<void> selectPlace() async {
     bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-    await attach();
     bloc.add(const MapCanvasTapped(Point(20, 20)));
     await settle();
     expect(bloc.state.selected?.name, 'Museum');
+  }
+
+  test('publishes the desired scene before a native map exists', () async {
+    final content = MapContent(layer: sampleLayer, location: sampleLocation);
+    bloc.add(MapCanvasContentChanged(content));
+    await settle();
+    expect(bloc.state.scene.content, content);
+    expect(renderer.scenes.single, bloc.state.scene);
+    expect(bloc.state.renderStatus, MapRenderStatus.waitingForMap);
+  });
+
+  test(
+    'native status changes preserve current content, focus and popup',
+    () async {
+      bloc.add(MapCanvasAttached(TestMapController()));
+      await selectPlace();
+      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
+      await settle();
+      final scene = bloc.state.scene;
+      renderer.attachments.single.add(MapRenderStatus.renderingFailure);
+      await settle();
+      expect(bloc.state.scene, scene);
+      expect(bloc.state.selected?.name, 'Museum');
+      expect(bloc.state.errorMessage, isNotNull);
+      renderer.attachments.single.add(MapRenderStatus.ready);
+      await settle();
+      expect(bloc.state.ready, isTrue);
+      expect(bloc.state.errorMessage, isNull);
+    },
+  );
+
+  test('reattachment cancels the old status subscription', () async {
+    bloc.add(MapCanvasAttached(TestMapController()));
+    await settle();
+    final old = renderer.attachments.single;
+    bloc.add(MapCanvasAttached(TestMapController()));
+    await settle();
+    expect(old.hasListener, isFalse);
+    old.add(MapRenderStatus.styleTimeout);
+    renderer.attachments.last.add(MapRenderStatus.ready);
+    await settle();
+    expect(bloc.state.ready, isTrue);
+  });
+
+  test(
+    'repeating focus still requests recentering after a manual pan',
+    () async {
+      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.places));
+      bloc.add(const MapCanvasFocusRequested(MapCameraFocus.places));
+      await settle();
+      expect(renderer.focuses, hasLength(2));
+      expect(renderer.focuses.first, renderer.focuses.last);
+    },
+  );
+
+  test('late GPS preserves newer focus and an open popup', () async {
+    await selectPlace();
+    bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
+    bloc.add(const MapCanvasFocusRequested(MapCameraFocus.places));
+    bloc.add(
+      MapCanvasContentChanged(
+        MapContent(layer: sampleLayer, location: sampleLocation),
+      ),
+    );
+    await settle();
+    expect(bloc.state.scene.focus, MapCameraFocus.places);
+    expect(renderer.scenes.last.content.location, sampleLocation);
     expect(bloc.state.selected?.address, 'Jalan Museum');
+  });
+
+  test('selects, dismisses, reselects and clears a background tap', () async {
+    await selectPlace();
     bloc.add(const MapCanvasSelectionCleared());
     await settle();
     expect(bloc.state.selected, isNull);
     bloc.add(const MapCanvasTapped(Point(20, 20)));
     await settle();
     expect(bloc.state.selected?.name, 'Museum');
-    factory.surface.picked = null;
+    renderer.pick = (_) async => const Success(null);
     bloc.add(const MapCanvasTapped(Point(40, 40)));
     await settle();
     expect(bloc.state.selected, isNull);
   });
 
-  test(
-    'GPS changes preserve the open popup without rewriting tourism data',
-    () async {
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await attach();
-      bloc.add(const MapCanvasTapped(Point(20, 20)));
-      await settle();
-      factory.surface.calls.clear();
-      bloc.add(
-        MapCanvasContentChanged(
-          MapContent(layer: sampleLayer, location: sampleLocation),
-        ),
-      );
-      await settle();
-      expect(factory.surface.calls, ['location']);
-      expect(bloc.state.selected?.name, 'Museum');
-    },
-  );
-
-  test('native writes and camera commands cannot interleave', () async {
-    await attach();
-    final pending = Completer<void>();
-    factory.surface.onShowPlaces = (_) => pending.future;
+  test('a slow earlier tap cannot override the latest tap', () async {
     bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-    bloc.add(const MapCanvasZoomRequested(1));
+    final pending = Completer<Result<String?>>();
+    renderer.pick = (point) =>
+        point.x == 20 ? pending.future : Future.value(const Success(null));
+    bloc.add(const MapCanvasTapped(Point(20, 20)));
     await settle();
-    expect(factory.surface.calls, ['places:Jogja']);
-    pending.complete();
+    bloc.add(const MapCanvasTapped(Point(40, 40)));
     await settle();
-    expect(factory.surface.calls, ['places:Jogja', 'fit:Jogja', 'zoom:1.0']);
+    pending.complete(const Success('place-1'));
+    await settle();
+    expect(bloc.state.selected, isNull);
+  });
+
+  test('a pending pick does not reopen a dismissed popup', () async {
+    await selectPlace();
+    final pending = Completer<Result<String?>>();
+    renderer.pick = (_) => pending.future;
+    bloc.add(const MapCanvasTapped(Point(20, 20)));
+    await settle();
+    bloc.add(const MapCanvasSelectionCleared());
+    await settle();
+    pending.complete(const Success('place-1'));
+    await settle();
+    expect(bloc.state.selected, isNull);
+  });
+
+  test('a pending pick cannot select a replaced dataset', () async {
+    await selectPlace();
+    final pending = Completer<Result<String?>>();
+    renderer.pick = (_) => pending.future;
+    bloc.add(const MapCanvasTapped(Point(20, 20)));
+    await settle();
+    bloc.add(
+      MapCanvasContentChanged(
+        MapContent(
+          layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
+        ),
+      ),
+    );
+    await settle();
+    pending.complete(const Success('place-1'));
+    await settle();
+    expect(bloc.state.selected, isNull);
+  });
+
+  test('a failed pick preserves the current selection', () async {
+    await selectPlace();
+    renderer.pick = (_) async => const FailureResult(
+      Failure(FailureKind.unexpected, 'Native query failed'),
+    );
+    bloc.add(const MapCanvasTapped(Point(20, 20)));
+    await settle();
+    expect(bloc.state.selected?.name, 'Museum');
   });
 
   test(
-    'a render failure retains content for a successful style retry',
+    'close cancels watches and pending picks before releasing the renderer',
     () async {
-      await attach();
-      factory.surface.onShowPlaces = (_) async =>
-          throw PlatformException(code: 'failed');
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await settle();
-      expect(bloc.state.failure, MapCanvasFailure.rendering);
-      expect(bloc.state.content.layer, same(sampleLayer));
-      factory.surface.onShowPlaces = null;
-      bloc.add(const MapCanvasStyleReloadRequested());
-      bloc.add(const MapCanvasStyleLoaded());
-      await settle();
-      expect(bloc.state.ready, isTrue);
-      expect(bloc.state.failure, isNull);
-    },
-  );
-
-  test(
-    'recreating the native map keeps data and binds a new surface',
-    () async {
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await attach();
-      final oldSurface = factory.surface;
-      oldSurface.isDisposed = true;
-      factory.surface = FakeMapSurface();
-      await attach();
-      expect(factory.surface.calls, ['places:Jogja', 'fit:Jogja']);
-      expect(oldSurface.calls, ['places:Jogja', 'fit:Jogja']);
-    },
-  );
-
-  testWidgets(
-    'style timeout is recoverable and an old timeout cannot fail a new load',
-    (tester) async {
-      final timedBloc = MapCanvasBloc(factory);
-      addTearDown(timedBloc.close);
-      timedBloc.add(MapCanvasAttached(TestMapController()));
-      await tester.pump();
-      timedBloc.add(const MapCanvasStyleTimedOut());
-      await tester.pump();
-      expect(timedBloc.state.status, MapCanvasStatus.loadingStyle);
-      await tester.pump(const Duration(seconds: 26));
-      expect(timedBloc.state.failure, MapCanvasFailure.styleTimeout);
-      timedBloc.add(const MapCanvasStyleReloadRequested());
-      timedBloc.add(const MapCanvasStyleLoaded());
-      await tester.pump();
-      expect(timedBloc.state.ready, isTrue);
-    },
-  );
-
-  test(
-    'a pending native failure after disposal does not emit a late state',
-    () async {
-      await attach();
-      final pending = Completer<void>();
-      factory.surface.onShowPlaces = (_) => pending.future;
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await settle();
-      final closing = bloc.close();
-      pending.completeError(PlatformException(code: 'disposed'));
-      await closing;
-      expect(bloc.state.failure, isNull);
-    },
-  );
-
-  test(
-    'closing during a successful write prevents subsequent camera operations',
-    () async {
-      await attach();
-      final pending = Completer<void>();
-      factory.surface.onShowPlaces = (_) => pending.future;
-      bloc.add(
-        MapCanvasContentChanged(
-          MapContent(layer: sampleLayer, location: sampleLocation),
-        ),
-      );
-      await settle();
-      final closing = bloc.close();
-      pending.complete();
-      await closing;
-      expect(factory.surface.calls, ['places:Jogja']);
-    },
-  );
-
-  test(
-    'closing discards native attachment events still in the queue',
-    () async {
-      await attach();
-      final pending = Completer<void>();
-      factory.surface.onShowPlaces = (_) => pending.future;
-      bloc.add(MapCanvasContentChanged(MapContent(layer: sampleLayer)));
-      await settle();
       bloc.add(MapCanvasAttached(TestMapController()));
-      final closing = bloc.close();
-      pending.complete();
-      await closing;
-      expect(factory.creations, 1);
+      await selectPlace();
+      final pending = Completer<Result<String?>>();
+      renderer.pick = (_) => pending.future;
+      bloc.add(const MapCanvasTapped(Point(20, 20)));
+      await settle();
+      await bloc.close();
+      expect(renderer.closed, isTrue);
+      expect(renderer.attachments.single.hasListener, isFalse);
+      pending.complete(const Success(null));
+      await settle();
+      expect(bloc.state.selected?.name, 'Museum');
     },
   );
 }

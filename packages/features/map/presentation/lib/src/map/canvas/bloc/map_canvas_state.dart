@@ -1,8 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_canvas_failure.dart';
-import 'package:map_presentation/src/map/canvas/models/map_canvas_status.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
+import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 
 part 'map_canvas_state.freezed.dart';
@@ -11,13 +9,17 @@ part 'map_canvas_state.freezed.dart';
 abstract class MapCanvasState with _$MapCanvasState {
   const MapCanvasState._();
   const factory MapCanvasState({
-    @Default(MapContent()) MapContent content,
-    @Default(MapCanvasStatus.waitingForMap) MapCanvasStatus status,
-    @Default(MapCameraFocus.places) MapCameraFocus focus,
+    @Default(MapScene()) MapScene scene,
+    @Default(MapRenderStatus.waitingForMap) MapRenderStatus renderStatus,
     PlaceDetails? selected,
-    MapCanvasFailure? failure,
   }) = _MapCanvasState;
 
-  bool get ready => status == MapCanvasStatus.ready;
-  String? get errorMessage => failure?.message;
+  bool get ready => renderStatus == MapRenderStatus.ready;
+  String? get errorMessage => switch (renderStatus) {
+    MapRenderStatus.styleTimeout =>
+      'Basemap belum dapat dimuat. Periksa koneksi internet lalu coba lagi.',
+    MapRenderStatus.renderingFailure =>
+      'Peta belum dapat diperbarui. Coba muat ulang basemap.',
+    _ => null,
+  };
 }
