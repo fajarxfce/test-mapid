@@ -9,6 +9,8 @@ import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
 const allowed = <String, Set<String>>{
+  'map_domain': {'core_common'},
+  'map_data': {'map_domain', 'core_common', 'core_network'},
   'core_common': {},
   'core_data': {'core_common'},
   'core_network': {'core_common'},

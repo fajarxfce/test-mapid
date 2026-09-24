@@ -1,4 +1,7 @@
 enum FailureKind {
+  permissionDenied,
+  permissionPermanentlyDenied,
+  serviceDisabled,
   unauthorized,
   forbidden,
   notFound,

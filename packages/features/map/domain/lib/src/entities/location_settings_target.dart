@@ -1,0 +1,1 @@
+enum LocationSettingsTarget { application, device }

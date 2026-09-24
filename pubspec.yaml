@@ -3,6 +3,8 @@ publish_to: none
 environment:
   sdk: ">=3.13.0 <4.0.0"
 workspace:
+  - packages/features/map/domain
+  - packages/features/map/data
   - apps/fluent_starter
   - packages/core/common
   - packages/core/data
