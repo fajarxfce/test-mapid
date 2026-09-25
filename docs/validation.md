@@ -46,8 +46,8 @@ The API key is absent from tracked source and local commit history. The root
   datasources/DTOs, and SDK imports in Bloc events, states, and the renderer port.
 
 The boundary refactor passed all 234 automated tests and both release builds.
-It has not been retested on the physical phone because the device remained
-locked. The device observations below describe earlier builds.
+Physical verification of this source is recorded in the Clean Architecture
+device follow-up below; earlier observations retain their original build context.
 
 ## Map audit regressions
 
@@ -138,3 +138,34 @@ signing certificate, so staging was installed separately.
 Regression tests cover passive permission checks, recovery after permanent
 denial and disabled GPS, repeated resumes without new permission prompts,
 explicit retry cancellation, and center-only camera easing during GPS follow.
+
+### Clean Architecture device follow-up
+
+Source `cea8196` was verified on the Galaxy A72 running Android 16 on
+25 September 2026 using the staging ARM64 release. The installed APK's SHA-256
+matched the local build artifact. This run exercised the production route,
+generated dependency injection, native MapLibre adapter, and location repository.
+
+- Liberty tiles, map labels, and all 10 tourism features rendered
+  without a basemap or data warning. Tapping the BBY feature displayed its name
+  and address; closing the popup restored the location card.
+- GPS and compass became available. The location action centered the blue
+  position marker. Android retained an active high-accuracy GPS request across
+  three samples, and the requested interval was one second.
+- With foreground location permissions revoked and marked permanently denied,
+  the map and tourism layer remained usable. The recovery action opened Android
+  application settings.
+- Foreground location permissions were granted through ADB while Settings was
+  open. Returning to the app restored GPS, compass, and camera follow without
+  another location tap. The process ID remained unchanged and all 10 places
+  remained available.
+- Refreshing tourism data preserved GPS camera focus. The layer control restored
+  the tourism overview and worked again after a manual pan.
+- Backgrounding the live app released its active GPS request. Reopening it
+  restored GPS and compass in the same process.
+- No Flutter errors or Android fatal exceptions appeared in the tested app
+  processes. Foreground location permissions and the original screen timeout
+  were restored after testing.
+
+This run did not repeat the walking/rotation experiment or the continuous label
+fade recordings. Those observations remain attributed to the earlier builds.
