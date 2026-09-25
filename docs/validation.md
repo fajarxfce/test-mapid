@@ -227,7 +227,10 @@ the release artifact produced after the single-Bloc refactor.
   in the final tested app process.
 - Foreground location permissions, permission flags, and the original screen
   timeout were restored after testing.
+- The device owner rotated the phone and confirmed that the heading arrow
+  changed direction while road/building labels remained stable during the
+  requested observation period.
 
-This run did not measure walking distance or record continuous label fading.
-The heading image was inspected on the native map; a new manual rotation and
-label-stability confirmation from the device owner is still pending.
+This run did not measure walking distance or record a new label-fade video.
+Rotation and label stability were confirmed by the device owner; native marker
+appearance was also inspected directly.
