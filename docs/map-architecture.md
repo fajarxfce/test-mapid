@@ -5,8 +5,9 @@ location is a shared capability under `core/location`, so another feature can
 use it without importing the map feature.
 
 Domain packages remain independent of Flutter, transport clients, and platform
-I/O. The dependency checker explicitly permits the pure Dart `collection`
-utilities used for value equality; UI and Bloc ownership rules still apply.
+I/O. Equatable supplies value equality for domain entities and geographic values;
+Freezed generates presentation state and its equality. The dependency checker
+permits these domain models to depend on Equatable, a pure Dart utility.
 
 ```mermaid
 flowchart LR

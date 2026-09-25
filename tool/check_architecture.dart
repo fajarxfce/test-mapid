@@ -10,7 +10,7 @@ import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
 // Reviewed utilities with no Flutter or platform I/O dependency.
-const purePackages = {'core_common', 'collection'};
+const purePackages = {'core_common', 'collection', 'equatable'};
 
 const allowed = <String, Set<String>>{
   'core_common': {},

@@ -28,14 +28,18 @@ void main() {
         .writeAsStringSync("import 'package:core_common/core_common.dart';");
     expect(checkArchitecture(root), isEmpty);
   });
-  test('permits pure collection utilities but still rejects transport dependencies', () {
+  test('permits pure equality utilities but still rejects transport dependencies', () {
     final spec = File(p.join(root.path, 'domain/pubspec.yaml'));
     final source = File(p.join(root.path, 'domain/lib/domain.dart'));
-    spec.writeAsStringSync(
-      'name: map_domain\ndependencies: {core_common: any, collection: any}\n',
-    );
-    source.writeAsStringSync("import 'package:collection/collection.dart';");
-    expect(checkArchitecture(root), isEmpty);
+    for (final dependency in ['collection', 'equatable']) {
+      spec.writeAsStringSync(
+        'name: map_domain\ndependencies: {core_common: any, $dependency: any}\n',
+      );
+      source.writeAsStringSync(
+        "import 'package:$dependency/$dependency.dart';",
+      );
+      expect(checkArchitecture(root), isEmpty);
+    }
     spec.writeAsStringSync(
       'name: map_domain\ndependencies: {core_common: any, dio: any}\n',
     );

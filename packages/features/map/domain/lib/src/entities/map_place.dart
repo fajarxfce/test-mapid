@@ -1,6 +1,7 @@
 import 'package:core_common/core_common.dart';
+import 'package:equatable/equatable.dart';
 
-final class MapPlace {
+final class MapPlace extends Equatable {
   const MapPlace({
     required this.id,
     required this.name,
@@ -19,17 +20,5 @@ final class MapPlace {
   final GeoPoint point;
 
   @override
-  bool operator ==(Object other) =>
-      other is MapPlace &&
-      id == other.id &&
-      name == other.name &&
-      address == other.address &&
-      city == other.city &&
-      district == other.district &&
-      period == other.period &&
-      point == other.point;
-
-  @override
-  int get hashCode =>
-      Object.hash(id, name, address, city, district, period, point);
+  List<Object> get props => [id, name, address, city, district, period, point];
 }

@@ -9,6 +9,7 @@ dependency_overrides:
   collection: ^1.19.1
   build_runner: ^2.10.0
   dio: ^5.11.1
+  equatable: ^2.0.7
   fluent_ui: ^4.16.1
   flutter_bloc: ^9.1.1
   flutter_flavorizr: ^2.6.0
