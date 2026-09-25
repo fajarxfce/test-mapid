@@ -7,10 +7,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_renderer.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart'
     show CameraUpdate, CircleLayerProperties, SymbolLayerProperties;
 import 'package:mocktail/mocktail.dart';
@@ -19,6 +18,7 @@ import 'support/map_fixtures.dart';
 import 'support/native_map_harness.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MapLibreRenderer renderer;
   late NativeMapHarness native;
   late List<MapRenderStatus> statuses;
@@ -74,15 +74,8 @@ void main() {
       ]);
       renderer.styleLoaded();
       await settle();
-      expect(native.operations, [
-        MapStyle.placesSource,
-        MapStyle.locationSource,
-        'camera',
-      ]);
-      expect(
-        native.sources[MapStyle.locationSource]!['features'],
-        hasLength(1),
-      );
+      expect(native.operations, ['mapid-places', 'user-location', 'camera']);
+      expect(native.sources['user-location']!['features'], hasLength(1));
       expect(statuses.last, MapRenderStatus.ready);
     },
   );
@@ -108,7 +101,7 @@ void main() {
     renderer.focus(places);
     renderer.render(scene);
     await settle();
-    expect(native.operations, [MapStyle.locationSource, 'camera']);
+    expect(native.operations, ['user-location', 'camera']);
     expect(native.cameraMoves.single, [
       'newLatLngZoom',
       [-7.8, closeTo(110.36, 1e-9)],
@@ -127,7 +120,7 @@ void main() {
       ),
     );
     await settle();
-    expect(native.operations, [MapStyle.placesSource]);
+    expect(native.operations, ['mapid-places']);
   });
 
   test('style replacement restores latest sources and camera intent', () async {
@@ -141,11 +134,11 @@ void main() {
     await settle();
     expect(native.operations, [
       'reload',
-      MapStyle.placesSource,
-      MapStyle.locationSource,
+      'mapid-places',
+      'user-location',
       'camera',
     ]);
-    expect(native.layers, {MapStyle.placesLayer, MapStyle.locationLayer});
+    expect(native.layers, {'mapid-place-points', 'user-location-point'});
     expect(native.cameraMoves.single, [
       'newLatLngZoom',
       [-6.2, closeTo(106.8, 1e-9)],
@@ -160,17 +153,17 @@ void main() {
       await ready(const MapScene());
       final pending = Completer<void>();
       native.onWrite = (id, _) async {
-        if (id == MapStyle.placesSource) await pending.future;
+        if (id == 'mapid-places') await pending.future;
       };
       renderer.render(scene);
       renderer.zoomBy(1);
       await settle();
-      expect(native.operations, [MapStyle.placesSource]);
+      expect(native.operations, ['mapid-places']);
       pending.complete();
       await settle();
       expect(native.operations, [
-        MapStyle.placesSource,
-        MapStyle.locationSource,
+        'mapid-places',
+        'user-location',
         'camera',
         'camera',
       ]);
@@ -181,7 +174,7 @@ void main() {
   test('a failed partial render can retry the same desired scene', () async {
     await ready(const MapScene());
     native.onWrite = (id, _) async {
-      if (id == MapStyle.locationSource) {
+      if (id == 'user-location') {
         throw PlatformException(code: 'failed');
       }
     };
@@ -192,7 +185,7 @@ void main() {
     renderer.render(scene);
     await settle();
     expect(statuses.last, MapRenderStatus.ready);
-    expect(native.sources[MapStyle.locationSource]!['features'], hasLength(1));
+    expect(native.sources['user-location']!['features'], hasLength(1));
     expect(native.cameraMoves, hasLength(1));
   });
 
@@ -201,18 +194,18 @@ void main() {
     () async {
       await ready(const MapScene());
       native.onWrite = (id, _) async {
-        if (id == MapStyle.locationSource) {
+        if (id == 'user-location') {
           throw PlatformException(code: 'failed');
         }
       };
       renderer.render(scene);
       await settle();
-      expect(native.sources[MapStyle.placesSource]!['features'], hasLength(1));
+      expect(native.sources['mapid-places']!['features'], hasLength(1));
       native.onWrite = null;
       renderer.render(const MapScene());
       await settle();
-      expect(native.sources[MapStyle.placesSource]!['features'], isEmpty);
-      expect(native.sources[MapStyle.locationSource]!['features'], isEmpty);
+      expect(native.sources['mapid-places']!['features'], isEmpty);
+      expect(native.sources['user-location']!['features'], isEmpty);
       expect(statuses.last, MapRenderStatus.ready);
     },
   );
@@ -269,8 +262,8 @@ void main() {
       );
       expect(native.operations, ['query']);
       expect(replacement.operations, [
-        MapStyle.placesSource,
-        MapStyle.locationSource,
+        'mapid-places',
+        'user-location',
         'camera',
       ]);
     },
@@ -289,7 +282,7 @@ void main() {
       final statusCount = statuses.length;
       pending.complete();
       await settle();
-      expect(native.operations, [MapStyle.placesSource]);
+      expect(native.operations, ['mapid-places']);
       expect(statuses, hasLength(statusCount));
     },
   );

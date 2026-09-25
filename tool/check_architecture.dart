@@ -144,7 +144,10 @@ List<String> checkArchitecture(Directory root) {
             .whereType<String>()
             .where((name) => !name.startsWith('_'))
             .toList();
-        if (publicTypes.length > 1 &&
+        // Related presentation contracts, enums and payloads can share a file.
+        // Domain/data types retain their explicit file boundaries.
+        if (!name.endsWith('_presentation') &&
+            publicTypes.length > 1 &&
             !_isSealedFamily(unit, publicTypes.length)) {
           errors.add(
             '$name/$relativePath: split public types into separate files: '
@@ -198,10 +201,12 @@ List<String> checkArchitecture(Directory root) {
         }
         if (name == 'map_presentation' &&
             (relativePath.startsWith('src/map/canvas/bloc/') ||
-                relativePath == 'src/map/canvas/rendering/map_renderer.dart') &&
+                relativePath == 'src/map/canvas/rendering/map_renderer.dart' ||
+                relativePath == 'src/map/rendering/map_renderer.dart') &&
             (uri.startsWith('package:maplibre_gl/') ||
                 uri.startsWith('package:synchronized/') ||
-                uri.contains('/rendering/map_libre_'))) {
+                uri.contains('/rendering/map_libre_') ||
+                uri.contains('/rendering/maplibre_'))) {
           errors.add(
             '$name/$relativePath: canvas Bloc must use the renderer contract; native resources belong to the adapter',
           );

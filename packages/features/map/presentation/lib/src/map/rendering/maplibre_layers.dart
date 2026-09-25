@@ -3,10 +3,8 @@ import 'dart:ui';
 
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart' show rootBundle, Uint8List;
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/rendering/draw_heading_image.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_geojson_encoder.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// Owns style sources, layer paint, and native feature queries.
@@ -15,9 +13,9 @@ class MapLibreLayers {
   final MapLibreMapController _controller;
 
   Future<void> showPlaces(MapLayer? layer) => _replaceCircleData(
-    sourceId: MapStyle.placesSource,
-    layerId: MapStyle.placesLayer,
-    data: placesGeoJson(layer),
+    sourceId: _placesSource,
+    layerId: _placesLayer,
+    data: _placesGeoJson(layer),
     paint: const CircleLayerProperties(
       circleRadius: 9,
       circleColor: '#E77536',
@@ -28,9 +26,9 @@ class MapLibreLayers {
 
   Future<void> showLocation(LocationFix? location) async {
     await _replaceCircleData(
-      sourceId: MapStyle.locationSource,
-      layerId: MapStyle.locationLayer,
-      data: locationGeoJson(location),
+      sourceId: _locationSource,
+      layerId: _locationLayer,
+      data: _locationGeoJson(location),
       paint: const CircleLayerProperties(
         circleRadius: 9,
         circleColor: '#1468D4',
@@ -40,23 +38,19 @@ class MapLibreLayers {
     );
     if (_controller.isDisposed || location?.bearing == null) return;
     final layers = await _controller.getLayerIds();
-    if (_controller.isDisposed || layers.contains(MapStyle.headingLayer)) {
+    if (_controller.isDisposed || layers.contains(_headingLayer)) {
       return;
     }
     // Native MapLibre interprets image bytes at screen density; web uses 1x.
-    final image = await drawHeadingImage(
-      pixelRatio: kIsWeb
-          ? 1
-          : PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1,
-    );
+    final image = await _loadHeadingImage();
     if (_controller.isDisposed) return;
-    await _controller.addImage(MapStyle.headingImage, image);
+    await _controller.addImage(_headingImage, image);
     if (_controller.isDisposed) return;
     await _controller.addSymbolLayer(
-      MapStyle.locationSource,
-      MapStyle.headingLayer,
+      _locationSource,
+      _headingLayer,
       const SymbolLayerProperties(
-        iconImage: MapStyle.headingImage,
+        iconImage: _headingImage,
         iconSize: 0.8,
         iconRotate: ['get', 'bearing'],
         iconRotationAlignment: 'map',
@@ -102,7 +96,7 @@ class MapLibreLayers {
   Future<String?> placeAt(Point<double> point) async {
     final features = await _controller.queryRenderedFeaturesInRect(
       Rect.fromCenter(center: Offset(point.x, point.y), width: 28, height: 28),
-      [MapStyle.placesLayer],
+      [_placesLayer],
       null,
     );
     for (final feature in features) {
@@ -110,4 +104,72 @@ class MapLibreLayers {
     }
     return null;
   }
+
+  Future<Uint8List> _loadHeadingImage() async {
+    final ratio = kIsWeb
+        ? 1.0
+        : PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1.0;
+    final bytes = await rootBundle.load(
+      'packages/map_presentation/assets/map/heading.png',
+    );
+    // MapLibre decodes at native display density. Resize the 4x asset to keep
+    // its logical size consistent at fractional densities as well as 1x/2x/3x.
+    final size = (64 * ratio).ceil();
+    final codec = await instantiateImageCodec(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+      targetWidth: size,
+      targetHeight: size,
+    );
+    try {
+      final frame = await codec.getNextFrame();
+      try {
+        final png = (await frame.image.toByteData(
+          format: ImageByteFormat.png,
+        ))!;
+        return png.buffer.asUint8List(png.offsetInBytes, png.lengthInBytes);
+      } finally {
+        frame.image.dispose();
+      }
+    } finally {
+      codec.dispose();
+    }
+  }
 }
+
+Map<String, dynamic> _placesGeoJson(MapLayer? layer) => {
+  'type': 'FeatureCollection',
+  'features': [
+    for (final place in layer?.places ?? <MapPlace>[])
+      {
+        'type': 'Feature',
+        'id': place.id,
+        'properties': {'place_id': place.id},
+        'geometry': {
+          'type': 'Point',
+          'coordinates': [place.point.longitude, place.point.latitude],
+        },
+      },
+  ],
+};
+
+Map<String, dynamic> _locationGeoJson(LocationFix? location) => {
+  'type': 'FeatureCollection',
+  'features': [
+    if (location != null)
+      {
+        'type': 'Feature',
+        'properties': <String, dynamic>{'bearing': location.bearing?.degrees},
+        'geometry': {
+          'type': 'Point',
+          'coordinates': [location.point.longitude, location.point.latitude],
+        },
+      },
+  ],
+};
+
+const _placesSource = 'mapid-places';
+const _placesLayer = 'mapid-place-points';
+const _locationSource = 'user-location';
+const _locationLayer = 'user-location-point';
+const _headingImage = 'user-heading-arrow';
+const _headingLayer = 'user-location-heading';

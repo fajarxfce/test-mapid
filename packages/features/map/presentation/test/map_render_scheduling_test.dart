@@ -7,10 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_renderer.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -29,6 +28,7 @@ MapScene sceneAt(double latitude) => MapScene(
 );
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MapLibreRenderer renderer;
   late NativeMapHarness native;
   late List<MapRenderStatus> statuses;
@@ -64,12 +64,12 @@ void main() {
     final moved = sceneAt(-6.21);
     renderer.render(moved);
     await Future<void>.delayed(Duration.zero);
-    expect(native.operations, [MapStyle.locationSource]);
+    expect(native.operations, ['user-location']);
     renderer.render(moved.copyWith(focus: MapCameraFocus.free));
     gate.complete();
     await Future<void>.delayed(Duration.zero);
     expect(native.cameraMoves, isEmpty);
-    expect(native.operations, [MapStyle.locationSource]);
+    expect(native.operations, ['user-location']);
   });
 
   test(
@@ -87,10 +87,10 @@ void main() {
       gate.complete();
       await Future<void>.delayed(Duration.zero);
       expect(native.operations, [
-        MapStyle.locationSource,
+        'user-location',
         'camera',
         'camera',
-        MapStyle.locationSource,
+        'user-location',
       ]);
       expect(native.cameraMoves, [
         [
@@ -100,8 +100,7 @@ void main() {
         ['zoomBy', 1.0],
       ]);
       final feature =
-          (native.sources[MapStyle.locationSource]!['features'] as List).single
-              as Map;
+          (native.sources['user-location']!['features'] as List).single as Map;
       expect((feature['geometry'] as Map)['coordinates'], [
         106.8,
         closeTo(-6.212, 1e-9),
@@ -114,7 +113,7 @@ void main() {
     () async {
       var arrivals = 0;
       native.onWrite = (id, _) async {
-        if (id == MapStyle.locationSource && arrivals < 5) {
+        if (id == 'user-location' && arrivals < 5) {
           arrivals++;
           renderer.render(sceneAt(-6.21 - arrivals / 1000));
         }
@@ -156,7 +155,7 @@ void main() {
       );
       native.onQuery = null;
       await renderer.placeAt(const Point(10, 20));
-      expect(native.operations, ['query', MapStyle.locationSource, 'query']);
+      expect(native.operations, ['query', 'user-location', 'query']);
       expect(native.cameraMoves, isEmpty);
       expect(statuses.last, MapRenderStatus.ready);
     },
@@ -193,7 +192,7 @@ void main() {
     renderer.render(sceneAt(-6.22));
     gate.complete();
     await Future<void>.delayed(Duration.zero);
-    expect(native.operations, [MapStyle.locationSource, 'reload']);
+    expect(native.operations, ['user-location', 'reload']);
     expect(native.cameraMoves, isEmpty);
     renderer.styleLoaded();
     await Future<void>.delayed(Duration.zero);
@@ -212,11 +211,7 @@ void main() {
       native.layers.clear();
       renderer.styleLoaded();
       await Future<void>.delayed(Duration.zero);
-      expect(native.operations, [
-        MapStyle.placesSource,
-        MapStyle.locationSource,
-        'camera',
-      ]);
+      expect(native.operations, ['mapid-places', 'user-location', 'camera']);
       expect(statuses.last, MapRenderStatus.ready);
     },
   );

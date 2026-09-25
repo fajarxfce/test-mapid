@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:map_presentation/src/map/widgets/map_canvas.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
@@ -24,7 +24,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(MapLibreMap), findsOneWidget);
-    expect(platform.creationParams?['styleString'], MapStyle.liberty);
+    expect(platform.creationParams?['styleString'], MapLibreRenderer.styleUrl);
     await tester.pumpWidget(const SizedBox.shrink());
     expect(tester.takeException(), isNull);
   });

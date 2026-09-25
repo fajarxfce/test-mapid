@@ -6,8 +6,7 @@ import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_factory.dart';
 import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_observer.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_renderer.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class MapCanvas extends StatelessWidget {
@@ -21,7 +20,7 @@ class MapCanvas extends StatelessWidget {
       ),
     },
     child: MapLibreMap(
-      styleString: MapStyle.liberty,
+      styleString: MapLibreRenderer.styleUrl,
       annotationOrder: const [],
       initialCameraPosition: const CameraPosition(
         target: LatLng(-7.80, 110.37),

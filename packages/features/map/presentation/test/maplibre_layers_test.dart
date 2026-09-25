@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_geojson_encoder.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_layers.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_layers.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -15,6 +14,7 @@ import 'support/map_fixtures.dart';
 import 'support/mock_map_controller.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late TestMapController controller;
   late MapLibreLayers layers;
   late Set<String> sourceIds;
@@ -69,14 +69,15 @@ void main() {
     });
   });
 
-  test('encodes feature IDs and GeoJSON longitude before latitude', () {
-    final data = placesGeoJson(sampleLayer);
+  test('encodes feature IDs and GeoJSON longitude before latitude', () async {
+    await layers.showPlaces(sampleLayer);
+    final data = writes.last;
     final feature = (data['features'] as List).single as Map;
     expect(feature['id'], samplePlace.id);
     expect(feature['properties'], {'place_id': samplePlace.id});
     expect((feature['geometry'] as Map)['coordinates'], [110.36, -7.8]);
-    final location =
-        (locationGeoJson(sampleLocation)['features'] as List).single as Map;
+    await layers.showLocation(sampleLocation);
+    final location = (writes.last['features'] as List).single as Map;
     expect((location['geometry'] as Map)['coordinates'], [106.8, -6.2]);
   });
 
@@ -91,13 +92,34 @@ void main() {
     );
     await layers.showLocation(location);
     await layers.showLocation(location);
-    expect(layerIds, contains(MapStyle.headingLayer));
-    verify(() => controller.addImage(MapStyle.headingImage, any())).called(1);
+    expect(layerIds, contains('user-location-heading'));
+    final imageBytes =
+        verify(() => controller.addImage('user-heading-arrow', captureAny()))
+                .captured
+                .single
+            as Uint8List;
+    final codec = await ui.instantiateImageCodec(imageBytes);
+    final image = (await codec.getNextFrame()).image;
+    final ratio =
+        ui.PlatformDispatcher.instance.implicitView?.devicePixelRatio ?? 1;
+    expect(image.width, (64 * ratio).ceil());
+    expect(image.height, (64 * ratio).ceil());
+    final pixels = (await image.toByteData(
+      format: ui.ImageByteFormat.rawRgba,
+    ))!;
+    final arrowCenter =
+        ((12 * ratio).floor() * image.width + (32 * ratio).floor()) * 4;
+    final belowArrow =
+        ((40 * ratio).floor() * image.width + (32 * ratio).floor()) * 4;
+    expect(pixels.getUint8(arrowCenter + 3), 255);
+    expect(pixels.getUint8(belowArrow + 3), 0);
+    image.dispose();
+    codec.dispose();
     final properties =
         verify(
               () => controller.addSymbolLayer(
-                MapStyle.locationSource,
-                MapStyle.headingLayer,
+                'user-location',
+                'user-location-heading',
                 captureAny(),
                 filter: any<dynamic>(named: 'filter'),
                 enableInteraction: false,
@@ -134,10 +156,10 @@ void main() {
         layers.showPlaces(sampleLayer),
         throwsA(isA<PlatformException>()),
       );
-      expect(sourceIds, contains(MapStyle.placesSource));
+      expect(sourceIds, contains('mapid-places'));
       expect(layerIds, isEmpty);
       await layers.showPlaces(sampleLayer);
-      expect(layerIds, contains(MapStyle.placesLayer));
+      expect(layerIds, contains('mapid-place-points'));
       verify(() => controller.addGeoJsonSource(any(), any())).called(1);
       expect(attempts, 2);
     },
@@ -157,7 +179,7 @@ void main() {
           enableInteraction: false,
         ),
       ).called(1);
-      verify(() => controller.setGeoJsonSource(MapStyle.placesSource, any()))
+      verify(() => controller.setGeoJsonSource('mapid-places', any()))
           .called(1);
     },
   );
@@ -165,8 +187,8 @@ void main() {
   test('places and location have independent source and layer IDs', () async {
     await layers.showPlaces(sampleLayer);
     await layers.showLocation(sampleLocation);
-    expect(sourceIds, {MapStyle.placesSource, MapStyle.locationSource});
-    expect(layerIds, {MapStyle.placesLayer, MapStyle.locationLayer});
+    expect(sourceIds, {'mapid-places', 'user-location'});
+    expect(layerIds, {'mapid-place-points', 'user-location-point'});
   });
 
   test(
@@ -188,7 +210,7 @@ void main() {
     () async {
       when(() => controller.queryRenderedFeaturesInRect(any(), any(), null))
           .thenAnswer((call) async {
-            expect(call.positionalArguments[1], [MapStyle.placesLayer]);
+            expect(call.positionalArguments[1], ['mapid-place-points']);
             expect(
               (call.positionalArguments[0] as Rect).center,
               const Offset(100, 200),

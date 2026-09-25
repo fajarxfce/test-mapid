@@ -7,8 +7,8 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 
 import 'support/fake_map_renderer.dart';
 import 'support/map_fixtures.dart';

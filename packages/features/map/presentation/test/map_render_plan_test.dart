@@ -4,10 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/diff_map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_baseline.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_scene_change.dart';
 import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/rendering/map_render_plan.dart';
 
 import 'support/map_fixtures.dart';
 

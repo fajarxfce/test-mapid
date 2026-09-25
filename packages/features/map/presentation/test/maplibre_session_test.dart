@@ -4,8 +4,8 @@ import 'dart:ui' show Rect;
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_render_session.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_session.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -23,7 +23,10 @@ void main() {
   test(
     'style timeout recovers and successful reload cancels its timer',
     () => fakeAsync((clock) {
-      final session = MapLibreRenderSession(NativeMapHarness().controller);
+      final session = MapLibreSession(
+        NativeMapHarness().controller,
+        styleUrl: "test-style",
+      );
       final statuses = <MapRenderStatus>[];
       final subscription = session.statuses.listen(statuses.add);
       clock.flushMicrotasks();
@@ -49,7 +52,10 @@ void main() {
   test(
     'close cancels a pending style timeout',
     () => fakeAsync((clock) {
-      final session = MapLibreRenderSession(NativeMapHarness().controller);
+      final session = MapLibreSession(
+        NativeMapHarness().controller,
+        styleUrl: "test-style",
+      );
       final statuses = <MapRenderStatus>[];
       final subscription = session.statuses.listen(statuses.add);
       clock.flushMicrotasks();

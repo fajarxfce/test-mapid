@@ -4,26 +4,23 @@ import 'dart:math';
 
 import 'package:core_common/core_common.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/diff_map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_camera.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_layers.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_native_operation.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_baseline.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_scene_change.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_style.dart';
+import 'package:map_presentation/src/map/rendering/map_render_plan.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_camera.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_layers.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' show MapLibreMapController;
 import 'package:synchronized/synchronized.dart';
 
 /// Owns operations for exactly one native controller. The widget disposes it.
-final class MapLibreRenderSession {
-  MapLibreRenderSession(this._controller)
+final class MapLibreSession {
+  MapLibreSession(this._controller, {required this.styleUrl})
     : _layers = MapLibreLayers(_controller),
       _camera = MapLibreCamera(_controller) {
     _waitForStyle();
   }
 
   final MapLibreMapController _controller;
+  final String styleUrl;
   final MapLibreLayers _layers;
   final MapLibreCamera _camera;
   final _operations = Lock();
@@ -87,10 +84,7 @@ final class MapLibreRenderSession {
     unawaited(
       _operations.synchronized(() async {
         if (_styleReady) {
-          await _execute(
-            MapNativeOperation.camera,
-            () => _camera.zoomBy(amount),
-          );
+          await _execute(_NativeOperation.camera, () => _camera.zoomBy(amount));
         }
       }),
     );
@@ -103,8 +97,8 @@ final class MapLibreRenderSession {
     unawaited(
       _operations.synchronized(
         () => _execute(
-          MapNativeOperation.style,
-          () => _controller.setStyle(MapStyle.liberty),
+          _NativeOperation.style,
+          () => _controller.setStyle(styleUrl),
         ),
       ),
     );
@@ -113,7 +107,7 @@ final class MapLibreRenderSession {
   Future<Result<String?>> placeAt(Point<double> point) =>
       _operations.synchronized(
         () => _execute(
-          MapNativeOperation.query,
+          _NativeOperation.query,
           () async => _styleReady ? await _layers.placeAt(point) : null,
         ),
       );
@@ -158,15 +152,15 @@ final class MapLibreRenderSession {
     if (_closed || !_styleReady) return false;
     final result = await switch (change) {
       MapPlacesChanged(:final layer) => _execute(
-        MapNativeOperation.sources,
+        _NativeOperation.sources,
         () => _layers.showPlaces(layer),
       ),
       MapLocationChanged(:final location) => _execute(
-        MapNativeOperation.sources,
+        _NativeOperation.sources,
         () => _layers.showLocation(location),
       ),
       MapCameraChanged(:final scene, :final reframe) => _execute(
-        MapNativeOperation.camera,
+        _NativeOperation.camera,
         () => _camera.focus(scene, reframe: reframe),
       ),
     };
@@ -176,7 +170,7 @@ final class MapLibreRenderSession {
   }
 
   Future<Result<T>> _execute<T>(
-    MapNativeOperation operation,
+    _NativeOperation operation,
     Future<T> Function() run,
   ) async {
     if (_closed) {
@@ -200,10 +194,10 @@ final class MapLibreRenderSession {
         stackTrace: stackTrace,
       );
       if (!_closed) {
-        if (operation == MapNativeOperation.sources) {
+        if (operation == _NativeOperation.sources) {
           _applied = MapRenderBaseline(camera: _applied.camera);
         }
-        if (operation != MapNativeOperation.query) {
+        if (operation != _NativeOperation.query) {
           _statuses.add(MapRenderStatus.renderingFailure);
         }
       }
@@ -219,3 +213,5 @@ final class MapLibreRenderSession {
     return _statuses.close();
   }
 }
+
+enum _NativeOperation { sources, camera, query, style }

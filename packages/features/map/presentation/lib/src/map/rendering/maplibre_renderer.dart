@@ -4,17 +4,17 @@ import 'dart:math';
 import 'package:core_common/core_common.dart';
 import 'package:injectable/injectable.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_render_session.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_status.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_session.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' show MapLibreMapController;
 import 'package:rxdart/rxdart.dart';
 
 /// Retains the desired scene across native creation and style replacement.
 @injectable
 final class MapLibreRenderer implements MapRenderer {
+  static const styleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   MapScene _scene = const MapScene();
-  MapLibreRenderSession? _session;
+  MapLibreSession? _session;
   StreamSubscription<MapRenderStatus>? _statusSubscription;
   final _statuses = BehaviorSubject<MapRenderStatus>.seeded(
     MapRenderStatus.waitingForMap,
@@ -28,7 +28,7 @@ final class MapLibreRenderer implements MapRenderer {
     if (_statuses.isClosed || controller.isDisposed) return;
     unawaited(_statusSubscription?.cancel());
     unawaited(_session?.close());
-    final session = MapLibreRenderSession(controller);
+    final session = MapLibreSession(controller, styleUrl: styleUrl);
     _session = session;
     _statusSubscription = session.statuses.listen((status) {
       if (!_statuses.isClosed && identical(session, _session)) {

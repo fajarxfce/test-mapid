@@ -5,8 +5,8 @@ import 'package:injectable/injectable.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_state.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
+import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 
 /// Owns user intent and selection. The renderer owns native resources and work.
 @injectable

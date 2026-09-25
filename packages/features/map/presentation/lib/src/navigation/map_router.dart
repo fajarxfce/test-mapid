@@ -8,7 +8,7 @@ import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
 import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_libre_renderer.dart';
+import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:map_presentation/src/navigation/map_router.gr.dart';
 
 @lazySingleton

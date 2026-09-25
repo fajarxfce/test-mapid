@@ -232,6 +232,24 @@ void main() {
     );
     expect(checkArchitecture(root), contains(contains('split public types')));
   });
+
+  test('presentation contracts can colocate supporting enums and payloads', () {
+    File(p.join(root.path, 'domain/pubspec.yaml'))
+        .writeAsStringSync('name: map_presentation\ndependencies: {}\n');
+    final file = File(
+      p.join(root.path, 'domain/lib/src/map/rendering/map_renderer.dart'),
+    );
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync('''
+enum MapRenderStatus { loading, ready }
+class MapScene { const MapScene(); }
+abstract interface class MapRenderer {
+  MapRenderStatus get status;
+  void render(MapScene scene);
+}
+''');
+    expect(checkArchitecture(root), isEmpty);
+  });
   test('accepts a sealed event family in one source file', () {
     File(p.join(root.path, 'domain/lib/map_event.dart')).writeAsStringSync('''
 sealed class MapEvent {}

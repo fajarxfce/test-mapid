@@ -1,7 +1,51 @@
+import 'package:core_location_domain/core_location_domain.dart';
+import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_render_baseline.dart';
-import 'package:map_presentation/src/map/canvas/rendering/map_scene_change.dart';
+import 'package:map_presentation/src/map/models/map_content.dart';
+
+/// Confirmed native content and camera progress can fail independently.
+final class MapRenderBaseline {
+  const MapRenderBaseline({this.content, this.camera});
+  final MapContent? content;
+  final MapScene? camera;
+
+  MapRenderBaseline afterSuccess(MapSceneChange change) => switch (change) {
+    MapPlacesChanged(:final layer) => MapRenderBaseline(
+      content: (content ?? const MapContent()).copyWith(layer: layer),
+      camera: camera,
+    ),
+    MapLocationChanged(:final location) => MapRenderBaseline(
+      content: (content ?? const MapContent()).copyWith(location: location),
+      camera: camera,
+    ),
+    MapCameraChanged(:final scene) => MapRenderBaseline(
+      content: content,
+      camera: scene,
+    ),
+  };
+}
+
+/// A finite rendering plan, separate from Bloc input events.
+sealed class MapSceneChange {
+  const MapSceneChange();
+}
+
+final class MapPlacesChanged extends MapSceneChange {
+  const MapPlacesChanged(this.layer);
+  final MapLayer? layer;
+}
+
+final class MapLocationChanged extends MapSceneChange {
+  const MapLocationChanged(this.location);
+  final LocationFix? location;
+}
+
+final class MapCameraChanged extends MapSceneChange {
+  const MapCameraChanged(this.scene, {this.reframe = false});
+  final MapScene scene;
+  final bool reframe;
+}
 
 /// Computes native work without performing I/O or modifying either snapshot.
 List<MapSceneChange> diffMapScene(

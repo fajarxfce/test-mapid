@@ -22,7 +22,7 @@ flowchart LR
     Canvas --> View[Canvas state and popup]
     Scene --> Port[MapRenderer]
     Port --> Adapter[MapLibreRenderer]
-    Adapter --> Session[MapLibreRenderSession]
+    Adapter --> Session[MapLibreSession]
     Session --> Diff[Pure scene diff]
     Session --> Layers[MapLibreLayers]
     Session --> Camera[MapLibreCamera]
@@ -41,7 +41,7 @@ flowchart LR
 | `MapScene` | Immutable content and camera focus to display. |
 | `MapRenderer` | SDK-free presentation commands and render status; no controller, attachment, or disposal API. |
 | `MapLibreRenderer` | Route-owned adapter retaining the desired scene and replaying status across native session replacement. |
-| `MapLibreRenderSession` | One controller's style readiness, operation queue, timeout, and applied scene. |
+| `MapLibreSession` | One controller's style readiness, operation queue, timeout, and applied scene. |
 | `MapRenderBaseline` | Independently confirmed source content and camera intent. |
 | `diffMapScene` | Pure calculation of changed sources and required camera movement. |
 | `MapLibreLayers` | Native source/layer updates and feature hit testing. |
@@ -56,6 +56,14 @@ overlays; the location card rebuilds when its displayed status or bearing change
 one injected dependency, `MapRenderer`; it has no native controller field, timer,
 lock, or manual stream subscription. The architecture checker enforces the
 rendering contract boundary and rejects feature dependencies from shared location.
+
+Rendering lives in six files under `src/map/rendering`: the SDK-free contract,
+its MapLibre adapter, one native session, a pure render plan, layer operations,
+and camera operations. The render plan colocates its baseline and change types;
+the contract colocates its status enum. GeoJSON encoders and native layer IDs are
+private to the layers implementation. Domain entities, DTOs, repositories, and
+use cases retain separate files. Presentation grouping is reviewed by concern;
+the checker enforces dependency and ownership boundaries.
 
 ## Lifecycle and ordering
 
@@ -165,8 +173,8 @@ interference.
 
 The MapLibre symbol rotates relative to the map using a bearing property in the
 location source. Its image and layer are recreated after style replacement.
-The image is rasterized at the native display's pixel ratio; the web SDK uses
-1x image pixels. This keeps the arrow's size consistent with the location dot.
+The static arrow asset is decoded at the native display's pixel ratio, including
+fractional densities; the web SDK uses 1x image pixels. This keeps the arrow's size consistent with the location dot.
 `diffMapScene` treats heading changes separately from coordinate changes, so
 turning the phone does not move the camera. GPS follow uses a center-only
 `easeCamera` update over 800 ms, preserving zoom throughout the animation.
