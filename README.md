@@ -42,7 +42,7 @@ VS Code and Zed configurations include run, debug, build, and maintenance tasks.
 - `apps/fluent_starter`: application bootstrap, configuration, and composition.
 - `packages/features/map/domain`: entities, repository contracts, and use cases.
 - `packages/features/map/data`: API services, DTOs, data sources, and repositories.
-- `packages/features/map/presentation`: screen/canvas Blocs, MapLibre adapters,
+- `packages/features/map/presentation`: page Bloc, MapLibre rendering adapters,
   routes, and UI.
 - `packages/core/location/{domain,data}`: shared location contracts, use cases,
   permissions, and the Geolocator adapter.
