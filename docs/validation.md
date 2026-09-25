@@ -74,9 +74,9 @@ asset files are excluded from these counts.
   hidden-bearing behavior.
 
 All 243 tests and static checks passed. Android release validation is listed
-above. This simplified version has not yet been retested on the physical phone;
-the device was initially locked, then its ADB connection became unavailable.
-Earlier device checks below apply to their stated builds.
+above. Physical verification of the simplified presentation is recorded in the
+Presentation simplification device follow-up below. Earlier device checks retain
+their original build context.
 
 ## Map audit regressions
 
@@ -198,3 +198,36 @@ generated dependency injection, native MapLibre adapter, and location repository
 
 This run did not repeat the walking/rotation experiment or the continuous label
 fade recordings. Those observations remain attributed to the earlier builds.
+
+### Presentation simplification device follow-up
+
+Source `3a72373` was verified on the Galaxy A72 running Android 16 on
+25 September 2026 using the staging release. The installed APK's SHA-256 matched
+the release artifact produced after the single-Bloc refactor.
+
+- Liberty, map labels, and all 10 tourism features rendered without connection
+  warnings. Tapping BBY displayed its name and address; dismissing the popup
+  restored the location card.
+- The native GPS marker and heading arrow were visible at the device's display
+  density. GPS and compass status appeared in the location card.
+- Permanent location denial left the map and tourism layer usable. The recovery
+  action opened Android Settings. Granting foreground access through ADB while
+  Settings was open, then returning, restored GPS, compass, and camera follow
+  without another tap or process restart.
+- Backgrounding released the high-accuracy location request. Returning restarted
+  it in the same process. Live GPS and compass status were observed after about
+  10 seconds, within the existing 20-second first-fix deadline; an initial check
+  at three seconds was too early. No timeout was changed.
+- A deliberate pan kept the camera away from the position marker through seven
+  seconds of tracking. The location action restored follow. Refreshing tourism
+  data preserved that focus, and the layer control restored the tourism overview.
+- Android retained the app's high-accuracy location request across three samples
+  with a requested interval of one second; a subsequent provider snapshot
+  contained a newer fix. No Flutter errors or Android fatal exceptions appeared
+  in the final tested app process.
+- Foreground location permissions, permission flags, and the original screen
+  timeout were restored after testing.
+
+This run did not measure walking distance or record continuous label fading.
+The heading image was inspected on the native map; a new manual rotation and
+label-stability confirmation from the device owner is still pending.
