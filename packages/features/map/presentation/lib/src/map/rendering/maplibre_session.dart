@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:core_common/core_common.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_render_plan.dart';
 import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_camera.dart';

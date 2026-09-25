@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 234 tests.
+  dependency boundaries, architecture rules, static analysis, and 243 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev universal release and staging ARM64 release builds: passed. Both
   APK signatures were verified with Android SDK `apksigner`. Earlier debug-build
@@ -20,7 +20,7 @@ Coverage includes GeoJSON parsing and coordinate validation, HTTP failures,
 credential-safe logging, shared location permissions and service failures,
 successive GPS fixes, compass fallback and throttling, first-fix timeout,
 background cancellation and resumption, heading-only updates, and camera follow,
-typed canvas handlers, pure scene diffing, UI event bindings, style restoration,
+typed page handlers, pure scene diffing, UI event bindings, style restoration,
 serialized native rendering, partial write rollback, stale feature picks,
 controller replacement, disposal during native operations, popup content, and
 constrained layouts. See [Map architecture](map-architecture.md) for boundaries
@@ -45,9 +45,38 @@ The API key is absent from tracked source and local commit history. The root
 - Architecture checks reject domain imports and Result/Failure wrappers in raw
   datasources/DTOs, and SDK imports in Bloc events, states, and the renderer port.
 
-The boundary refactor passed all 234 automated tests and both release builds.
-Physical verification of this source is recorded in the Clean Architecture
-device follow-up below; earlier observations retain their original build context.
+The earlier boundary refactor passed 234 tests and both release builds. Its
+physical verification is recorded in the Clean Architecture device follow-up
+below; observations retain their original build context.
+
+## Presentation simplification
+
+The current presentation layer has 22 manual Dart files, down from 39. Its native
+rendering implementation occupies six files, down from 13. Generated code and
+asset files are excluded from these counts.
+
+- Geographic, place, layer, and location values use Equatable; immutable page
+  state and scene use Freezed. Tests cover independently reconstructed values,
+  changed attributes, ordered layers, caller mutation, and fresh sensor metadata.
+- One `MapBloc` owns page data, location, selection, camera intent, and render
+  status. The second canvas Bloc, content-forwarding binding, nested content
+  model, and pass-through page view have been removed.
+- The renderer remains SDK-free at the Bloc boundary. The generated route injects
+  the same adapter into the Bloc and native widget, and owns its disposal.
+- The location button dispatches one event. Late layer results preserve newer GPS,
+  focus, and native status. Tests also cover commands during pending requests,
+  popup preservation, stale picks, and cancellation of GPS/status observation.
+- Widget tests confirm that compass updates preserve header, controls, and popup
+  widget instances. Native constructor assertions and intentional-pan detection
+  remain covered.
+- The heading arrow uses a static image with native-density decoding. Tests check
+  its decoded dimensions and transparent area as well as symbol alignment and
+  hidden-bearing behavior.
+
+All 243 tests and static checks passed. Android release validation is listed
+above. This simplified version has not yet been retested on the physical phone;
+the device was initially locked, then its ADB connection became unavailable.
+Earlier device checks below apply to their stated builds.
 
 ## Map audit regressions
 

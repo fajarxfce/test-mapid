@@ -1,24 +1,33 @@
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
+import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/bloc/map_bloc.dart';
+import 'package:map_presentation/src/map/bloc/map_event.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/widgets/map_canvas.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import 'support/fake_map_renderer.dart';
+import 'support/fake_repositories.dart';
 import 'support/map_platform_view.dart';
 
 void main() {
-  late MapCanvasBloc bloc;
+  late MapBloc bloc;
   late FakeMapRenderer renderer;
   late int nativeTaps;
   late int nativeDragUpdates;
 
   setUp(() {
     renderer = FakeMapRenderer();
-    bloc = MapCanvasBloc(renderer);
+    final locations = FakeLocationRepository();
+    bloc = MapBloc(
+      LoadMapLayer(FakeMapRepository()),
+      WatchLocation(locations),
+      OpenLocationSettings(locations),
+      renderer,
+    );
     nativeTaps = 0;
     nativeDragUpdates = 0;
     final previous = MapLibrePlatform.createInstance;
@@ -33,12 +42,13 @@ void main() {
     MapLibrePlatform.createInstance = () => platform;
     addTearDown(() async {
       await bloc.close();
+      await renderer.close();
       MapLibrePlatform.createInstance = previous;
     });
   });
 
   Future<void> mount(WidgetTester tester) async {
-    bloc.add(const MapCanvasFocusRequested(MapCameraFocus.userLocation));
+    bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,

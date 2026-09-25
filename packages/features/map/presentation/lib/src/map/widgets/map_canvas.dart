@@ -2,10 +2,9 @@ import 'dart:math';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
-import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_factory.dart';
-import 'package:map_presentation/src/map/canvas/gestures/map_pan_gesture_observer.dart';
+import 'package:map_presentation/src/map/bloc/map_bloc.dart';
+import 'package:map_presentation/src/map/bloc/map_event.dart';
+import 'package:map_presentation/src/map/gestures/map_pan_gesture.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
@@ -16,7 +15,7 @@ class MapCanvas extends StatelessWidget {
     excludeFromSemantics: true,
     gestures: {
       MapPanGestureObserver: MapPanGestureFactory(
-        onPan: () => context.read<MapCanvasBloc>().add(const MapCanvasPanned()),
+        onPan: () => context.read<MapBloc>().add(const MapPanned()),
       ),
     },
     child: MapLibreMap(
@@ -34,7 +33,7 @@ class MapCanvas extends StatelessWidget {
       onStyleLoadedCallback: () =>
           context.read<MapLibreRenderer>().styleLoaded(),
       onMapClick: (point, coordinates) =>
-          context.read<MapCanvasBloc>().add(MapCanvasTapped(point)),
+          context.read<MapBloc>().add(MapTapped(point)),
     ),
   );
 }

@@ -4,9 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_bloc.dart';
-import 'package:map_presentation/src/map/canvas/bloc/map_canvas_event.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
 
 class MapLocationCard extends StatelessWidget {
   const MapLocationCard({super.key});
@@ -60,14 +57,9 @@ class MapLocationCard extends StatelessWidget {
                 icon: const Icon(FluentIcons.location, size: 16),
                 isLoading: state.locating,
                 loadingLabel: 'Mencari lokasi',
-                onPressed: () {
-                  context.read<MapCanvasBloc>().add(
-                    const MapCanvasFocusRequested(MapCameraFocus.userLocation),
-                  );
-                  context.read<MapBloc>().add(
-                    const MapLocationActionRequested(),
-                  );
-                },
+                onPressed: () => context.read<MapBloc>().add(
+                  const MapLocationActionRequested(),
+                ),
               ),
             ),
           ],

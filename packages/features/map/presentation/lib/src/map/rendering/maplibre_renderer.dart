@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:core_common/core_common.dart';
 import 'package:injectable/injectable.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_session.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' show MapLibreMapController;

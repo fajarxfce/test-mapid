@@ -2,8 +2,7 @@ import 'dart:math';
 
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 /// Converts feature-level camera requests to native MapLibre updates.
@@ -14,9 +13,9 @@ class MapLibreCamera {
   Future<void> focus(MapScene scene, {bool reframe = false}) async {
     switch (scene.focus) {
       case MapCameraFocus.places:
-        if (scene.content.layer case final layer?) await _fitPlaces(layer);
+        if (scene.layer case final layer?) await _fitPlaces(layer);
       case MapCameraFocus.userLocation:
-        if (scene.content.location case final location?) {
+        if (scene.location case final location?) {
           await _centerOn(location, reframe: reframe);
         }
       case MapCameraFocus.free:

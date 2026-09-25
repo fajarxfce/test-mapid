@@ -5,9 +5,7 @@ import 'package:core_common/core_common.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart'
@@ -23,9 +21,7 @@ void main() {
   late NativeMapHarness native;
   late List<MapRenderStatus> statuses;
   StreamSubscription<MapRenderStatus>? statusSubscription;
-  final scene = MapScene(
-    content: MapContent(layer: sampleLayer, location: sampleLocation),
-  );
+  final scene = MapScene(layer: sampleLayer, location: sampleLocation);
   setUpAll(() {
     registerFallbackValue(const CircleLayerProperties());
     registerFallbackValue(Rect.zero);
@@ -63,7 +59,7 @@ void main() {
   test(
     'retains the newest scene before creation and waits for style readiness',
     () async {
-      renderer.render(MapScene(content: MapContent(layer: sampleLayer)));
+      renderer.render(MapScene(layer: sampleLayer));
       attach();
       renderer.render(scene);
       await settle();
@@ -95,7 +91,7 @@ void main() {
   );
 
   test('late GPS respects newer tourism focus without fitting again', () async {
-    final places = MapScene(content: MapContent(layer: sampleLayer));
+    final places = MapScene(layer: sampleLayer);
     await ready(places);
     renderer.focus(places.copyWith(focus: MapCameraFocus.userLocation));
     renderer.focus(places);
@@ -114,9 +110,7 @@ void main() {
     await ready(focused);
     renderer.render(
       focused.copyWith(
-        content: focused.content.copyWith(
-          layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
-        ),
+        layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
       ),
     );
     await settle();

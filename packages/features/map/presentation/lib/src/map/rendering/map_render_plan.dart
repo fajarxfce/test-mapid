@@ -1,26 +1,24 @@
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 
-/// Confirmed native content and camera progress can fail independently.
+/// Confirmed native sources and camera progress can fail independently.
 final class MapRenderBaseline {
-  const MapRenderBaseline({this.content, this.camera});
-  final MapContent? content;
+  const MapRenderBaseline({this.sources, this.camera});
+  final MapScene? sources;
   final MapScene? camera;
 
   MapRenderBaseline afterSuccess(MapSceneChange change) => switch (change) {
     MapPlacesChanged(:final layer) => MapRenderBaseline(
-      content: (content ?? const MapContent()).copyWith(layer: layer),
+      sources: (sources ?? const MapScene()).copyWith(layer: layer),
       camera: camera,
     ),
     MapLocationChanged(:final location) => MapRenderBaseline(
-      content: (content ?? const MapContent()).copyWith(location: location),
+      sources: (sources ?? const MapScene()).copyWith(location: location),
       camera: camera,
     ),
     MapCameraChanged(:final scene) => MapRenderBaseline(
-      content: content,
+      sources: sources,
       camera: scene,
     ),
   };
@@ -54,28 +52,27 @@ List<MapSceneChange> diffMapScene(
   bool refocus = false,
 }) {
   final placesChanged =
-      previous.content == null || previous.content?.layer != next.content.layer;
-  final before = previous.content?.location;
-  final after = next.content.location;
+      previous.sources == null || previous.sources?.layer != next.layer;
+  final before = previous.sources?.location;
+  final after = next.location;
   final positionChanged =
       before?.point.latitude != after?.point.latitude ||
       before?.point.longitude != after?.point.longitude;
   final locationChanged =
-      previous.content == null ||
+      previous.sources == null ||
       positionChanged ||
       before?.bearing?.degrees != after?.bearing?.degrees;
   final camera = previous.camera;
-  final cameraLocation = camera?.content.location;
+  final cameraLocation = camera?.location;
   final cameraPositionChanged =
       cameraLocation?.point.latitude != after?.point.latitude ||
       cameraLocation?.point.longitude != after?.point.longitude;
   return [
-    if (placesChanged) MapPlacesChanged(next.content.layer),
-    if (locationChanged) MapLocationChanged(next.content.location),
+    if (placesChanged) MapPlacesChanged(next.layer),
+    if (locationChanged) MapLocationChanged(next.location),
     if (refocus ||
         camera?.focus != next.focus ||
-        (next.focus == MapCameraFocus.places &&
-            camera?.content.layer != next.content.layer) ||
+        (next.focus == MapCameraFocus.places && camera?.layer != next.layer) ||
         (next.focus == MapCameraFocus.userLocation && cameraPositionChanged))
       MapCameraChanged(
         next,

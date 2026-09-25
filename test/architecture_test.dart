@@ -62,7 +62,7 @@ void main() {
       contains(contains('forbidden dependency map_domain')),
     );
   });
-  test('screen data Bloc cannot import a native map SDK', () {
+  test('page Bloc cannot import a native map SDK', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
     );
@@ -73,9 +73,7 @@ void main() {
     file.writeAsStringSync("import 'package:maplibre_gl/maplibre_gl.dart';");
     expect(
       checkArchitecture(root),
-      contains(
-        contains('screen data Bloc must not depend on native map rendering'),
-      ),
+      contains(contains('Bloc must use the renderer contract')),
     );
   });
   test('Blocs cannot depend on sibling Blocs', () {
@@ -94,53 +92,49 @@ void main() {
       contains(contains('Blocs must not depend on another Bloc')),
     );
   });
-  test('canvas Bloc depends on the renderer contract, not native adapters', () {
+  test('page Bloc depends on the renderer contract, not native adapters', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any, synchronized: any}\n',
     );
     final file = File(
-      p.join(root.path, 'domain/lib/src/map/canvas/bloc/map_canvas_bloc.dart'),
+      p.join(root.path, 'domain/lib/src/map/bloc/map_bloc.dart'),
     );
     file.parent.createSync(recursive: true);
     file.writeAsStringSync(
-      "import 'package:map_presentation/src/map/canvas/rendering/map_renderer.dart';",
+      "import 'package:map_presentation/src/map/rendering/map_renderer.dart';",
     );
     expect(checkArchitecture(root), isEmpty);
     for (final uri in [
       'package:maplibre_gl/maplibre_gl.dart',
       'package:synchronized/synchronized.dart',
-      'package:map_presentation/src/map/canvas/rendering/map_libre_render_session.dart',
+      'package:map_presentation/src/map/rendering/maplibre_session.dart',
+      'package:map_presentation/src/map/rendering/map_render_plan.dart',
     ]) {
       file.writeAsStringSync("import '$uri';");
       expect(
         checkArchitecture(root),
-        contains(contains('canvas Bloc must use the renderer contract')),
+        contains(contains('Bloc must use the renderer contract')),
       );
     }
   });
-  test(
-    'canvas events and renderer contracts cannot expose SDK dependencies',
-    () {
-      File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-        'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
+  test('page events and renderer contracts cannot expose SDK dependencies', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
+    );
+    for (final path in [
+      'src/map/bloc/map_event.dart',
+      'src/map/rendering/map_renderer.dart',
+    ]) {
+      final file = File(p.join(root.path, 'domain/lib', path));
+      file.parent.createSync(recursive: true);
+      file.writeAsStringSync("import 'package:maplibre_gl/maplibre_gl.dart';");
+      expect(
+        checkArchitecture(root),
+        contains(contains('Bloc must use the renderer contract')),
       );
-      for (final path in [
-        'src/map/canvas/bloc/map_canvas_event.dart',
-        'src/map/canvas/rendering/map_renderer.dart',
-      ]) {
-        final file = File(p.join(root.path, 'domain/lib', path));
-        file.parent.createSync(recursive: true);
-        file.writeAsStringSync(
-          "import 'package:maplibre_gl/maplibre_gl.dart';",
-        );
-        expect(
-          checkArchitecture(root),
-          contains(contains('canvas Bloc must use the renderer contract')),
-        );
-        file.deleteSync();
-      }
-    },
-  );
+      file.deleteSync();
+    }
+  });
 
   test('datasource and DTO boundaries reject domain models and Result wrappers', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(

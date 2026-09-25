@@ -200,24 +200,14 @@ List<String> checkArchitecture(Directory root) {
           );
         }
         if (name == 'map_presentation' &&
-            (relativePath.startsWith('src/map/canvas/bloc/') ||
-                relativePath == 'src/map/canvas/rendering/map_renderer.dart' ||
+            (relativePath.startsWith('src/map/bloc/') ||
                 relativePath == 'src/map/rendering/map_renderer.dart') &&
             (uri.startsWith('package:maplibre_gl/') ||
                 uri.startsWith('package:synchronized/') ||
-                uri.contains('/rendering/map_libre_') ||
-                uri.contains('/rendering/maplibre_'))) {
+                (uri.contains('/rendering/') &&
+                    !uri.endsWith('/map_renderer.dart')))) {
           errors.add(
-            '$name/$relativePath: canvas Bloc must use the renderer contract; native resources belong to the adapter',
-          );
-        }
-        if (name == 'map_presentation' &&
-            relativePath.startsWith('src/map/bloc/') &&
-            (uri.startsWith('package:maplibre_gl/') ||
-                uri.contains('/src/map/canvas/') ||
-                uri.contains('/rendering/'))) {
-          errors.add(
-            '$name/$relativePath: screen data Bloc must not depend on native map rendering',
+            '$name/$relativePath: Bloc must use the renderer contract; native resources and render planning belong to the adapter',
           );
         }
         final parsed = Uri.parse(uri);

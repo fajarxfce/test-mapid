@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter/gestures.dart';
+import 'package:flutter/widgets.dart' show GestureRecognizerFactory;
 
 /// Observes intentional drags without claiming MapLibre's native gestures.
 class MapPanGestureObserver extends OneSequenceGestureRecognizer {
@@ -43,4 +44,17 @@ class MapPanGestureObserver extends OneSequenceGestureRecognizer {
     _origins.clear();
     super.dispose();
   }
+}
+
+/// RawGestureDetector owns the observer and refreshes its callback on rebuild.
+class MapPanGestureFactory
+    extends GestureRecognizerFactory<MapPanGestureObserver> {
+  const MapPanGestureFactory({required this.onPan});
+  final VoidCallback onPan;
+
+  @override
+  MapPanGestureObserver constructor() => MapPanGestureObserver();
+
+  @override
+  void initializer(MapPanGestureObserver instance) => instance.onPan = onPan;
 }

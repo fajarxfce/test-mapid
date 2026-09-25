@@ -2,36 +2,30 @@ import 'package:core_common/core_common.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_render_plan.dart';
 
 import 'support/map_fixtures.dart';
 
 MapRenderBaseline baseline(MapScene? scene) =>
-    MapRenderBaseline(content: scene?.content, camera: scene);
+    MapRenderBaseline(sources: scene, camera: scene);
 
 void main() {
-  final places = MapScene(content: MapContent(layer: sampleLayer));
-  final located = places.copyWith(
-    content: places.content.copyWith(location: sampleLocation),
-  );
+  final places = MapScene(layer: sampleLayer);
+  final located = places.copyWith(location: sampleLocation);
 
   test('turning the phone updates the arrow without moving the camera', () {
     final before = located.copyWith(focus: MapCameraFocus.userLocation);
     final after = before.copyWith(
-      content: before.content.copyWith(
-        location: LocationFix(
-          point: GeoPoint(
-            latitude: sampleLocation.point.latitude,
-            longitude: sampleLocation.point.longitude,
-          ),
-          accuracyMeters: 12,
-          bearing: const LocationBearing(
-            degrees: 90,
-            source: LocationBearingSource.compass,
-          ),
+      location: LocationFix(
+        point: GeoPoint(
+          latitude: sampleLocation.point.latitude,
+          longitude: sampleLocation.point.longitude,
+        ),
+        accuracyMeters: 12,
+        bearing: const LocationBearing(
+          degrees: 90,
+          source: LocationBearingSource.compass,
         ),
       ),
     );
@@ -41,11 +35,9 @@ void main() {
   test('a new GPS position follows without resetting the zoom', () {
     final before = located.copyWith(focus: MapCameraFocus.userLocation);
     final after = before.copyWith(
-      content: before.content.copyWith(
-        location: const LocationFix(
-          point: GeoPoint(latitude: -6.21, longitude: 106.8),
-          accuracyMeters: 12,
-        ),
+      location: const LocationFix(
+        point: GeoPoint(latitude: -6.21, longitude: 106.8),
+        accuracyMeters: 12,
       ),
     );
     expect(diffMapScene(baseline(before), after), [
@@ -60,15 +52,13 @@ void main() {
 
   test('new timestamps and accuracy alone require no native redraw', () {
     final next = located.copyWith(
-      content: located.content.copyWith(
-        location: LocationFix(
-          point: GeoPoint(
-            latitude: sampleLocation.point.latitude,
-            longitude: sampleLocation.point.longitude,
-          ),
-          accuracyMeters: 15,
-          timestamp: DateTime.utc(2026),
+      location: LocationFix(
+        point: GeoPoint(
+          latitude: sampleLocation.point.latitude,
+          longitude: sampleLocation.point.longitude,
         ),
+        accuracyMeters: 15,
+        timestamp: DateTime.utc(2026),
       ),
     );
     expect(diffMapScene(baseline(located), next), isEmpty);
@@ -114,7 +104,7 @@ void main() {
     );
     expect(identical(refreshed.places.single, samplePlace), isFalse);
     expect(refreshed.hashCode, sampleLayer.hashCode);
-    final next = places.copyWith(content: MapContent(layer: refreshed));
+    final next = places.copyWith(layer: refreshed);
     expect(diffMapScene(baseline(places), next), isEmpty);
   });
   test('changed place coordinates require a source update and new fit', () {
@@ -126,7 +116,7 @@ void main() {
         ),
       ],
     );
-    final next = places.copyWith(content: MapContent(layer: changed));
+    final next = places.copyWith(layer: changed);
     expect(diffMapScene(baseline(places), next), [
       isA<MapPlacesChanged>(),
       isA<MapCameraChanged>(),
@@ -156,9 +146,7 @@ void main() {
     () {
       final before = located.copyWith(focus: MapCameraFocus.userLocation);
       final after = before.copyWith(
-        content: before.content.copyWith(
-          layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
-        ),
+        layer: MapLayer(name: 'Reloaded', places: [samplePlace]),
       );
       expect(diffMapScene(baseline(before), after), [isA<MapPlacesChanged>()]);
     },

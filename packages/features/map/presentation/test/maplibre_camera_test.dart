@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_camera.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:mocktail/mocktail.dart';
@@ -26,7 +24,7 @@ void main() {
       await MapLibreCamera(controller).focus(
         const MapScene(
           focus: MapCameraFocus.userLocation,
-          content: MapContent(location: sampleLocation),
+          location: sampleLocation,
         ),
       );
       final update =
@@ -56,7 +54,7 @@ void main() {
       await MapLibreCamera(controller).focus(
         const MapScene(
           focus: MapCameraFocus.userLocation,
-          content: MapContent(location: sampleLocation),
+          location: sampleLocation,
         ),
         reframe: true,
       );

@@ -5,9 +5,7 @@ import 'package:core_common/core_common.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_presentation/src/map/canvas/models/map_camera_focus.dart';
-import 'package:map_presentation/src/map/canvas/models/map_scene.dart';
-import 'package:map_presentation/src/map/models/map_content.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
@@ -18,12 +16,11 @@ import 'support/native_map_harness.dart';
 
 MapScene sceneAt(double latitude) => MapScene(
   focus: MapCameraFocus.userLocation,
-  content: MapContent(
-    layer: sampleLayer,
-    location: LocationFix(
-      point: GeoPoint(latitude: latitude, longitude: 106.8),
-      accuracyMeters: 12,
-    ),
+
+  layer: sampleLayer,
+  location: LocationFix(
+    point: GeoPoint(latitude: latitude, longitude: 106.8),
+    accuracyMeters: 12,
   ),
 );
 
@@ -141,14 +138,12 @@ void main() {
       final scene = sceneAt(-6.2);
       renderer.render(
         scene.copyWith(
-          content: scene.content.copyWith(
-            location: LocationFix(
-              point: scene.content.location!.point,
-              accuracyMeters: 12,
-              bearing: const LocationBearing(
-                degrees: 90,
-                source: LocationBearingSource.compass,
-              ),
+          location: LocationFix(
+            point: scene.location!.point,
+            accuracyMeters: 12,
+            bearing: const LocationBearing(
+              degrees: 90,
+              source: LocationBearingSource.compass,
             ),
           ),
         ),
