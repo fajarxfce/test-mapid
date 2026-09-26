@@ -112,6 +112,7 @@ List<String> checkArchitecture(Directory root) {
       }
       final ui =
           relativePath == 'app.dart' ||
+          relativePath == 'src/map/canvas/map_canvas.dart' ||
           p.posix
               .split(relativePath)
               .any({'pages', 'views', 'widgets'}.contains);
@@ -215,21 +216,19 @@ List<String> checkArchitecture(Directory root) {
         }
         if (name == 'map_presentation') {
           if (relativePath.startsWith('src/map/bloc/') &&
-              (uri.contains('/rendering/') ||
-                  uri.contains('/bindings/') ||
+              (uri.contains('/canvas/') ||
                   uri.startsWith('package:maplibre_gl/') ||
                   uri.startsWith('package:synchronized/'))) {
             errors.add(
               '$name/$relativePath: Bloc must emit view state and effects; canvas binding owns rendering',
             );
           }
-          if (relativePath == 'src/map/rendering/map_renderer.dart' &&
+          if (relativePath == 'src/map/canvas/map_canvas_port.dart' &&
               (uri.startsWith('package:maplibre_gl/') ||
                   uri.startsWith('package:synchronized/') ||
-                  (uri.contains('/rendering/') &&
-                      !uri.endsWith('/map_renderer.dart')))) {
+                  uri.contains('/canvas/'))) {
             errors.add(
-              '$name/$relativePath: renderer contract must remain SDK-free',
+              '$name/$relativePath: canvas contract must remain SDK-free',
             );
           }
         }

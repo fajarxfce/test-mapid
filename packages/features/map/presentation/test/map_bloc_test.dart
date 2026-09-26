@@ -6,10 +6,10 @@ import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
+import 'package:map_presentation/src/map/bloc/map_effect.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/models/map_effect.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_camera_focus.dart';
 
 import 'support/fake_repositories.dart';
 import 'support/map_fixtures.dart';
@@ -40,7 +40,7 @@ void main() {
     bloc.add(const MapFocusRequested(MapCameraFocus.places));
     bloc.add(const MapFocusRequested(MapCameraFocus.places));
     bloc.add(const MapZoomRequested(1));
-    bloc.add(const MapStyleReloadRequested());
+    bloc.add(const MapCanvasRetryRequested());
     await Future<void>.delayed(Duration.zero);
     expect(effects, [
       isA<FocusMapCamera>(),
@@ -48,7 +48,7 @@ void main() {
       isA<ZoomMapCamera>(),
       isA<ReloadMapCanvas>(),
     ]);
-    expect(bloc.state.scene, const MapScene());
+    expect(bloc.state, const MapState());
     await bloc.close();
     expect(effectsClosed, isTrue);
     await subscription.cancel();
@@ -133,15 +133,15 @@ void main() {
       );
       updates.add(Success(moved));
       await Future<void>.delayed(Duration.zero);
-      expect(bloc.state.scene.location, same(moved));
-      expect(bloc.state.scene.location?.bearing?.degrees, 90);
+      expect(bloc.state.location, same(moved));
+      expect(bloc.state.location?.bearing?.degrees, 90);
       expect(bloc.state.locationMessage, contains('realtime'));
       updates.add(
         const FailureResult(Failure(FailureKind.cancelled, 'background')),
       );
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.locationStatus, LocationTrackingStatus.paused);
-      expect(bloc.state.scene.location, same(moved));
+      expect(bloc.state.location, same(moved));
       expect(bloc.state.locationMessage, contains('Lokasi terakhir'));
       updates.add(Success(moved));
       await Future<void>.delayed(Duration.zero);
@@ -157,8 +157,8 @@ void main() {
     build: createBloc,
     act: (bloc) => bloc.add(const MapLayerRequested()),
     verify: (bloc) {
-      expect(bloc.state.scene.layer, same(sampleLayer));
-      expect(bloc.state.scene.layer?.places, hasLength(1));
+      expect(bloc.state.layer, same(sampleLayer));
+      expect(bloc.state.layer?.places, hasLength(1));
       expect(bloc.state.loadingLayer, isFalse);
     },
   );
@@ -173,7 +173,7 @@ void main() {
       bloc.add(const MapLocationRequested());
     },
     verify: (bloc) {
-      expect(bloc.state.scene.layer?.places, hasLength(1));
+      expect(bloc.state.layer?.places, hasLength(1));
       expect(bloc.state.locationFailure?.kind, FailureKind.permissionDenied);
       expect(
         bloc.state.locationMessage,
@@ -195,12 +195,12 @@ void main() {
     bloc.add(const MapLayerRequested());
     await started.future;
     maps.response = () async => Success(sampleLayer);
-    final loaded = bloc.stream.firstWhere((state) => state.scene.layer != null);
+    final loaded = bloc.stream.firstWhere((state) => state.layer != null);
     bloc.add(const MapLayerRequested());
     await loaded;
     old.complete(Success(MapLayer(name: 'Stale', places: [])));
     await Future<void>.delayed(Duration.zero);
-    expect(bloc.state.scene.layer, same(sampleLayer));
+    expect(bloc.state.layer, same(sampleLayer));
   });
 
   test(
@@ -208,9 +208,7 @@ void main() {
     () async {
       final bloc = createBloc();
       addTearDown(bloc.close);
-      var settled = bloc.stream.firstWhere(
-        (state) => state.scene.layer != null,
-      );
+      var settled = bloc.stream.firstWhere((state) => state.layer != null);
       bloc.add(const MapLayerRequested());
       await settled;
       maps.response = () async =>
@@ -218,7 +216,7 @@ void main() {
       settled = bloc.stream.firstWhere((state) => state.layerFailure != null);
       bloc.add(const MapLayerRequested());
       await settled;
-      expect(bloc.state.scene.layer, same(sampleLayer));
+      expect(bloc.state.layer, same(sampleLayer));
       maps.response = () async => Success(sampleLayer);
       settled = bloc.stream.firstWhere(
         (state) => !state.loadingLayer && state.layerFailure == null,
@@ -240,9 +238,7 @@ void main() {
     bloc.add(const MapLocationRequested());
     await Future<void>.delayed(Duration.zero);
     expect(locations.calls, 1);
-    final found = bloc.stream.firstWhere(
-      (state) => state.scene.location != null,
-    );
+    final found = bloc.stream.firstWhere((state) => state.location != null);
     pending.complete(const Success(sampleLocation));
     await found;
     expect(bloc.state.locationMessage, contains('12 m'));
@@ -252,9 +248,7 @@ void main() {
     'the location button completes GPS acquisition and releases the Bloc',
     () async {
       final bloc = createBloc();
-      final found = bloc.stream.firstWhere(
-        (state) => state.scene.location != null,
-      );
+      final found = bloc.stream.firstWhere((state) => state.location != null);
       bloc.add(const MapLocationActionRequested());
       await found;
       expect(locations.calls, 1);
@@ -304,7 +298,7 @@ void main() {
       await bloc.close();
       pending.complete(Success(sampleLayer));
       await Future<void>.delayed(Duration.zero);
-      expect(bloc.state.scene.layer, isNull);
+      expect(bloc.state.layer, isNull);
     },
   );
 

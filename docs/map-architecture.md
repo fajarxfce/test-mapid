@@ -1,205 +1,146 @@
-# Map architecture
+# Map presentation
 
-One `MapBloc` owns the page state: loaded places, live location, selected place,
-camera intent, and render status. Native resources belong to the route-owned
-MapLibre adapter. Shared location remains under `packages/core/location`.
-
-Domain values use Equatable. Presentation state and `MapScene` use Freezed.
-Datasources expose DTOs and technical exceptions; repositories select and combine
-sources, map entities, and return domain failures. No SDK controller, Flutter UI
-type, or raw platform exception crosses the Bloc contract.
-
-The MAPID mapper removes a known corrupted alias suffix from place names. The
-API already contains Unicode replacement characters, so the lost alias cannot
-be recovered by changing fonts. Raw DTOs retain the response; valid Unicode and
-other parenthetical names are preserved in domain values.
+The page uses three domain operations: `LoadMapLayer`, `WatchLocation`, and
+`OpenLocationSettings`. `MapBloc` owns the page state and emits one-time visual
+commands. Native rendering belongs to a route-owned canvas component.
 
 ```mermaid
 flowchart LR
-    UI[Widget events] --> Bloc[MapBloc]
-    Bloc --> UseCases[Map and location use cases]
-    Bloc --> State[MapState with MapScene]
-    State --> Widgets[Page and widgets]
-    Bloc --> Effects[One-time visual effects]
-    State --> Binding[MapCanvasBinding]
-    Effects --> Binding
-    Binding --> Port[MapRenderer]
-    Port --> Adapter[MapLibreRenderer]
-    Native[SDK lifecycle callbacks] --> Adapter
-    Adapter --> Status[Render status stream]
-    Status --> Binding
-    Binding --> Events[Typed status and pick events]
-    Events --> Bloc
-    Adapter --> Session[MapLibreSession]
-    Session --> Plan[Pure render plan]
-    Session --> Layers[MapLibreLayers]
-    Session --> Camera[MapLibreCamera]
+    Widgets -->|events| Bloc[MapBloc]
+    Bloc --> UseCases[Domain use cases]
+    Bloc -->|state| Widgets
+    Bloc -->|layer, location, effects| Binding[MapCanvasBinding]
+    Binding --> Port[MapCanvasPort]
+    Port --> Adapter[MapLibreAdapter]
+    Adapter --> Places[TourismMarkers]
+    Adapter --> Location[LocationMarker]
+    Adapter --> Camera[MapCamera]
+    Adapter -->|status and selected ID| Binding
+    Binding -->|typed events| Bloc
 ```
 
-## Presentation structure
+## Files and ownership
 
-`lib/di` contains Injectable composition. Feature implementation lives under
-`lib/src/map`: `bloc`, `models`, `bindings`, `pages`, `widgets`, `gestures`,
-and `rendering`.
-AutoRoute configuration lives under `lib/src/navigation`.
+Implementation lives under `lib/src/map`. Injectable composition remains in
+`lib/di`, and feature-owned AutoRoute composition remains in `lib/src/navigation`.
 
-| File | Responsibility |
+| Component | Responsibility |
 | --- | --- |
-| `map_effect.dart` | Typed one-time visual commands and place-pick requests. |
-| `map_render_status.dart` | SDK-free canvas availability reported in page state. |
-| `map_canvas_binding.dart` | Connects scenes and effects to the renderer; returns status and pick events. |
-| `map_renderer.dart` | SDK-free rendering contract used by the binding. |
-| `maplibre_renderer.dart` | Latest desired scene, native attachment, stable status observation, and session replacement. |
-| `maplibre_session.dart` | One controller's readiness, timeout, serialized operations, and applied state. |
-| `map_render_plan.dart` | Pure diff, confirmed source/camera baseline, and related change types. |
-| `maplibre_camera.dart` | Camera bounds, zoom, recentering, and continuous follow. |
-| `maplibre_layers.dart` | GeoJSON encoding, native sources/layers, heading asset, and visual hit testing. |
+| `bloc/map_bloc.dart` | Calls use cases, handles each event separately, and updates page state. |
+| `bloc/map_state.dart` | Loaded layer, latest location, selection, loading and user-facing feedback. |
+| `bloc/map_effect.dart` | Explicit zoom, focus and canvas retry commands. |
+| `models/place_details.dart` | Immutable, value-equal popup content. |
+| `pages` and `widgets` | Render selected state fields and dispatch events. |
+| `canvas/map_canvas.dart` | Hosts the MapLibre widget and forwards native callbacks. |
+| `canvas/map_canvas_binding.dart` | Connects streams and callbacks; never stores or resolves a Bloc. |
+| `canvas/map_canvas_port.dart` | SDK-free visual operations and observation streams. |
+| `canvas/map_pan_observer.dart` | Reports deliberate drags while leaving native gesture handling intact. |
+| `canvas/maplibre/maplibre_adapter.dart` | Native attachment, readiness, deadlines and ordered work. |
+| `canvas/maplibre/tourism_markers.dart` | Tourism annotations and stable place IDs. |
+| `canvas/maplibre/location_marker.dart` | Position circle and heading symbol supplied by shared location. |
+| `canvas/maplibre/map_camera.dart` | Camera mode, framing, zoom and continuous follow. |
 
-Related presentation contracts, enums, and payloads can share a file. Internal
-layer IDs and encoders stay private to their implementation. Domain entities,
-DTOs, repositories, and use cases have separate files. Architecture checks focus
-on dependency, I/O, and resource ownership boundaries.
+The route creates the Bloc and adapter through Injectable, wires the binding,
+and releases all three on removal. The SDK widget owns its native controller.
+Each loaded style owns its tourism/location annotation handles. Replacing a
+style releases those handles; replacing a controller also gets a fresh operation
+queue so it does not wait for an old controller's pending call.
 
-`MapState.scene` holds the layer, location, and focus directly. One Bloc owns
-page state and calls use cases; it never imports the renderer or its binding.
-Every event has a typed registration and its own handler. The location button sends one event; the Bloc
-requests focus and decides whether to acquire location or open settings.
-Widgets render state and dispatch events. Header, viewport, and location-card
-builders select only their displayed fields, so compass updates leave unrelated
-widgets and an open popup intact.
+## Why annotation APIs
 
-## Lifecycle and asynchronous work
+This case study displays a small point layer. `addCircles`, `updateCircle`, and
+`onCircleTapped` let the SDK own source IDs, GeoJSON serialization, style-layer
+creation, and hit testing. The application does not maintain a scene diff,
+render-plan hierarchy or a custom asynchronous feature-query pipeline.
 
-The feature route creates `MapBloc` and `MapLibreRenderer` through Injectable.
-It connects them with one `MapCanvasBinding`, which receives streams and an event
-callback rather than holding or resolving a Bloc. The binding forwards changed
-scenes and one-time visual effects to the rendering contract. Render statuses and
-successful picks return as typed Bloc events. Status-only state changes never
-trigger another render. Native widget callbacks go directly to the adapter.
+`TourismMarkers` attaches the domain place ID to each circle. A tap emits that
+ID, and the Bloc selects the current domain value for the popup. An equal layer
+refresh leaves annotations and selection intact. Changed attributes update the
+popup by ID; removing that ID clears it. Background taps dismiss selection.
+Retired annotations cannot select a place after their style or data is replaced.
 
-The route releases the binding subscriptions, Bloc, and renderer on removal.
-The SDK widget owns controller disposal; each session owns its timeout, status
-stream, and operation queue. Replacing a controller closes its old session.
-The adapter replays its latest status to late observers. The Bloc owns its effect
-stream and location subscription; closing it releases both.
+The SDK can change its in-memory annotation collection before a native write
+fails. Tourism replacement therefore reconciles only annotations it owns,
+including ones left by failed additions. Location updates record confirmed
+position and heading independently. Retrying a failed heading update preserves
+confirmed position, and heading-only updates do not rewrite tourism markers.
 
-Layer requests use `restartable()`; the binding uses `switchMap` for native picks.
-A late response cannot replace newer data or reopen a dismissed popup. Pick
-results carry the layer and selection they were requested against, and the Bloc
-checks both before applying them. Handlers apply results to current state,
-preserving GPS updates and camera intent received during I/O. A delayed Settings
-failure cannot replace feedback after location has recovered.
+`LocationMarker` uses the existing static arrow asset at native display density.
+Symbol options do not expose rotation alignment or placement, so the adapter
+configures those properties once on the SDK-owned symbol layer. Geometry and
+bearing updates still use the annotation API. Missing bearing removes the arrow.
 
-A change of camera focus travels through scene state and produces one movement.
-Pressing the same focus action again emits a one-time recenter effect instead,
-so equality does not suppress an explicit request. Zoom and style reload are
-also effects. The binding discards a queued recenter superseded by a pan.
+This approach targets the current point dataset. Clustering, large datasets, or
+more complex geometry may justify dedicated GeoJSON/vector sources later.
 
-One session lock serializes native work. Waiting scene updates coalesce into the
-newest scene. Explicit commands, including zoom, remain ordered between draws.
-After source I/O, the session reads the latest camera intent, so a pan supersedes
-an old follow request. Camera progress does not wait for continuous sensor input
-to stop. Pending work and late status emission are discarded after session close.
-An already-issued platform call may finish against its original controller.
+## State, commands and asynchronous behavior
 
-Native creation and style loading each have a 25-second deadline. If the native
-controller never arrives, the adapter reports `creationTimeout`; the canvas
-selector unmounts the stalled SDK widget. Retry returns to `waitingForMap`, which
-mounts a fresh native view while preserving page data, selection, and GPS. Late
-creation after the deadline is ignored. Attachment and route disposal cancel the
-creation timer. This is a timeout fallback: the SDK does not provide a widget
-callback for reporting native initialization failures.
+The page has one Bloc. Layer and location are direct state fields; there is no
+nested rendering scene or duplicated camera focus in page state. The binding
+observes those values independently with equality filtering. Map readiness and
+popup changes do not trigger native data writes. Header, status card and overlay
+builders select only their displayed fields.
 
-Sources are written only after style readiness. Reloading or replacing a style
-restores custom sources, layers, and current camera intent. A 25-second timeout
-reports stalled style loading because MapLibre GL 0.27.1 has no widget-level
-style-error callback. Successful loading, replacement, and disposal cancel it.
+Camera mode belongs to `MapCamera`. Every focus button tap is an explicit command,
+including repeated requests while page values are equal. A queued focus prevents
+an automatic update from issuing the same movement first. A newer pan supersedes
+that focus. Camera cancellation does not confirm a position; the next update or
+explicit command uses current intent. An accepted iOS animation acknowledgment
+may be null, while false denotes cancellation.
 
-The render plan tracks confirmed sources and camera progress independently.
-A successful operation advances only its own baseline. Source failures invalidate
-source progress; camera failures preserve confirmed source content. Hit-test
-failures preserve both baselines and the current selection. Native exceptions
-and stack traces remain in the internal `map.renderer` diagnostic log.
-A native camera cancellation preserves source progress but invalidates camera
-progress. It waits for the next scene or explicit action rather than immediately
-fighting a user gesture. Android cancellation returns `false`; an iOS `null`
-animation acknowledgment is accepted according to the plugin contract.
+One operation queue orders annotation updates and camera commands for the current
+controller. While a write is pending, new fixes replace the desired location.
+After the current pass, at most one next pass reads the latest values. Camera
+follow reads current intent after annotation I/O rather than an old captured
+position. Explicit zoom commands retain queue order. Closing or replacing the
+style prevents later operations and public error/status emissions from old work.
+An already-issued SDK call may still complete on its original controller.
 
-Layer equality includes its name and ordered place values. Identical refreshes
-need no native write or camera refit and preserve the popup. Changed attributes
-update selection by stable ID; removing that ID clears it. GPS updates and layer
-refreshes respect the current camera focus. Explicit focus commands recenter even
-when scene values are unchanged.
+Native creation and style loading each have a 25-second deadline. A creation
+timeout unmounts the stalled SDK widget; retry mounts a new view while retaining
+page data and the GPS subscription. A style retry restores annotations from the
+latest inputs. This is a timeout fallback because the SDK does not expose a
+widget callback for every native initialization/style failure.
 
-## Location and heading
+Native exceptions and stack traces stay in the internal `map.canvas` log, with
+the failed operation named. The page receives an SDK-free status. Layer requests
+use `restartable()`; a late response cannot overwrite a newer layer. A delayed
+Settings failure cannot replace feedback after GPS has recovered.
 
-`WatchLocation` coordinates `LocationAccessRepository`, `LocationRepository`,
-and `AppLifecycleRepository`. Each visible session checks access, requests
-permission if denied and prompting is allowed, then starts location acquisition.
-Only the first session of an explicit request may prompt; resuming is passive.
-A failed session does not end lifecycle observation, so returning from Settings
-can recover access. Hiding the app or cancelling the use case cancels the current
-acquisition and releases its sensors. `GetCurrentLocation` follows the same
-check/request/read sequence for a one-time user request.
+## Location and data boundaries
 
-`DeviceLocationAccessRepository` exposes separate read-only access checks,
-permission requests, and Settings commands through `LocationAccessDataSource`.
-It translates permission values and technical exceptions to domain results;
-the use case decides whether to prompt or start tracking. The access check emits
-one result as a stream so cancellation between pending platform calls stops
-subsequent checks. Cancelling the use case also prevents a later dialog or sensor
-acquisition; an already-open OS permission dialog cannot be dismissed this way.
+Datasources expose technical DTOs and exceptions. Repositories select/combine
+sources, map entities, and translate errors. Use cases coordinate repositories.
+MapLibre calls are visual SDK operations in the presentation adapter; they do
+not fetch business data or participate in the domain repository contract.
 
-`DeviceLocationRepository` only reads positions and combines `LocationDataSource`
-GPS fixes with `CompassDataSource` readings, mapping DTOs and exceptions to domain
-values and failures. It does not manage permission policy or call another
-repository. Compass failure is logged and falls back to GPS movement bearing
-while location tracking continues.
+`WatchLocation` coordinates access, tracking and application visibility through
+shared repositories. Permission prompting, passive Settings recovery, sensor
+acquisition and cancellation stay outside the map feature. Returning from
+Settings can restart tracking without another tap; backgrounding releases it.
+`OpenLocationSettings` handles an explicit recovery action. The map adapter does
+not request permission, subscribe to device sensors or open Settings.
 
-`safeLocationCall` and `safeLocationStream` centralize the location data error
-boundary. Repositories return their mapped results inside these functions;
-technical failures become domain failures through `mapLocationException`, with
-the original error and stack trace retained in the internal diagnostic log.
-Neither function retries operations or requests permission. Stream acquisition
-is deferred until subscription, cancellation reaches the source, and the GPS
-repository still owns the rule that a failed acquisition ends its session.
+Valid compass headings take priority over GPS course, are rounded to a degree,
+and are limited to ten updates per second. GPS course is used at sufficient
+movement speed when compass data is unavailable. Android requests high-accuracy
+positions at a one-second interval; the first-fix deadline is 20 seconds.
 
-The GPS datasource only reads positions and configures native acquisition;
-the access datasource only calls permission, service, and Settings APIs.
-Neither depends on another datasource or decides when tracking should resume.
-`OpenLocationSettings` delegates an explicit user action through the access
-repository to the access adapter. Flutter visibility observation lives in shared
-`core/lifecycle`, outside location and map implementations.
+Follow uses an 800 ms center-only `easeCamera` update. It preserves zoom and avoids
+the repeated label fades caused by Android flight animations. Bearing-only
+updates rotate the arrow without moving the camera. A deliberate pan stops
+follow, while tap jitter does not.
 
-Android requests high-accuracy positions at a one-second interval. A 20-second
-first-fix deadline is cancelled after the first result, so stationary tracking
-does not time out. Backgrounding releases sensors. Resuming checks access again
-without prompting; only an explicit request may open the permission dialog.
-The lifecycle observer survives permission/service failure so returning from
-Settings can recover tracking without another tap. Explicit retry replaces the
-previous watch; closing the route releases it.
+The MAPID mapper removes a known corrupted alias suffix from place names. Raw
+DTOs preserve the response; valid Unicode and other parenthetical names remain
+intact. The API already contains replacement characters, so HTTP headers or
+fonts cannot reconstruct the missing alias bytes.
 
-Valid compass headings take priority, are rounded to a degree, and are limited
-to ten updates per second. GPS course is used at speeds of at least 0.5 m/s when
-compass data is unavailable. Without either bearing, the arrow is hidden.
-The static heading image is decoded at native display density, including
-fractional ratios; web uses 1x. Its symbol rotates relative to the map.
+## Verification
 
-Heading-only updates change the source without moving the camera. GPS follow
-uses a center-only `easeCamera` transition over 800 ms, preserving zoom and
-avoiding the label fades caused by repeated Android flight animations
-([MapLibre Native #2477](https://github.com/maplibre/maplibre-native/issues/2477)).
-A deliberate pan changes focus to `free`; tap jitter does not. The gesture
-observer leaves native taps and drags to MapLibre, while `RawGestureDetector`
-owns observer disposal. GPS and compass keep updating until the app hides or
-route closes. The location action restores follow.
-
-## Validation
-
-Tests cover value equality, raw datasource boundaries, sensor recovery, pure
-render planning, native failures, ordering, coalescing, stale requests/picks,
-selection, and resource disposal. Page tests verify user-event bindings and
-rebuild scope. The route test uses generated Injectable and AutoRoute composition
-with the actual page and map widget; only native platform operations are mocked.
-Android verification and its build-specific limits are recorded in
-[validation.md](validation.md).
+Tests cover the SDK annotation mutation contract, equal refreshes, stale handles,
+partial failures, heading updates, camera cancellation, coalesced fixes, explicit
+commands, style restoration, controller replacement and disposal. Generated
+AutoRoute/Injectable route tests exercise the real page and SDK widget with only
+native platform operations replaced. Physical Android results and build-specific
+limits are recorded in [validation.md](validation.md).

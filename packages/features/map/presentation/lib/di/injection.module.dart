@@ -11,15 +11,15 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:map_domain/map_domain.dart' as _i774;
 import 'package:map_presentation/src/map/bloc/map_bloc.dart' as _i1021;
-import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart'
-    as _i466;
+import 'package:map_presentation/src/map/canvas/maplibre/maplibre_adapter.dart'
+    as _i549;
 import 'package:map_presentation/src/navigation/map_router.dart' as _i318;
 
 class MapPresentationPackageModule extends _i526.MicroPackageModule {
   // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) {
-    gh.factory<_i466.MapLibreRenderer>(() => _i466.MapLibreRenderer());
+    gh.factory<_i549.MapLibreAdapter>(() => _i549.MapLibreAdapter());
     gh.factory<_i1021.MapBloc>(
       () => _i1021.MapBloc(
         gh<_i774.LoadMapLayer>(),

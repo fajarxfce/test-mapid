@@ -92,43 +92,40 @@ void main() {
       contains(contains('Blocs must not depend on another Bloc')),
     );
   });
-  test(
-    'page Bloc exposes state and effects without importing canvas wiring',
-    () {
-      File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
-        'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any, synchronized: any}\n',
+  test('page Bloc exposes state and effects without importing canvas wiring', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any, synchronized: any}\n',
+    );
+    final file = File(
+      p.join(root.path, 'domain/lib/src/map/bloc/map_bloc.dart'),
+    );
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync(
+      "import 'package:map_presentation/src/map/bloc/map_effect.dart';",
+    );
+    expect(checkArchitecture(root), isEmpty);
+    for (final uri in [
+      'package:maplibre_gl/maplibre_gl.dart',
+      'package:synchronized/synchronized.dart',
+      'package:map_presentation/src/map/canvas/map_canvas_port.dart',
+      'package:map_presentation/src/map/canvas/map_canvas_binding.dart',
+      'package:map_presentation/src/map/canvas/maplibre/maplibre_adapter.dart',
+      'package:map_presentation/src/map/canvas/maplibre/tourism_markers.dart',
+    ]) {
+      file.writeAsStringSync("import '$uri';");
+      expect(
+        checkArchitecture(root),
+        contains(contains('Bloc must emit view state and effects')),
       );
-      final file = File(
-        p.join(root.path, 'domain/lib/src/map/bloc/map_bloc.dart'),
-      );
-      file.parent.createSync(recursive: true);
-      file.writeAsStringSync(
-        "import 'package:map_presentation/src/map/models/map_effect.dart';",
-      );
-      expect(checkArchitecture(root), isEmpty);
-      for (final uri in [
-        'package:maplibre_gl/maplibre_gl.dart',
-        'package:synchronized/synchronized.dart',
-        'package:map_presentation/src/map/rendering/map_renderer.dart',
-        'package:map_presentation/src/map/bindings/map_canvas_binding.dart',
-        'package:map_presentation/src/map/rendering/maplibre_session.dart',
-        'package:map_presentation/src/map/rendering/map_render_plan.dart',
-      ]) {
-        file.writeAsStringSync("import '$uri';");
-        expect(
-          checkArchitecture(root),
-          contains(contains('Bloc must emit view state and effects')),
-        );
-      }
-    },
-  );
+    }
+  });
   test('page events and renderer contracts cannot expose SDK dependencies', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any, maplibre_gl: any}\n',
     );
     for (final path in [
       'src/map/bloc/map_event.dart',
-      'src/map/rendering/map_renderer.dart',
+      'src/map/canvas/map_canvas_port.dart',
     ]) {
       final file = File(p.join(root.path, 'domain/lib', path));
       file.parent.createSync(recursive: true);
@@ -139,7 +136,7 @@ void main() {
           contains(
             path.contains('/bloc/')
                 ? 'Bloc must emit view state and effects'
-                : 'renderer contract must remain SDK-free',
+                : 'canvas contract must remain SDK-free',
           ),
         ),
       );
@@ -260,7 +257,7 @@ void main() {
     File(p.join(root.path, 'domain/pubspec.yaml'))
         .writeAsStringSync('name: map_presentation\ndependencies: {}\n');
     final file = File(
-      p.join(root.path, 'domain/lib/src/map/rendering/map_renderer.dart'),
+      p.join(root.path, 'domain/lib/src/map/canvas/map_canvas_port.dart'),
     );
     file.parent.createSync(recursive: true);
     file.writeAsStringSync('''

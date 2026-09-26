@@ -1,29 +1,30 @@
-import 'package:core_location_domain/core_location_domain.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
-import 'package:map_presentation/src/map/widgets/map_canvas.dart';
+import 'package:map_presentation/src/map/bloc/map_state.dart';
+import 'package:map_presentation/src/map/canvas/map_canvas.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'support/fake_repositories.dart';
 import 'support/map_platform_view.dart';
 
+class MockMapBloc extends MockBloc<MapEvent, MapState> implements MapBloc {}
+
 void main() {
-  late MapBloc bloc;
+  setUpAll(() => registerFallbackValue(const MapPanned()));
+  late MockMapBloc bloc;
   late int nativeTaps;
   late int nativeDragUpdates;
 
   setUp(() {
-    final locations = FakeLocationRepository();
-    final access = FakeLocationAccessRepository();
-    bloc = MapBloc(
-      LoadMapLayer(FakeMapRepository()),
-      WatchLocation(locations, access, const FakeAppLifecycleRepository()),
-      OpenLocationSettings(access),
+    bloc = MockMapBloc();
+    whenListen(
+      bloc,
+      const Stream<MapState>.empty(),
+      initialState: const MapState(),
     );
     nativeTaps = 0;
     nativeDragUpdates = 0;
@@ -38,21 +39,22 @@ void main() {
     );
     MapLibrePlatform.createInstance = () => platform;
     addTearDown(() async {
-      await bloc.close();
       MapLibrePlatform.createInstance = previous;
     });
   });
 
   Future<void> mount(WidgetTester tester) async {
-    bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: BlocProvider.value(value: bloc, child: const MapCanvas()),
+        child: BlocProvider<MapBloc>.value(
+          value: bloc,
+          child: const MapCanvas(),
+        ),
       ),
     );
     await tester.pump();
-    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
+    verifyNever(() => bloc.add(any(that: isA<MapPanned>())));
   }
 
   testWidgets('tap jitter preserves follow and reaches the map surface', (
@@ -63,7 +65,7 @@ void main() {
     await finger.moveBy(const Offset(3, 2));
     await finger.up();
     await tester.pump();
-    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
+    verifyNever(() => bloc.add(any(that: isA<MapPanned>())));
     expect(nativeTaps, 1);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -77,7 +79,7 @@ void main() {
       await finger.moveBy(const Offset(60, 0));
       await finger.up();
       await tester.pump();
-      expect(bloc.state.scene.focus, MapCameraFocus.free);
+      verify(() => bloc.add(any(that: isA<MapPanned>()))).called(1);
       expect(nativeDragUpdates, greaterThan(0));
       expect(nativeTaps, 0);
       await tester.pumpWidget(const SizedBox.shrink());
@@ -94,12 +96,12 @@ void main() {
     final next = await tester.startGesture(const Offset(500, 300));
     await next.moveBy(const Offset(3, 2));
     await tester.pump();
-    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
+    verifyNever(() => bloc.add(any(that: isA<MapPanned>())));
     await tester.pumpWidget(const SizedBox.shrink());
     await next.moveBy(const Offset(100, 0));
     await next.up();
     await tester.pump();
-    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
+    verifyNever(() => bloc.add(any(that: isA<MapPanned>())));
     expect(tester.takeException(), isNull);
   });
 }

@@ -6,10 +6,10 @@ import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/bloc/map_effect.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/models/map_effect.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_camera_focus.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 
 /// Owns page state and user intent. The route owns the native renderer.
@@ -17,7 +17,7 @@ import 'package:map_presentation/src/map/models/place_details.dart';
 class MapBloc extends Bloc<MapEvent, MapState> {
   MapBloc(this._loadLayer, this._watchLocation, this._openSettings)
     : super(const MapState()) {
-    on<MapRenderStatusChanged>(_onRenderStatusChanged);
+    on<MapCanvasStatusChanged>(_onCanvasStatusChanged);
     on<MapLayerRequested>(_onLayerRequested, transformer: restartable());
     on<MapLocationRequested>(
       _onLocationRequested,
@@ -34,9 +34,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       _onLocationActionRequested,
       transformer: droppable(),
     );
-    on<MapStyleReloadRequested>(_onStyleReloadRequested);
-    on<MapTapped>(_onTapped);
-    on<MapPlacePicked>(_onPlacePicked);
+    on<MapCanvasRetryRequested>(_onCanvasRetryRequested);
+    on<MapPlaceSelected>(_onPlaceSelected);
     on<MapSelectionCleared>(_onSelectionCleared);
     on<MapFocusRequested>(_onFocusRequested);
     on<MapZoomRequested>(_onZoomRequested);
@@ -49,10 +48,10 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final _effects = StreamController<MapEffect>.broadcast();
   Stream<MapEffect> get effects => _effects.stream;
 
-  void _onRenderStatusChanged(
-    MapRenderStatusChanged event,
+  void _onCanvasStatusChanged(
+    MapCanvasStatusChanged event,
     Emitter<MapState> emit,
-  ) => emit(state.copyWith(renderStatus: event.status));
+  ) => emit(state.copyWith(canvasStatus: event.status));
 
   Future<void> _onLayerRequested(
     MapLayerRequested event,
@@ -65,9 +64,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       case Success(:final value):
         emit(
           state.copyWith(
-            scene: state.scene.copyWith(layer: value),
+            layer: value,
             loadingLayer: false,
-            selected: state.scene.layer == value
+            selected: state.layer == value
                 ? state.selected
                 : value.places
                       .where((place) => place.id == state.selected?.id)
@@ -96,9 +95,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       onData: (result) {
         switch (result) {
           case Success(:final value):
-            final scene = state.scene.copyWith(location: value);
             return state.copyWith(
-              scene: scene,
+              location: value,
               locationStatus: LocationTrackingStatus.live,
               locationFailure: null,
               settingsMessage: null,
@@ -121,15 +119,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     MapLocationActionRequested event,
     Emitter<MapState> emit,
   ) async {
-    if (state.scene.focus == MapCameraFocus.userLocation) {
-      _effects.add(const FocusMapCamera(MapCameraFocus.userLocation));
-    } else {
-      emit(
-        state.copyWith(
-          scene: state.scene.copyWith(focus: MapCameraFocus.userLocation),
-        ),
-      );
-    }
+    _effects.add(const FocusMapCamera(MapCameraFocus.userLocation));
     if (state.locationAction == LocationAction.locate) {
       add(const MapLocationRequested());
       return;
@@ -156,53 +146,31 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     );
   }
 
-  void _onStyleReloadRequested(
-    MapStyleReloadRequested event,
+  void _onCanvasRetryRequested(
+    MapCanvasRetryRequested event,
     Emitter<MapState> emit,
   ) => _effects.add(const ReloadMapCanvas());
 
-  void _onTapped(MapTapped event, Emitter<MapState> emit) => _effects.add(
-    PickMapPlace(
-      event.point,
-      layer: state.scene.layer,
-      selection: state.selected,
+  void _onPlaceSelected(MapPlaceSelected event, Emitter<MapState> emit) => emit(
+    state.copyWith(
+      selected: state.layer?.places
+          .where((place) => place.id == event.id)
+          .map(PlaceDetails.fromPlace)
+          .firstOrNull,
     ),
   );
-
-  void _onPlacePicked(MapPlacePicked event, Emitter<MapState> emit) {
-    if (state.scene.layer != event.layer || state.selected != event.selection) {
-      return;
-    }
-    emit(
-      state.copyWith(
-        selected: event.layer?.places
-            .where((place) => place.id == event.id)
-            .map(PlaceDetails.fromPlace)
-            .firstOrNull,
-      ),
-    );
-  }
 
   void _onSelectionCleared(MapSelectionCleared event, Emitter<MapState> emit) =>
       emit(state.copyWith(selected: null));
 
-  void _onFocusRequested(MapFocusRequested event, Emitter<MapState> emit) {
-    if (state.scene.focus == event.focus) {
+  void _onFocusRequested(MapFocusRequested event, Emitter<MapState> emit) =>
       _effects.add(FocusMapCamera(event.focus));
-    } else {
-      emit(state.copyWith(scene: state.scene.copyWith(focus: event.focus)));
-    }
-  }
 
   void _onZoomRequested(MapZoomRequested event, Emitter<MapState> emit) =>
       _effects.add(ZoomMapCamera(event.amount));
 
-  void _onPanned(MapPanned event, Emitter<MapState> emit) {
-    if (state.scene.focus == MapCameraFocus.free) return;
-    emit(
-      state.copyWith(scene: state.scene.copyWith(focus: MapCameraFocus.free)),
-    );
-  }
+  void _onPanned(MapPanned event, Emitter<MapState> emit) =>
+      _effects.add(const FocusMapCamera(MapCameraFocus.free));
 
   @override
   Future<void> close() async {

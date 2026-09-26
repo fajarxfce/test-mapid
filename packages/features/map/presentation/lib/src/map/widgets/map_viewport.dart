@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/widgets/map_controls.dart';
-import 'package:map_presentation/src/map/widgets/map_location_card.dart';
-import 'package:map_presentation/src/map/widgets/place_popup.dart';
+import 'package:map_presentation/src/map/widgets/map_status_card.dart';
+import 'package:map_presentation/src/map/widgets/map_toolbar.dart';
+import 'package:map_presentation/src/map/widgets/place_details_popup.dart';
 
 class MapViewport extends StatelessWidget {
   const MapViewport({required this.canvas, super.key});
@@ -14,7 +14,7 @@ class MapViewport extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
     buildWhen: (before, after) =>
-        before.renderStatus != after.renderStatus ||
+        before.canvasStatus != after.canvasStatus ||
         before.selected != after.selected,
     builder: (context, state) => LayoutBuilder(
       builder: (context, constraints) => Stack(
@@ -23,7 +23,7 @@ class MapViewport extends StatelessWidget {
           Positioned(
             top: 14,
             right: 12,
-            child: MapControls(enabled: state.mapReady),
+            child: MapToolbar(enabled: state.mapReady),
           ),
           if (!state.mapReady && state.mapError == null)
             const Positioned(
@@ -43,7 +43,7 @@ class MapViewport extends StatelessWidget {
                 action: AppButton(
                   label: 'Muat peta',
                   onPressed: () => context.read<MapBloc>().add(
-                    const MapStyleReloadRequested(),
+                    const MapCanvasRetryRequested(),
                   ),
                 ),
               ),
@@ -60,13 +60,13 @@ class MapViewport extends StatelessWidget {
                   maxHeight: constraints.maxHeight * .6,
                 ),
                 child: state.selected != null
-                    ? PlacePopup(
+                    ? PlaceDetailsPopup(
                         details: state.selected!,
                         onClose: () => context.read<MapBloc>().add(
                           const MapSelectionCleared(),
                         ),
                       )
-                    : const MapLocationCard(),
+                    : const MapStatusCard(),
               ),
             ),
           ),

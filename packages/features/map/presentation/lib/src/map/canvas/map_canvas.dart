@@ -5,16 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/gestures/map_pan_gesture.dart';
-import 'package:map_presentation/src/map/models/map_render_status.dart';
-import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
+import 'package:map_presentation/src/map/canvas/map_pan_observer.dart';
+import 'package:map_presentation/src/map/canvas/maplibre/maplibre_adapter.dart';
+import 'package:map_presentation/src/map/models/map_canvas_status.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class MapCanvas extends StatelessWidget {
   const MapCanvas({super.key});
   @override
   Widget build(BuildContext context) => BlocSelector<MapBloc, MapState, bool>(
-    selector: (state) => state.renderStatus != MapRenderStatus.creationTimeout,
+    selector: (state) => state.canvasStatus != MapCanvasStatus.creationTimeout,
     builder: (context, mountNativeMap) => mountNativeMap
         ? RawGestureDetector(
             excludeFromSemantics: true,
@@ -24,8 +24,15 @@ class MapCanvas extends StatelessWidget {
               ),
             },
             child: MapLibreMap(
-              styleString: MapLibreRenderer.styleUrl,
-              annotationOrder: const [],
+              styleString: MapLibreAdapter.styleUrl,
+              annotationOrder: const [
+                AnnotationType.circle,
+                AnnotationType.symbol,
+              ],
+              annotationConsumeTapEvents: const [
+                AnnotationType.circle,
+                AnnotationType.symbol,
+              ],
               initialCameraPosition: const CameraPosition(
                 target: LatLng(-7.80, 110.37),
                 zoom: 11,
@@ -34,11 +41,11 @@ class MapCanvas extends StatelessWidget {
               compassViewPosition: CompassViewPosition.bottomRight,
               compassViewMargins: const Point(16, 16),
               onMapCreated: (controller) =>
-                  context.read<MapLibreRenderer>().attach(controller),
+                  context.read<MapLibreAdapter>().attach(controller),
               onStyleLoadedCallback: () =>
-                  context.read<MapLibreRenderer>().styleLoaded(),
+                  context.read<MapLibreAdapter>().styleLoaded(),
               onMapClick: (point, coordinates) =>
-                  context.read<MapBloc>().add(MapTapped(point)),
+                  context.read<MapLibreAdapter>().backgroundTapped(),
             ),
           )
         : const SizedBox.expand(),

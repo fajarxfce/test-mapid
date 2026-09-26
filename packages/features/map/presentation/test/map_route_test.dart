@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:core_common/core_common.dart';
@@ -13,27 +12,21 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/di/injection.module.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
-import 'package:map_presentation/src/map/rendering/map_renderer.dart';
-import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
-import 'package:map_presentation/src/map/widgets/map_canvas.dart';
+import 'package:map_presentation/src/map/canvas/map_canvas.dart';
+import 'package:map_presentation/src/map/canvas/maplibre/maplibre_adapter.dart';
+import 'package:map_presentation/src/map/models/map_camera_focus.dart';
+import 'package:map_presentation/src/map/models/map_canvas_status.dart';
 import 'package:map_presentation/src/navigation/map_router.dart';
 import 'package:maplibre_gl/maplibre_gl.dart' hide Success;
 import 'package:mocktail/mocktail.dart';
 
+import 'support/annotation_map_harness.dart';
 import 'support/fake_repositories.dart';
 import 'support/map_fixtures.dart';
 import 'support/map_platform_view.dart';
-import 'support/native_map_harness.dart';
 
 void main() {
-  setUpAll(() {
-    registerFallbackValue(const CircleLayerProperties());
-    registerFallbackValue(const SymbolLayerProperties());
-    registerFallbackValue(CameraUpdate.zoomBy(1));
-    registerFallbackValue(Rect.zero);
-    registerFallbackValue(Uint8List(0));
-  });
+  setUpAll(AnnotationMapHarness.registerFallbacks);
 
   late StreamController<Result<LocationFix>> fixes;
   late RootStackRouter router;
@@ -68,17 +61,17 @@ void main() {
       fixes.add(const Success(sampleLocation));
       await tester.pump();
       final context = tester.element(find.byType(MapCanvas));
-      final renderer = context.read<MapLibreRenderer>();
+      final renderer = context.read<MapLibreAdapter>();
       final bloc = context.read<MapBloc>();
-      final native = NativeMapHarness();
+      final native = AnnotationMapHarness();
       final widget = tester.widget<MapLibreMap>(find.byType(MapLibreMap));
       widget.onMapCreated!(native.controller);
       widget.onStyleLoadedCallback!();
       await tester.pump();
       expect(bloc.state.mapReady, isTrue);
-      expect(bloc.state.scene.layer?.places, hasLength(1));
-      expect(bloc.state.scene.location, sampleLocation);
-      expect(native.sources, isNotEmpty);
+      expect(bloc.state.layer?.places, hasLength(1));
+      expect(bloc.state.location, sampleLocation);
+      expect(native.circles, isNotEmpty);
 
       native.cameraMoves.clear();
       bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
@@ -97,14 +90,14 @@ void main() {
       );
 
       // Observers that join after native readiness receive the current status.
-      MapRenderStatus? observed;
+      MapCanvasStatus? observed;
       final disposed = Completer<void>();
       final subscription = renderer.statuses.listen(
         (status) => observed = status,
         onDone: disposed.complete,
       );
       await tester.pump();
-      expect(observed, MapRenderStatus.ready);
+      expect(observed, MapCanvasStatus.ready);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);
       expect(bloc.isClosed, isTrue);
@@ -127,42 +120,53 @@ void main() {
       final context = tester.element(find.byType(MapCanvas));
       final bloc = context.read<MapBloc>();
       final originalNativeState = tester.state(find.byType(MapLibreMap));
-      final scene = bloc.state.scene;
-      expect(scene.layer?.places, hasLength(1));
-      expect(scene.location, sampleLocation);
+      final layer = bloc.state.layer;
+      final location = bloc.state.location;
+      expect(layer?.places, hasLength(1));
+      expect(location, sampleLocation);
 
       await tester.pump(const Duration(seconds: 26));
       await tester.pump();
-      expect(bloc.state.renderStatus, MapRenderStatus.creationTimeout);
+      expect(bloc.state.canvasStatus, MapCanvasStatus.creationTimeout);
       expect(find.byType(MapLibreMap), findsNothing);
       expect(originalNativeState.mounted, isFalse);
       expect(
         find.text('Peta belum dapat dimulai. Coba muat ulang peta.'),
         findsOneWidget,
       );
-      expect(bloc.state.scene, scene);
+      expect(bloc.state.layer, same(layer));
+      expect(bloc.state.location, same(location));
       expect(fixes.hasListener, isTrue);
 
       await tester.tap(find.text('Muat peta'));
       await tester.pump();
       await tester.pump();
-      expect(bloc.state.renderStatus, MapRenderStatus.waitingForMap);
+      expect(bloc.state.canvasStatus, MapCanvasStatus.waitingForMap);
       expect(find.byType(MapLibreMap), findsOneWidget);
       expect(
         tester.state(find.byType(MapLibreMap)),
         isNot(same(originalNativeState)),
       );
       expect(context.read<MapBloc>(), same(bloc));
-      expect(bloc.state.scene, scene);
+      expect(bloc.state.layer, same(layer));
+      expect(bloc.state.location, same(location));
 
-      final native = NativeMapHarness();
+      final native = AnnotationMapHarness();
       final canvas = tester.widget<MapLibreMap>(find.byType(MapLibreMap));
       canvas.onMapCreated!(native.controller);
       canvas.onStyleLoadedCallback!();
       await tester.pump();
       expect(bloc.state.mapReady, isTrue);
-      expect(native.sources['mapid-places']!['features'], hasLength(1));
-      expect(native.sources['user-location']!['features'], hasLength(1));
+      expect(
+        native.circles.where((circle) => circle.data?['place_id'] != null),
+        hasLength(1),
+      );
+      expect(
+        native.circles.where(
+          (circle) => circle.data?['role'] == 'user-location',
+        ),
+        hasLength(1),
+      );
       expect(find.text('Muat peta'), findsNothing);
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pumpWidget(const SizedBox.shrink());

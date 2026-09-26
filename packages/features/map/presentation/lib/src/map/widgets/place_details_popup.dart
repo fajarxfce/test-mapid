@@ -2,8 +2,12 @@ import 'package:core_design_system/core_design_system.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 
-class PlacePopup extends StatelessWidget {
-  const PlacePopup({required this.details, required this.onClose, super.key});
+class PlaceDetailsPopup extends StatelessWidget {
+  const PlaceDetailsPopup({
+    required this.details,
+    required this.onClose,
+    super.key,
+  });
   final PlaceDetails details;
   final VoidCallback onClose;
   @override

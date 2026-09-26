@@ -2,7 +2,7 @@ import 'package:core_design_system/core_design_system.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
-import 'package:map_presentation/src/map/widgets/place_popup.dart';
+import 'package:map_presentation/src/map/widgets/place_details_popup.dart';
 
 void main() {
   testWidgets('popup shows name and address and exposes a close action', (
@@ -14,7 +14,7 @@ void main() {
         theme: AppTheme.light(),
         home: SizedBox(
           width: 360,
-          child: PlacePopup(
+          child: PlaceDetailsPopup(
             details: const PlaceDetails(
               id: 'place-1',
               name: 'Museum Jogja',
@@ -48,7 +48,7 @@ void main() {
               child: SizedBox(
                 width: 296,
                 height: 290,
-                child: PlacePopup(
+                child: PlaceDetailsPopup(
                   details: const PlaceDetails(
                     id: 'place-1',
                     name: 'TAMAN TIMUR PASAR BERINGHARJO YOGYAKARTA',

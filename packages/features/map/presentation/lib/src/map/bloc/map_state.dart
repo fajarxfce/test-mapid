@@ -1,7 +1,8 @@
 import 'package:core_common/core_common.dart';
+import 'package:core_location_domain/core_location_domain.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:map_presentation/src/map/models/map_render_status.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/models/map_canvas_status.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 
 part 'map_state.freezed.dart';
@@ -10,8 +11,9 @@ part 'map_state.freezed.dart';
 abstract class MapState with _$MapState {
   const MapState._();
   const factory MapState({
-    @Default(MapScene()) MapScene scene,
-    @Default(MapRenderStatus.waitingForMap) MapRenderStatus renderStatus,
+    MapLayer? layer,
+    LocationFix? location,
+    @Default(MapCanvasStatus.waitingForMap) MapCanvasStatus canvasStatus,
     PlaceDetails? selected,
     @Default(true) bool loadingLayer,
     @Default(LocationTrackingStatus.idle) LocationTrackingStatus locationStatus,
@@ -49,9 +51,9 @@ abstract class MapState with _$MapState {
       : settingsMessage ??
             switch (locationFailure?.kind) {
               null =>
-                scene.location == null
+                location == null
                     ? null
-                    : '${locationStatus == LocationTrackingStatus.live ? 'Lokasi realtime' : 'Lokasi terakhir'} · akurasi ±${scene.location!.accuracyMeters.toStringAsFixed(0)} m',
+                    : '${locationStatus == LocationTrackingStatus.live ? 'Lokasi realtime' : 'Lokasi terakhir'} · akurasi ±${location!.accuracyMeters.toStringAsFixed(0)} m',
               FailureKind.permissionDenied => 'Izin lokasi belum diberikan. Peta wisata tetap bisa digunakan.',
               FailureKind.permissionPermanentlyDenied =>
                 'Izin lokasi perlu diaktifkan melalui pengaturan aplikasi.',
@@ -61,13 +63,13 @@ abstract class MapState with _$MapState {
                 'Lokasi belum ditemukan. Coba lagi di area terbuka.',
               _ => 'Lokasi perangkat belum dapat diakses. Coba lagi.',
             };
-  bool get mapReady => renderStatus == MapRenderStatus.ready;
-  String? get mapError => switch (renderStatus) {
-    MapRenderStatus.creationTimeout =>
+  bool get mapReady => canvasStatus == MapCanvasStatus.ready;
+  String? get mapError => switch (canvasStatus) {
+    MapCanvasStatus.creationTimeout =>
       'Peta belum dapat dimulai. Coba muat ulang peta.',
-    MapRenderStatus.styleTimeout =>
+    MapCanvasStatus.styleTimeout =>
       'Basemap belum dapat dimuat. Periksa koneksi internet lalu coba lagi.',
-    MapRenderStatus.renderingFailure =>
+    MapCanvasStatus.renderingFailure =>
       'Peta belum dapat diperbarui. Coba muat ulang basemap.',
     _ => null,
   };

@@ -1,5 +1,5 @@
 /// Native view observations. User-facing messages belong to page state.
-enum MapRenderStatus {
+enum MapCanvasStatus {
   waitingForMap,
   loadingStyle,
   ready,

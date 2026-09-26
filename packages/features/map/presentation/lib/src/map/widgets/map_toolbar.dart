@@ -3,10 +3,10 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_camera_focus.dart';
 
-class MapControls extends StatelessWidget {
-  const MapControls({required this.enabled, super.key});
+class MapToolbar extends StatelessWidget {
+  const MapToolbar({required this.enabled, super.key});
   final bool enabled;
   @override
   Widget build(BuildContext context) => AppCard(

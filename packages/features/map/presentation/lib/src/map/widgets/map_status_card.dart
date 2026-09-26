@@ -5,8 +5,8 @@ import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
 
-class MapLocationCard extends StatelessWidget {
-  const MapLocationCard({super.key});
+class MapStatusCard extends StatelessWidget {
+  const MapStatusCard({super.key});
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
     buildWhen: (before, after) =>

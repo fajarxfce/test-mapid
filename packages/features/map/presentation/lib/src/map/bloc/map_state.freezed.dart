@@ -14,8 +14,9 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$MapState {
-  MapScene get scene;
-  MapRenderStatus get renderStatus;
+  MapLayer? get layer;
+  LocationFix? get location;
+  MapCanvasStatus get canvasStatus;
   PlaceDetails? get selected;
   bool get loadingLayer;
   LocationTrackingStatus get locationStatus;
@@ -36,10 +37,12 @@ mixin _$MapState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is MapState &&
-            (identical(other.scene, _this.scene) ||
-                other.scene == _this.scene) &&
-            (identical(other.renderStatus, _this.renderStatus) ||
-                other.renderStatus == _this.renderStatus) &&
+            (identical(other.layer, _this.layer) ||
+                other.layer == _this.layer) &&
+            (identical(other.location, _this.location) ||
+                other.location == _this.location) &&
+            (identical(other.canvasStatus, _this.canvasStatus) ||
+                other.canvasStatus == _this.canvasStatus) &&
             (identical(other.selected, _this.selected) ||
                 other.selected == _this.selected) &&
             (identical(other.loadingLayer, _this.loadingLayer) ||
@@ -59,8 +62,9 @@ mixin _$MapState {
     final _this = this as MapState;
     return Object.hash(
       runtimeType,
-      _this.scene,
-      _this.renderStatus,
+      _this.layer,
+      _this.location,
+      _this.canvasStatus,
       _this.selected,
       _this.loadingLayer,
       _this.locationStatus,
@@ -73,7 +77,7 @@ mixin _$MapState {
   @override
   String toString() {
     final _this = this as MapState;
-    return 'MapState(scene: ${_this.scene}, renderStatus: ${_this.renderStatus}, selected: ${_this.selected}, loadingLayer: ${_this.loadingLayer}, locationStatus: ${_this.locationStatus}, layerFailure: ${_this.layerFailure}, locationFailure: ${_this.locationFailure}, settingsMessage: ${_this.settingsMessage})';
+    return 'MapState(layer: ${_this.layer}, location: ${_this.location}, canvasStatus: ${_this.canvasStatus}, selected: ${_this.selected}, loadingLayer: ${_this.loadingLayer}, locationStatus: ${_this.locationStatus}, layerFailure: ${_this.layerFailure}, locationFailure: ${_this.locationFailure}, settingsMessage: ${_this.settingsMessage})';
   }
 }
 
@@ -83,8 +87,9 @@ abstract mixin class $MapStateCopyWith<$Res> {
       _$MapStateCopyWithImpl;
   @useResult
   $Res call({
-    MapScene scene,
-    MapRenderStatus renderStatus,
+    MapLayer? layer,
+    LocationFix? location,
+    MapCanvasStatus canvasStatus,
     PlaceDetails? selected,
     bool loadingLayer,
     LocationTrackingStatus locationStatus,
@@ -92,8 +97,6 @@ abstract mixin class $MapStateCopyWith<$Res> {
     Failure? locationFailure,
     String? settingsMessage,
   });
-
-  $MapSceneCopyWith<$Res> get scene;
 }
 
 /// @nodoc
@@ -108,8 +111,9 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? scene = null,
-    Object? renderStatus = null,
+    Object? layer = freezed,
+    Object? location = freezed,
+    Object? canvasStatus = null,
     Object? selected = freezed,
     Object? loadingLayer = null,
     Object? locationStatus = null,
@@ -119,14 +123,18 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
   }) {
     return _then(
       MapState(
-        scene: null == scene
-            ? _self.scene
-            : scene // ignore: cast_nullable_to_non_nullable
-                  as MapScene,
-        renderStatus: null == renderStatus
-            ? _self.renderStatus
-            : renderStatus // ignore: cast_nullable_to_non_nullable
-                  as MapRenderStatus,
+        layer: freezed == layer
+            ? _self.layer
+            : layer // ignore: cast_nullable_to_non_nullable
+                  as MapLayer?,
+        location: freezed == location
+            ? _self.location
+            : location // ignore: cast_nullable_to_non_nullable
+                  as LocationFix?,
+        canvasStatus: null == canvasStatus
+            ? _self.canvasStatus
+            : canvasStatus // ignore: cast_nullable_to_non_nullable
+                  as MapCanvasStatus,
         selected: freezed == selected
             ? _self.selected
             : selected // ignore: cast_nullable_to_non_nullable
@@ -153,16 +161,6 @@ class _$MapStateCopyWithImpl<$Res> implements $MapStateCopyWith<$Res> {
                   as String?,
       ),
     );
-  }
-
-  /// Create a copy of MapState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $MapSceneCopyWith<$Res> get scene {
-    return $MapSceneCopyWith<$Res>(_self.scene, (value) {
-      return _then(_self.copyWith(scene: value));
-    });
   }
 }
 
@@ -260,8 +258,9 @@ extension MapStatePatterns on MapState {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-      MapScene scene,
-      MapRenderStatus renderStatus,
+      MapLayer? layer,
+      LocationFix? location,
+      MapCanvasStatus canvasStatus,
       PlaceDetails? selected,
       bool loadingLayer,
       LocationTrackingStatus locationStatus,
@@ -276,8 +275,9 @@ extension MapStatePatterns on MapState {
     switch (_that) {
       case _MapState() when $default != null:
         return $default(
-          _that.scene,
-          _that.renderStatus,
+          _that.layer,
+          _that.location,
+          _that.canvasStatus,
           _that.selected,
           _that.loadingLayer,
           _that.locationStatus,
@@ -306,8 +306,9 @@ extension MapStatePatterns on MapState {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-      MapScene scene,
-      MapRenderStatus renderStatus,
+      MapLayer? layer,
+      LocationFix? location,
+      MapCanvasStatus canvasStatus,
       PlaceDetails? selected,
       bool loadingLayer,
       LocationTrackingStatus locationStatus,
@@ -321,8 +322,9 @@ extension MapStatePatterns on MapState {
     switch (_that) {
       case _MapState():
         return $default(
-          _that.scene,
-          _that.renderStatus,
+          _that.layer,
+          _that.location,
+          _that.canvasStatus,
           _that.selected,
           _that.loadingLayer,
           _that.locationStatus,
@@ -350,8 +352,9 @@ extension MapStatePatterns on MapState {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-      MapScene scene,
-      MapRenderStatus renderStatus,
+      MapLayer? layer,
+      LocationFix? location,
+      MapCanvasStatus canvasStatus,
       PlaceDetails? selected,
       bool loadingLayer,
       LocationTrackingStatus locationStatus,
@@ -365,8 +368,9 @@ extension MapStatePatterns on MapState {
     switch (_that) {
       case _MapState() when $default != null:
         return $default(
-          _that.scene,
-          _that.renderStatus,
+          _that.layer,
+          _that.location,
+          _that.canvasStatus,
           _that.selected,
           _that.loadingLayer,
           _that.locationStatus,
@@ -384,8 +388,9 @@ extension MapStatePatterns on MapState {
 
 class _MapState extends MapState {
   const _MapState({
-    this.scene = const MapScene(),
-    this.renderStatus = MapRenderStatus.waitingForMap,
+    this.layer,
+    this.location,
+    this.canvasStatus = MapCanvasStatus.waitingForMap,
     this.selected,
     this.loadingLayer = true,
     this.locationStatus = LocationTrackingStatus.idle,
@@ -395,11 +400,12 @@ class _MapState extends MapState {
   }) : super._();
 
   @override
-  @JsonKey()
-  final MapScene scene;
+  final MapLayer? layer;
+  @override
+  final LocationFix? location;
   @override
   @JsonKey()
-  final MapRenderStatus renderStatus;
+  final MapCanvasStatus canvasStatus;
   @override
   final PlaceDetails? selected;
   @override
@@ -428,9 +434,11 @@ class _MapState extends MapState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _MapState &&
-            (identical(other.scene, scene) || other.scene == scene) &&
-            (identical(other.renderStatus, renderStatus) ||
-                other.renderStatus == renderStatus) &&
+            (identical(other.layer, layer) || other.layer == layer) &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.canvasStatus, canvasStatus) ||
+                other.canvasStatus == canvasStatus) &&
             (identical(other.selected, selected) ||
                 other.selected == selected) &&
             (identical(other.loadingLayer, loadingLayer) ||
@@ -449,8 +457,9 @@ class _MapState extends MapState {
   int get hashCode {
     return Object.hash(
       runtimeType,
-      scene,
-      renderStatus,
+      layer,
+      location,
+      canvasStatus,
       selected,
       loadingLayer,
       locationStatus,
@@ -462,7 +471,7 @@ class _MapState extends MapState {
 
   @override
   String toString() {
-    return 'MapState(scene: $scene, renderStatus: $renderStatus, selected: $selected, loadingLayer: $loadingLayer, locationStatus: $locationStatus, layerFailure: $layerFailure, locationFailure: $locationFailure, settingsMessage: $settingsMessage)';
+    return 'MapState(layer: $layer, location: $location, canvasStatus: $canvasStatus, selected: $selected, loadingLayer: $loadingLayer, locationStatus: $locationStatus, layerFailure: $layerFailure, locationFailure: $locationFailure, settingsMessage: $settingsMessage)';
   }
 }
 
@@ -474,8 +483,9 @@ abstract mixin class _$MapStateCopyWith<$Res>
   @override
   @useResult
   $Res call({
-    MapScene scene,
-    MapRenderStatus renderStatus,
+    MapLayer? layer,
+    LocationFix? location,
+    MapCanvasStatus canvasStatus,
     PlaceDetails? selected,
     bool loadingLayer,
     LocationTrackingStatus locationStatus,
@@ -483,9 +493,6 @@ abstract mixin class _$MapStateCopyWith<$Res>
     Failure? locationFailure,
     String? settingsMessage,
   });
-
-  @override
-  $MapSceneCopyWith<$Res> get scene;
 }
 
 /// @nodoc
@@ -500,8 +507,9 @@ class __$MapStateCopyWithImpl<$Res> implements _$MapStateCopyWith<$Res> {
   @override
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? scene = null,
-    Object? renderStatus = null,
+    Object? layer = freezed,
+    Object? location = freezed,
+    Object? canvasStatus = null,
     Object? selected = freezed,
     Object? loadingLayer = null,
     Object? locationStatus = null,
@@ -511,14 +519,18 @@ class __$MapStateCopyWithImpl<$Res> implements _$MapStateCopyWith<$Res> {
   }) {
     return _then(
       _MapState(
-        scene: null == scene
-            ? _self.scene
-            : scene // ignore: cast_nullable_to_non_nullable
-                  as MapScene,
-        renderStatus: null == renderStatus
-            ? _self.renderStatus
-            : renderStatus // ignore: cast_nullable_to_non_nullable
-                  as MapRenderStatus,
+        layer: freezed == layer
+            ? _self.layer
+            : layer // ignore: cast_nullable_to_non_nullable
+                  as MapLayer?,
+        location: freezed == location
+            ? _self.location
+            : location // ignore: cast_nullable_to_non_nullable
+                  as LocationFix?,
+        canvasStatus: null == canvasStatus
+            ? _self.canvasStatus
+            : canvasStatus // ignore: cast_nullable_to_non_nullable
+                  as MapCanvasStatus,
         selected: freezed == selected
             ? _self.selected
             : selected // ignore: cast_nullable_to_non_nullable
@@ -545,15 +557,5 @@ class __$MapStateCopyWithImpl<$Res> implements _$MapStateCopyWith<$Res> {
                   as String?,
       ),
     );
-  }
-
-  /// Create a copy of MapState
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $MapSceneCopyWith<$Res> get scene {
-    return $MapSceneCopyWith<$Res>(_self.scene, (value) {
-      return _then(_self.copyWith(scene: value));
-    });
   }
 }

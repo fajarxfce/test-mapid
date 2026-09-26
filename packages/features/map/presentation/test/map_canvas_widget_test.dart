@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
-import 'package:map_presentation/src/map/widgets/map_canvas.dart';
+import 'package:map_presentation/src/map/canvas/map_canvas.dart';
+import 'package:map_presentation/src/map/canvas/maplibre/maplibre_adapter.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import 'support/map_platform_view.dart';
@@ -40,7 +40,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(MapLibreMap), findsOneWidget);
-    expect(platform.creationParams?['styleString'], MapLibreRenderer.styleUrl);
+    expect(platform.creationParams?['styleString'], MapLibreAdapter.styleUrl);
     await tester.pumpWidget(const SizedBox.shrink());
     expect(tester.takeException(), isNull);
   });

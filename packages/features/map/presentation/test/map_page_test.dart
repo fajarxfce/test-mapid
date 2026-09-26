@@ -11,12 +11,12 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
-import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/map_camera_focus.dart';
+import 'package:map_presentation/src/map/models/map_canvas_status.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
 import 'package:map_presentation/src/map/pages/map_page.dart';
-import 'package:map_presentation/src/map/rendering/map_renderer.dart';
-import 'package:map_presentation/src/map/widgets/map_controls.dart';
-import 'package:map_presentation/src/map/widgets/place_popup.dart';
+import 'package:map_presentation/src/map/widgets/map_toolbar.dart';
+import 'package:map_presentation/src/map/widgets/place_details_popup.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'support/map_fixtures.dart';
@@ -35,7 +35,7 @@ void main() {
     whenListen(
       bloc,
       states.stream,
-      initialState: const MapState(renderStatus: MapRenderStatus.ready),
+      initialState: const MapState(canvasStatus: MapCanvasStatus.ready),
     );
     await tester.pumpWidget(
       FluentApp(
@@ -47,9 +47,9 @@ void main() {
       ),
     );
     final loaded = MapState(
-      scene: MapScene(layer: sampleLayer),
+      layer: sampleLayer,
       loadingLayer: false,
-      renderStatus: MapRenderStatus.ready,
+      canvasStatus: MapCanvasStatus.ready,
     );
     states.add(loaded);
     await tester.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
     ).called(1);
     states.add(
       loaded.copyWith(
-        scene: loaded.scene.copyWith(location: sampleLocation),
+        location: sampleLocation,
         locationStatus: LocationTrackingStatus.live,
       ),
     );
@@ -101,10 +101,11 @@ void main() {
       final states = StreamController<MapState>.broadcast();
       addTearDown(states.close);
       final initial = MapState(
-        scene: MapScene(layer: sampleLayer, location: sampleLocation),
+        layer: sampleLayer,
+        location: sampleLocation,
         loadingLayer: false,
         locationStatus: LocationTrackingStatus.live,
-        renderStatus: MapRenderStatus.ready,
+        canvasStatus: MapCanvasStatus.ready,
       );
       whenListen(bloc, states.stream, initialState: initial);
       await tester.pumpWidget(
@@ -121,7 +122,7 @@ void main() {
           (widget) => widget is AppText && widget.data == 'MAPID Explorer',
         ),
       );
-      final controls = tester.widget<MapControls>(find.byType(MapControls));
+      final controls = tester.widget<MapToolbar>(find.byType(MapToolbar));
       final locationMessage = tester.widget<AppText>(
         find.byWidgetPredicate(
           (widget) =>
@@ -131,14 +132,12 @@ void main() {
       for (var i = 0; i < 10; i++) {
         states.add(
           initial.copyWith(
-            scene: initial.scene.copyWith(
-              location: LocationFix(
-                point: sampleLocation.point,
-                accuracyMeters: 12,
-                bearing: LocationBearing(
-                  degrees: i.toDouble(),
-                  source: LocationBearingSource.compass,
-                ),
+            location: LocationFix(
+              point: sampleLocation.point,
+              accuracyMeters: 12,
+              bearing: LocationBearing(
+                degrees: i.toDouble(),
+                source: LocationBearingSource.compass,
               ),
             ),
           ),
@@ -153,7 +152,7 @@ void main() {
           same(header),
         );
         expect(
-          tester.widget<MapControls>(find.byType(MapControls)),
+          tester.widget<MapToolbar>(find.byType(MapToolbar)),
           same(controls),
         );
         expect(
@@ -168,27 +167,25 @@ void main() {
       }
       expect(find.textContaining('Arah hadap'), findsNothing);
       final selected = initial.copyWith(
-        scene: initial.scene.copyWith(
-          layer: MapLayer(name: 'Updated layer', places: [samplePlace]),
-        ),
+        layer: MapLayer(name: 'Updated layer', places: [samplePlace]),
         selected: PlaceDetails.fromPlace(samplePlace),
       );
       states.add(selected);
       await tester.pumpAndSettle();
       expect(find.text('Updated layer'), findsNothing);
-      final popup = tester.widget<PlacePopup>(find.byType(PlacePopup));
+      final popup = tester.widget<PlaceDetailsPopup>(
+        find.byType(PlaceDetailsPopup),
+      );
       states.add(
         selected.copyWith(
-          scene: selected.scene.copyWith(
-            location: LocationFix(
-              point: sampleLocation.point,
-              accuracyMeters: 5,
-            ),
-          ),
+          location: LocationFix(point: sampleLocation.point, accuracyMeters: 5),
         ),
       );
       await tester.pumpAndSettle();
-      expect(tester.widget<PlacePopup>(find.byType(PlacePopup)), same(popup));
+      expect(
+        tester.widget<PlaceDetailsPopup>(find.byType(PlaceDetailsPopup)),
+        same(popup),
+      );
       expect(find.text('Museum'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('Tutup informasi tempat'));
       verify(() => bloc.add(any(that: isA<MapSelectionCleared>()))).called(1);
@@ -206,14 +203,14 @@ void main() {
         bloc,
         const Stream<MapState>.empty(),
         initialState: MapState(
-          scene: MapScene(layer: sampleLayer),
+          layer: sampleLayer,
           loadingLayer: false,
           locationStatus: LocationTrackingStatus.failed,
           locationFailure: const Failure(
             FailureKind.permissionPermanentlyDenied,
             'internal',
           ),
-          renderStatus: MapRenderStatus.styleTimeout,
+          canvasStatus: MapCanvasStatus.styleTimeout,
         ),
       );
       await tester.pumpWidget(
@@ -226,7 +223,7 @@ void main() {
         ),
       );
       await tester.tap(find.text('Muat peta'));
-      verify(() => bloc.add(any(that: isA<MapStyleReloadRequested>())))
+      verify(() => bloc.add(any(that: isA<MapCanvasRetryRequested>())))
           .called(1);
       await tester.tap(find.text('Buka izin aplikasi'));
       verify(() => bloc.add(any(that: isA<MapLocationActionRequested>())))

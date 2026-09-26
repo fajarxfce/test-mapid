@@ -7,9 +7,9 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 296 tests.
+  dependency boundaries, architecture rules, static analysis, and 254 tests.
 - Flavor generation and native scheme checks: passed.
-- The presentation-boundaries staging ARM64 release build passed, and its APK
+- The annotation-based staging ARM64 release build passed, and its APK
   signature was verified with Android SDK `apksigner`. Earlier dev universal
   release and debug-build verification is recorded below.
 - The configured GEO MAPID endpoint returned 10 point features in the
@@ -20,7 +20,7 @@ Coverage includes GeoJSON parsing and coordinate validation, HTTP failures,
 credential-safe logging, shared location permissions and service failures,
 successive GPS fixes, compass fallback and throttling, first-fix timeout,
 background cancellation and resumption, heading-only updates, and camera follow,
-typed page handlers, pure scene diffing, UI event bindings, style restoration,
+typed page handlers, SDK annotation updates, UI event bindings, style restoration,
 serialized native rendering, partial write rollback, stale feature picks,
 controller replacement, disposal during native operations, popup content, and
 constrained layouts. See [Map architecture](map-architecture.md) for boundaries
@@ -28,6 +28,35 @@ and lifecycle decisions.
 
 The API key is absent from tracked source and local commit history. The root
 `.env` and generated submission artifacts are ignored by Git.
+
+## Current annotation presentation
+
+The annotation implementation has 24 manual Dart files. Native integration uses
+four focused implementations: `MapLibreAdapter`, `TourismMarkers`,
+`LocationMarker`, and `MapCamera`. Scene models, render-plan types, and the custom
+asynchronous feature-query pipeline have been removed. Domain/data contracts are
+unchanged; permission and sensor orchestration remain in shared use cases.
+
+- Tests model the SDK's mutation-before-native-write behavior. Failed annotation
+  additions can be retried without duplicate points, and clearing after a failed
+  addition preserves the user marker. Heading failures retry independently of
+  confirmed position.
+- Annotation callbacks carry stable place IDs. Current IDs select current domain
+  values; background taps dismiss the popup. Retired annotations are ignored.
+- Equal layer refreshes preserve annotation identity and popup values. Compass
+  updates change only the heading annotation; unrelated widgets are preserved.
+- Camera tests cover accepted/cancelled Android and iOS acknowledgments,
+  center-only follow, focus before the first fix, and stale focus after a pan.
+- Controlled native work verifies coalescing twelve pending fixes, ordered zoom,
+  style restoration, controller replacement during blocked I/O, and disposal.
+- Generated route tests cover shared adapter ownership, repeated recenter,
+  creation timeout/remount, retained page data, and GPS subscription cleanup.
+- Architecture checks keep native SDKs and canvas orchestration out of Bloc files,
+  enforce an SDK-free canvas port, and apply UI rules to the canvas host widget.
+
+Earlier test counts and implementation details below retain their original build
+context. Tests tied to the removed scene engine were replaced by annotation,
+camera, binding, and production-route regressions.
 
 ## Clean Architecture boundary regressions
 
@@ -78,9 +107,9 @@ The earlier boundary refactor passed 234 tests and both release builds. Its
 physical verification is recorded in the Clean Architecture device follow-up
 below; observations retain their original build context.
 
-## Presentation simplification
+## Earlier presentation simplification
 
-The current presentation layer has 25 manual Dart files, down from 39. Its native
+Before the annotation refactor, presentation had 25 manual Dart files, down from 39. Its native
 rendering implementation occupies six files, down from 13. Generated code and
 asset files are excluded from these counts.
 
@@ -110,7 +139,7 @@ simplified presentation is recorded in the Presentation simplification device
 follow-up below. Earlier device checks retain
 their original build context.
 
-## Presentation boundaries and recovery
+## Earlier presentation boundaries and recovery
 
 - `MapBloc` constructs with use cases only. Architecture checks prohibit imports
   of canvas bindings, renderer contracts, and native SDKs in Bloc files.
@@ -128,7 +157,7 @@ their original build context.
   verifies that timeout removes the SDK widget and retry mounts a fresh instance
   while retaining the same Bloc, loaded places, and GPS subscription.
 
-## Map audit regressions
+## Original map audit regressions
 
 | Boundary | Regression coverage |
 | --- | --- |
@@ -311,3 +340,14 @@ Native creation failure and delayed Settings responses were exercised with
 controlled regression tests; a native initialization failure was not forced on
 the physical device. This run did not repeat the walking/rotation experiment or
 record a new label-stability video.
+
+### Annotation build device status
+
+The annotation-based staging ARM64 release was built, signature-verified and
+installed on the Galaxy A72 on 26 September 2026. The installed APK matched the
+local artifact (SHA-256 `6161ec2391bad0e7de6b30e4ef0f371ae2bd5924b3a4b8be1d2fb8532624f198`).
+
+Interactive verification of this build is pending because the device was locked.
+Earlier device observations above apply to their recorded implementations;
+they do not establish native annotation rendering or touch behavior for this
+build. Annotation, camera, binding and route behavior passed automated tests.
