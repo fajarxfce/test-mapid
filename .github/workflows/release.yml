@@ -27,6 +27,7 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
       version: ${{ steps.version.outputs.version }}
       prerelease: ${{ steps.version.outputs.prerelease }}
+      build_required: ${{ steps.existing.outputs.build_required }}
     steps:
       - uses: actions/checkout@v4
       - name: Validate release version
@@ -49,14 +50,42 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write(f'tag={tag}\nversion={version}\nprerelease={str(match.group(4) is not None).lower()}\n')
           PYTHON
+      - name: Skip an already published release
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, subprocess
+          result = subprocess.run(
+              ['gh', 'release', 'view', os.environ['RELEASE_TAG'], '--json', 'isDraft,url'],
+              capture_output=True, text=True,
+          )
+          if result.returncode and 'release not found' not in result.stderr.lower():
+              raise SystemExit('Unable to check the existing GitHub release.')
+          release = json.loads(result.stdout) if result.returncode == 0 else None
+          required = release is None or release['isDraft']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'build_required={str(required).lower()}\n')
+          if not required:
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+                  summary.write(f"Release already published: {release['url']}. Existing artifacts were retained.\n")
+          PYTHON
       - uses: ./.github/actions/setup-flutter
+        if: steps.existing.outputs.build_required == 'true'
       - run: dart run melos run generate --no-select
+        if: steps.existing.outputs.build_required == 'true'
       - name: Verify committed generated sources
+        if: steps.existing.outputs.build_required == 'true'
         run: git diff --exit-code
       - run: dart run melos run check --no-select
+        if: steps.existing.outputs.build_required == 'true'
 
   build:
     needs: verify
+    if: needs.verify.outputs.build_required == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -182,6 +211,7 @@ jobs:
 
   release:
     needs: [verify, build]
+    if: needs.verify.outputs.build_required == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write

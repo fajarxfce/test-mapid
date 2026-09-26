@@ -36,6 +36,8 @@ gh release edit v1.0.0 --draft=false
 
 Drafts are visible to repository maintainers. Published release artifacts are
 not overwritten. A draft can be rebuilt only from the same source commit.
+Publishing a draft can also emit a tag-push event; the workflow detects an
+existing published release and skips the duplicate build.
 
 ## Release by pushing a tag
 
@@ -96,7 +98,8 @@ or the App Store.
 The first [release workflow run](https://github.com/fajarxfce/test-mapid/actions/runs/36237835244)
 completed on 26 September 2026 for source `646d49e`. Generated-code checks,
 static analysis, architecture/dependency checks, and all 243 tests passed.
-Android, iOS, and Web artifacts were built and uploaded to draft `v1.0.0`.
+Android, iOS, and Web artifacts were built and subsequently published as
+[v1.0.0](https://github.com/fajarxfce/test-mapid/releases/tag/v1.0.0).
 
 - The downloaded APK uses the production application ID and version `1.0.0+1`.
   Its signing certificate matches the persistent project key. The AAB signature
