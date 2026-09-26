@@ -32,6 +32,10 @@ dependencies. It is also available in both editors. If Melos cannot start, use
 `dart tool/reset_android.dart` directly.
 
 The Flavorizr-generated Gradle script uses `AppExtension`; the project retains
-the compatible legacy DSL settings. Release APKs use local debug signing for
-this case study. CI builds use placeholder layer credentials to verify
-compilation without exposing the configured API key.
+the compatible legacy DSL settings. Local release APKs use debug signing unless
+`android/key.properties` configures a release key. The GitHub release workflow
+requires a persistent signing key and the real layer configuration through
+repository secrets. See [GitHub releases](releases.md).
+
+The regular verification workflow uses placeholder layer credentials to check
+Android compilation without using the configured API key.

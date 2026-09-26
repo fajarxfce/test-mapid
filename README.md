@@ -34,8 +34,11 @@ dart run tool/app.dart build android dev
 ```
 
 APK output: `apps/fluent_starter/build/app/outputs/flutter-apk/app-dev-release.apk`
-or `app-dev-debug.apk`. Case-study release builds use local debug signing.
+or `app-dev-debug.apk`. Local builds use debug signing unless a release key is configured.
 VS Code and Zed configurations include run, debug, build, and maintenance tasks.
+
+GitHub Actions packages Android, unsigned iOS, and Web releases. See
+[GitHub releases](docs/releases.md) for version tags, downloads, and signing.
 
 ## Project structure
 
