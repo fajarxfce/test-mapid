@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:map_domain/map_domain.dart';
 
-final class PlaceDetails {
+final class PlaceDetails extends Equatable {
   const PlaceDetails({
     required this.id,
     required this.name,
@@ -29,4 +30,7 @@ final class PlaceDetails {
   final String area;
   final String period;
   final String coordinates;
+
+  @override
+  List<Object> get props => [id, name, address, area, period, coordinates];
 }

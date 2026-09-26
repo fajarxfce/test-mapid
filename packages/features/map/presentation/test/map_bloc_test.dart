@@ -34,6 +34,61 @@ void main() {
   tearDown(() => renderer.close());
 
   test(
+    'late Settings failure cannot overwrite recovered live-location feedback',
+    () async {
+      final pending = Completer<Result<void>>();
+      final updates = StreamController<Result<LocationFix>>();
+      locations.updates = () => updates.stream;
+      access.settingsResponse = () => pending.future;
+      final bloc = createBloc();
+      addTearDown(() async {
+        await bloc.close();
+        await updates.close();
+      });
+      bloc.add(const MapLocationRequested());
+      await Future<void>.delayed(Duration.zero);
+      updates.add(
+        const FailureResult(
+          Failure(FailureKind.permissionPermanentlyDenied, 'Denied'),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const MapLocationActionRequested());
+      await Future<void>.delayed(Duration.zero);
+      expect(access.opened, LocationSettingsTarget.application);
+      updates.add(const Success(sampleLocation));
+      await Future<void>.delayed(Duration.zero);
+      pending.complete(
+        const FailureResult(Failure(FailureKind.unexpected, 'Delayed error')),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.live);
+      expect(bloc.state.settingsMessage, isNull);
+      expect(bloc.state.locationMessage, contains('realtime'));
+    },
+  );
+
+  test(
+    'Settings failure remains visible while the recovery context is current',
+    () async {
+      locations.response = () async => const FailureResult(
+        Failure(FailureKind.permissionPermanentlyDenied, 'Denied'),
+      );
+      access.settingsResult = const FailureResult(
+        Failure(FailureKind.unexpected, 'Unavailable'),
+      );
+      final bloc = createBloc();
+      addTearDown(bloc.close);
+      bloc.add(const MapLocationRequested());
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const MapLocationActionRequested());
+      await Future<void>.delayed(Duration.zero);
+      expect(bloc.state.locationStatus, LocationTrackingStatus.failed);
+      expect(bloc.state.settingsMessage, isNotNull);
+    },
+  );
+
+  test(
     'live fixes and heading updates continue without repeated button taps',
     () async {
       final updates = StreamController<Result<LocationFix>>();

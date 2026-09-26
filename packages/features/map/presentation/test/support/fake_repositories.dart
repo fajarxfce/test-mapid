@@ -36,6 +36,7 @@ class FakeLocationRepository implements LocationRepository {
 
 class FakeLocationAccessRepository implements LocationAccessRepository {
   Result<void> settingsResult = const Success(null);
+  Future<Result<void>> Function()? settingsResponse;
   LocationSettingsTarget? opened;
   @override
   Stream<Result<void>> checkAccess() => Stream.value(const Success(null));
@@ -44,7 +45,7 @@ class FakeLocationAccessRepository implements LocationAccessRepository {
   @override
   Future<Result<void>> openSettings(LocationSettingsTarget target) async {
     opened = target;
-    return settingsResult;
+    return settingsResponse?.call() ?? settingsResult;
   }
 }
 

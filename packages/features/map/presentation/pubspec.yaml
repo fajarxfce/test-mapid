@@ -19,6 +19,7 @@ dependencies:
   synchronized: any
   rxdart: any
   freezed_annotation: any
+  equatable: any
   injectable: any
   get_it: any
   auto_route: any

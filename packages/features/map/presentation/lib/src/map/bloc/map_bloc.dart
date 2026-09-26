@@ -134,12 +134,16 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       add(const MapLocationRequested());
       return;
     }
+    final recoveryFailure = state.locationFailure;
     final result = await _openSettings(
       state.locationAction == LocationAction.appSettings
           ? LocationSettingsTarget.application
           : LocationSettingsTarget.device,
     );
-    if (emit.isDone) return;
+    if (emit.isDone ||
+        state.locationStatus != LocationTrackingStatus.failed ||
+        state.locationFailure != recoveryFailure)
+      return;
     emit(
       state.copyWith(
         settingsMessage: switch (result) {
