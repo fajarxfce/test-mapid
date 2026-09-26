@@ -70,6 +70,19 @@ final class LocationMarker {
         await _controller.setLayerProperties(
           id,
           const SymbolLayerProperties(
+            // Native symbol layout needs explicitly typed annotation values.
+            iconImage: [
+              'image',
+              ['get', 'iconImage'],
+            ],
+            iconRotate: [
+              'to-number',
+              ['get', 'iconRotate'],
+            ],
+            iconSize: [
+              'to-number',
+              ['get', 'iconSize'],
+            ],
             iconRotationAlignment: 'map',
             iconAllowOverlap: true,
             iconIgnorePlacement: true,

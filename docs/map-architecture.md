@@ -69,6 +69,9 @@ confirmed position, and heading-only updates do not rewrite tourism markers.
 Symbol options do not expose rotation alignment or placement, so the adapter
 configures those properties once on the SDK-owned symbol layer. Geometry and
 bearing updates still use the annotation API. Missing bearing removes the arrow.
+The layer resolves each annotation's image ID with `image` and converts size and
+rotation with `to-number`. Untyped expressions left the runtime image invisible
+or used default scale/rotation on Android despite valid annotation values.
 
 This approach targets the current point dataset. Clustering, large datasets, or
 more complex geometry may justify dedicated GeoJSON/vector sources later.

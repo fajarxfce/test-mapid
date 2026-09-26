@@ -341,13 +341,38 @@ controlled regression tests; a native initialization failure was not forced on
 the physical device. This run did not repeat the walking/rotation experiment or
 record a new label-stability video.
 
-### Annotation build device status
+### Annotation canvas device follow-up
 
-The annotation-based staging ARM64 release was built, signature-verified and
-installed on the Galaxy A72 on 26 September 2026. The installed APK matched the
-local artifact (SHA-256 `6161ec2391bad0e7de6b30e4ef0f371ae2bd5924b3a4b8be1d2fb8532624f198`).
+The annotation-based staging ARM64 release was verified on the Galaxy A72
+running Android 16 on 26 September 2026. The APK was signature-verified, and the
+installed APK matched the local artifact (SHA-256 `de11f550a0723eb9e83b8416a1cc1aef58ca690f9b83f05fa04cbb1ecb1f71ed`). All 254 tests
+and the format, analysis, dependency and architecture checks passed again.
 
-Interactive verification of this build is pending because the device was locked.
-Earlier device observations above apply to their recorded implementations;
-they do not establish native annotation rendering or touch behavior for this
-build. Annotation, camera, binding and route behavior passed automated tests.
+- Liberty and green tourism annotations rendered without map or data warnings.
+  Tapping BBY displayed its name and address; dismissing the popup restored the
+  live-location card.
+- The blue GPS circle and separate heading arrow rendered. A deliberate pan
+  stopped follow; the location action restored it. Repeating that action after
+  zooming restored the framing. Refresh retained GPS focus.
+- Physical probes exposed native symbol layout using an unresolved runtime
+  image or default rotation/scale despite valid annotation values. The final
+  layer resolves the image with `image` and numeric values with `to-number`.
+  The native arrow then followed the supplied bearing, and the device owner
+  confirmed that rotating the phone rotated the arrow.
+- No Flutter errors or Android fatal exceptions appeared in the tested process.
+
+Permission and lifecycle checks were repeated on the preceding image-only
+release (SHA-256 `9d9523d4d160e7e13abd09902c3647c094492d3318e83a44f693b2477b2599f9`),
+before the final numeric layout correction. Permanent denial exposed Settings
+recovery without an active GPS request. Granting foreground access through ADB
+while Settings was open, then returning to MAPID, restored GPS in the same
+process without another location tap. Backgrounding released GPS; foregrounding
+resumed it without a prompt. Original permission grants, flags and screen timeout
+were restored. These checks did not depend on the heading layout expressions.
+
+The rotation confirmation followed a debug restart of the same final source;
+release appearance was checked again after installation. A release screenshot's
+arrow orientation (126.5 degrees) agreed with a contemporaneous Android rotation
+vector sample (128.1 degrees). This run did not measure walking distance or
+record a new label-stability video. Continuous label stability was not
+independently confirmed again for this build.

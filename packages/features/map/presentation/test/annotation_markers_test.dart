@@ -89,6 +89,22 @@ void main() {
       expect(native.operations, ['updateHeading']);
       expect(native.circles.first, same(marker));
       expect(native.symbols.single.options.iconRotate, 120);
+      expect(
+        native.headingStyle!.iconImage,
+        [
+          'image',
+          ['get', 'iconImage'],
+        ],
+        reason: 'Android needs runtime icon IDs resolved as images for layout.',
+      );
+      expect(native.headingStyle!.iconRotate, [
+        'to-number',
+        ['get', 'iconRotate'],
+      ], reason: 'Untyped native layout values left the arrow pointing north.');
+      expect(native.headingStyle!.iconSize, [
+        'to-number',
+        ['get', 'iconSize'],
+      ], reason: 'The native arrow must use its configured annotation scale.');
       expect(native.headingStyle!.iconRotationAlignment, 'map');
       expect(native.headingStyle!.iconIgnorePlacement, isTrue);
       final codec = await ui.instantiateImageCodec(native.image!);
