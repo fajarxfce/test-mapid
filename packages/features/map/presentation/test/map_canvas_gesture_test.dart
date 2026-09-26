@@ -9,25 +9,21 @@ import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/widgets/map_canvas.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
-import 'support/fake_map_renderer.dart';
 import 'support/fake_repositories.dart';
 import 'support/map_platform_view.dart';
 
 void main() {
   late MapBloc bloc;
-  late FakeMapRenderer renderer;
   late int nativeTaps;
   late int nativeDragUpdates;
 
   setUp(() {
-    renderer = FakeMapRenderer();
     final locations = FakeLocationRepository();
     final access = FakeLocationAccessRepository();
     bloc = MapBloc(
       LoadMapLayer(FakeMapRepository()),
       WatchLocation(locations, access, const FakeAppLifecycleRepository()),
       OpenLocationSettings(access),
-      renderer,
     );
     nativeTaps = 0;
     nativeDragUpdates = 0;
@@ -43,7 +39,6 @@ void main() {
     MapLibrePlatform.createInstance = () => platform;
     addTearDown(() async {
       await bloc.close();
-      await renderer.close();
       MapLibrePlatform.createInstance = previous;
     });
   });
@@ -69,7 +64,6 @@ void main() {
     await finger.up();
     await tester.pump();
     expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
-    expect(renderer.scenes, isEmpty);
     expect(nativeTaps, 1);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -84,7 +78,6 @@ void main() {
       await finger.up();
       await tester.pump();
       expect(bloc.state.scene.focus, MapCameraFocus.free);
-      expect(renderer.scenes, hasLength(1));
       expect(nativeDragUpdates, greaterThan(0));
       expect(nativeTaps, 0);
       await tester.pumpWidget(const SizedBox.shrink());
@@ -101,12 +94,12 @@ void main() {
     final next = await tester.startGesture(const Offset(500, 300));
     await next.moveBy(const Offset(3, 2));
     await tester.pump();
-    expect(renderer.scenes, isEmpty);
+    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
     await tester.pumpWidget(const SizedBox.shrink());
     await next.moveBy(const Offset(100, 0));
     await next.up();
     await tester.pump();
-    expect(renderer.scenes, isEmpty);
+    expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
     expect(tester.takeException(), isNull);
   });
 }

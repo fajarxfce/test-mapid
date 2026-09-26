@@ -1,8 +1,8 @@
 import 'package:core_common/core_common.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:map_presentation/src/map/models/map_render_status.dart';
 import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
-import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 
 part 'map_state.freezed.dart';
 

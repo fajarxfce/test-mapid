@@ -1,6 +1,9 @@
 import 'dart:math';
 
+import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/models/map_render_status.dart';
 import 'package:map_presentation/src/map/models/map_scene.dart';
+import 'package:map_presentation/src/map/models/place_details.dart';
 
 sealed class MapEvent {
   const MapEvent();
@@ -22,8 +25,9 @@ final class MapPanned extends MapEvent {
   const MapPanned();
 }
 
-final class MapStarted extends MapEvent {
-  const MapStarted();
+final class MapRenderStatusChanged extends MapEvent {
+  const MapRenderStatusChanged(this.status);
+  final MapRenderStatus status;
 }
 
 final class MapStyleReloadRequested extends MapEvent {
@@ -33,6 +37,13 @@ final class MapStyleReloadRequested extends MapEvent {
 final class MapTapped extends MapEvent {
   const MapTapped(this.point);
   final Point<double> point;
+}
+
+final class MapPlacePicked extends MapEvent {
+  const MapPlacePicked(this.id, {required this.layer, required this.selection});
+  final String? id;
+  final MapLayer? layer;
+  final PlaceDetails? selection;
 }
 
 final class MapSelectionCleared extends MapEvent {

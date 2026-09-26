@@ -8,30 +8,51 @@ import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
+import 'package:map_presentation/src/map/models/map_effect.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 
-import 'support/fake_map_renderer.dart';
 import 'support/fake_repositories.dart';
 import 'support/map_fixtures.dart';
 
 void main() {
   late FakeMapRepository maps;
-  late FakeMapRenderer renderer;
   late FakeLocationRepository locations;
   late FakeLocationAccessRepository access;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
     WatchLocation(locations, access, const FakeAppLifecycleRepository()),
     OpenLocationSettings(access),
-    renderer,
   );
   setUp(() {
     maps = FakeMapRepository();
-    renderer = FakeMapRenderer();
     locations = FakeLocationRepository();
     access = FakeLocationAccessRepository();
   });
 
-  tearDown(() => renderer.close());
+  test('page emits visual effects without a renderer dependency', () async {
+    final bloc = createBloc();
+    final effects = <MapEffect>[];
+    var effectsClosed = false;
+    final subscription = bloc.effects.listen(
+      effects.add,
+      onDone: () => effectsClosed = true,
+    );
+    bloc.add(const MapFocusRequested(MapCameraFocus.places));
+    bloc.add(const MapFocusRequested(MapCameraFocus.places));
+    bloc.add(const MapZoomRequested(1));
+    bloc.add(const MapStyleReloadRequested());
+    await Future<void>.delayed(Duration.zero);
+    expect(effects, [
+      isA<FocusMapCamera>(),
+      isA<FocusMapCamera>(),
+      isA<ZoomMapCamera>(),
+      isA<ReloadMapCanvas>(),
+    ]);
+    expect(bloc.state.scene, const MapScene());
+    await bloc.close();
+    expect(effectsClosed, isTrue);
+    await subscription.cancel();
+  });
 
   test(
     'late Settings failure cannot overwrite recovered live-location feedback',

@@ -12,6 +12,8 @@ import 'package:injectable/injectable.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/di/injection.module.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
+import 'package:map_presentation/src/map/bloc/map_event.dart';
+import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart';
 import 'package:map_presentation/src/map/widgets/map_canvas.dart';
@@ -78,6 +80,22 @@ void main() {
       expect(bloc.state.scene.layer?.places, hasLength(1));
       expect(bloc.state.scene.location, sampleLocation);
       expect(native.sources, isNotEmpty);
+
+      native.cameraMoves.clear();
+      bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
+      await tester.pump();
+      expect(
+        native.cameraMoves,
+        hasLength(1),
+        reason: 'Changing focus issues one movement.',
+      );
+      bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
+      await tester.pump();
+      expect(
+        native.cameraMoves,
+        hasLength(2),
+        reason: 'An equal-state recenter remains a one-time command.',
+      );
 
       // Observers that join after native readiness receive the current status.
       MapRenderStatus? observed;

@@ -20,11 +20,16 @@ flowchart LR
     Bloc --> UseCases[Map and location use cases]
     Bloc --> State[MapState with MapScene]
     State --> Widgets[Page and widgets]
-    Bloc --> Port[MapRenderer]
+    Bloc --> Effects[One-time visual effects]
+    State --> Binding[MapCanvasBinding]
+    Effects --> Binding
+    Binding --> Port[MapRenderer]
     Port --> Adapter[MapLibreRenderer]
     Native[SDK lifecycle callbacks] --> Adapter
     Adapter --> Status[Render status stream]
-    Status --> Bloc
+    Status --> Binding
+    Binding --> Events[Typed status and pick events]
+    Events --> Bloc
     Adapter --> Session[MapLibreSession]
     Session --> Plan[Pure render plan]
     Session --> Layers[MapLibreLayers]
@@ -34,12 +39,16 @@ flowchart LR
 ## Presentation structure
 
 `lib/di` contains Injectable composition. Feature implementation lives under
-`lib/src/map`: `bloc`, `models`, `pages`, `widgets`, `gestures`, and `rendering`.
+`lib/src/map`: `bloc`, `models`, `bindings`, `pages`, `widgets`, `gestures`,
+and `rendering`.
 AutoRoute configuration lives under `lib/src/navigation`.
 
 | File | Responsibility |
 | --- | --- |
-| `map_renderer.dart` | SDK-free rendering commands and the render-status enum. |
+| `map_effect.dart` | Typed one-time visual commands and place-pick requests. |
+| `map_render_status.dart` | SDK-free canvas availability reported in page state. |
+| `map_canvas_binding.dart` | Connects scenes and effects to the renderer; returns status and pick events. |
+| `map_renderer.dart` | SDK-free rendering contract used by the binding. |
 | `maplibre_renderer.dart` | Latest desired scene, native attachment, stable status observation, and session replacement. |
 | `maplibre_session.dart` | One controller's readiness, timeout, serialized operations, and applied state. |
 | `map_render_plan.dart` | Pure diff, confirmed source/camera baseline, and related change types. |
@@ -51,9 +60,9 @@ layer IDs and encoders stay private to their implementation. Domain entities,
 DTOs, repositories, and use cases have separate files. Architecture checks focus
 on dependency, I/O, and resource ownership boundaries.
 
-`MapState.scene` holds the layer, location, and focus directly. There is no
-second canvas Bloc or content-forwarding binding. Every event has a typed
-registration and its own handler. The location button sends one event; the Bloc
+`MapState.scene` holds the layer, location, and focus directly. One Bloc owns
+page state and calls use cases; it never imports the renderer or its binding.
+Every event has a typed registration and its own handler. The location button sends one event; the Bloc
 requests focus and decides whether to acquire location or open settings.
 Widgets render state and dispatch events. Header, viewport, and location-card
 builders select only their displayed fields, so compass updates leave unrelated
@@ -61,18 +70,30 @@ widgets and an open popup intact.
 
 ## Lifecycle and asynchronous work
 
-The feature route creates one `MapLibreRenderer` through Injectable, passes it
-to `MapBloc` as a `MapRenderer` factory parameter, and disposes it on route removal.
-The native widget sends creation and style callbacks directly to the adapter.
-The widget owns controller disposal; each session owns its timeout, status
-stream, and operation queue. Replacing a controller closes its old session.
+The feature route creates `MapBloc` and `MapLibreRenderer` through Injectable.
+It connects them with one `MapCanvasBinding`, which receives streams and an event
+callback rather than holding or resolving a Bloc. The binding forwards changed
+scenes and one-time visual effects to the rendering contract. Render statuses and
+successful picks return as typed Bloc events. Status-only state changes never
+trigger another render. Native widget callbacks go directly to the adapter.
 
-The Bloc observes renderer status and location through `emit.forEach`. Closing
-it cancels both subscriptions and pending picks. A duplicate start does not add
-another status observer. The adapter replays its latest status to late observers.
-Layer requests and feature picks use `restartable()`; a late response cannot
-replace newer data or reopen a dismissed popup. Handlers apply results to the
-current state, preserving GPS updates and camera intent received during I/O.
+The route releases the binding subscriptions, Bloc, and renderer on removal.
+The SDK widget owns controller disposal; each session owns its timeout, status
+stream, and operation queue. Replacing a controller closes its old session.
+The adapter replays its latest status to late observers. The Bloc owns its effect
+stream and location subscription; closing it releases both.
+
+Layer requests use `restartable()`; the binding uses `switchMap` for native picks.
+A late response cannot replace newer data or reopen a dismissed popup. Pick
+results carry the layer and selection they were requested against, and the Bloc
+checks both before applying them. Handlers apply results to current state,
+preserving GPS updates and camera intent received during I/O. A delayed Settings
+failure cannot replace feedback after location has recovered.
+
+A change of camera focus travels through scene state and produces one movement.
+Pressing the same focus action again emits a one-time recenter effect instead,
+so equality does not suppress an explicit request. Zoom and style reload are
+also effects. The binding discards a queued recenter superseded by a pan.
 
 One session lock serializes native work. Waiting scene updates coalesce into the
 newest scene. Explicit commands, including zoom, remain ordered between draws.
@@ -91,6 +112,10 @@ A successful operation advances only its own baseline. Source failures invalidat
 source progress; camera failures preserve confirmed source content. Hit-test
 failures preserve both baselines and the current selection. Native exceptions
 and stack traces remain in the internal `map.renderer` diagnostic log.
+A native camera cancellation preserves source progress but invalidates camera
+progress. It waits for the next scene or explicit action rather than immediately
+fighting a user gesture. Android cancellation returns `false`; an iOS `null`
+animation acknowledgment is accepted according to the plugin contract.
 
 Layer equality includes its name and ordered place values. Identical refreshes
 need no native write or camera refit and preserve the popup. Changed attributes

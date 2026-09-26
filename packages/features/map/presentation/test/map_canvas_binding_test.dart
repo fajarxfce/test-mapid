@@ -5,6 +5,7 @@ import 'package:core_common/core_common.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
+import 'package:map_presentation/src/map/bindings/map_canvas_binding.dart';
 import 'package:map_presentation/src/map/bloc/map_bloc.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/models/map_scene.dart';
@@ -19,6 +20,7 @@ void main() {
   late FakeMapRepository maps;
   late StreamController<Result<LocationFix>> fixes;
   late MapBloc bloc;
+  late MapCanvasBinding binding;
   setUp(() {
     renderer = FakeMapRenderer();
     maps = FakeMapRepository();
@@ -29,10 +31,18 @@ void main() {
       LoadMapLayer(maps),
       WatchLocation(locations, access, const FakeAppLifecycleRepository()),
       OpenLocationSettings(access),
-      renderer,
     );
+    binding = MapCanvasBinding(
+      renderer: renderer,
+      initialScene: bloc.state.scene,
+      scenes: bloc.stream.map((state) => state.scene),
+      effects: bloc.effects,
+      onEvent: bloc.add,
+    );
+    renderer.scenes.clear();
   });
   tearDown(() async {
+    await binding.close();
     await bloc.close();
     await renderer.close();
     await fixes.close();
@@ -59,11 +69,14 @@ void main() {
       bloc.add(const MapPanned());
       await settle();
       expect(bloc.state.scene.focus, MapCameraFocus.free);
-      expect(renderer.scenes, hasLength(1));
+      expect(renderer.scenes.map((scene) => scene.focus), [
+        MapCameraFocus.userLocation,
+        MapCameraFocus.free,
+      ]);
       bloc.add(const MapLocationActionRequested());
       await settle();
       expect(bloc.state.scene.focus, MapCameraFocus.userLocation);
-      expect(renderer.focuses, hasLength(2));
+      expect(renderer.scenes.last.focus, MapCameraFocus.userLocation);
     },
   );
 
@@ -80,7 +93,6 @@ void main() {
   });
 
   test('native status changes preserve content, focus and popup', () async {
-    bloc.add(const MapStarted());
     await selectPlace();
     bloc.add(const MapFocusRequested(MapCameraFocus.userLocation));
     await settle();
@@ -96,17 +108,23 @@ void main() {
     expect(bloc.state.mapError, isNull);
   });
 
-  test('starting twice keeps one status observer', () async {
-    bloc.add(const MapStarted());
-    bloc.add(const MapStarted());
-    await settle();
-    renderer.updates.add(MapRenderStatus.ready);
-    await settle();
-    expect(bloc.state.mapReady, isTrue);
-    await bloc.close();
-    expect(renderer.updates.hasListener, isFalse);
-    expect(renderer.closed, isFalse, reason: 'The route owns adapter disposal');
-  });
+  test(
+    'binding observes status and releases it without owning the renderer',
+    () async {
+      await settle();
+      renderer.updates.add(MapRenderStatus.ready);
+      await settle();
+      expect(bloc.state.mapReady, isTrue);
+      await binding.close();
+      await bloc.close();
+      expect(renderer.updates.hasListener, isFalse);
+      expect(
+        renderer.closed,
+        isFalse,
+        reason: 'The route owns adapter disposal',
+      );
+    },
+  );
 
   test(
     'repeated focus requests recenter even when scene values are equal',
@@ -230,13 +248,13 @@ void main() {
   test(
     'close cancels status, GPS and pending picks without disposing the adapter',
     () async {
-      bloc.add(const MapStarted());
       bloc.add(const MapLocationRequested());
       await selectPlace();
       final pending = Completer<Result<String?>>();
       renderer.pick = (_) => pending.future;
       bloc.add(const MapTapped(Point(20, 20)));
       await settle();
+      await binding.close();
       await bloc.close();
       expect(renderer.closed, isFalse);
       expect(renderer.updates.hasListener, isFalse);
@@ -252,7 +270,6 @@ void main() {
     () async {
       final pending = Completer<Result<MapLayer>>();
       maps.response = () => pending.future;
-      bloc.add(const MapStarted());
       bloc.add(const MapLayerRequested());
       bloc.add(const MapLocationRequested());
       await settle();
@@ -284,6 +301,7 @@ void main() {
     await settle();
     expect(renderer.zooms, [1]);
     expect(renderer.styleReloads, 1);
+    await binding.close();
     await bloc.close();
     pending.complete(Success(sampleLayer));
     await settle();

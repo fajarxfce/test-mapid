@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:core_common/core_common.dart';
 import 'package:core_location_domain/core_location_domain.dart';
@@ -6,20 +8,16 @@ import 'package:injectable/injectable.dart';
 import 'package:map_domain/map_domain.dart';
 import 'package:map_presentation/src/map/bloc/map_event.dart';
 import 'package:map_presentation/src/map/bloc/map_state.dart';
+import 'package:map_presentation/src/map/models/map_effect.dart';
 import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
-import 'package:map_presentation/src/map/rendering/map_renderer.dart';
 
 /// Owns page state and user intent. The route owns the native renderer.
 @injectable
 class MapBloc extends Bloc<MapEvent, MapState> {
-  MapBloc(
-    this._loadLayer,
-    this._watchLocation,
-    this._openSettings,
-    @factoryParam this._renderer,
-  ) : super(const MapState()) {
-    on<MapStarted>(_onStarted, transformer: droppable());
+  MapBloc(this._loadLayer, this._watchLocation, this._openSettings)
+    : super(const MapState()) {
+    on<MapRenderStatusChanged>(_onRenderStatusChanged);
     on<MapLayerRequested>(_onLayerRequested, transformer: restartable());
     on<MapLocationRequested>(
       _onLocationRequested,
@@ -37,7 +35,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       transformer: droppable(),
     );
     on<MapStyleReloadRequested>(_onStyleReloadRequested);
-    on<MapTapped>(_onTapped, transformer: restartable());
+    on<MapTapped>(_onTapped);
+    on<MapPlacePicked>(_onPlacePicked);
     on<MapSelectionCleared>(_onSelectionCleared);
     on<MapFocusRequested>(_onFocusRequested);
     on<MapZoomRequested>(_onZoomRequested);
@@ -47,13 +46,13 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   final LoadMapLayer _loadLayer;
   final WatchLocation _watchLocation;
   final OpenLocationSettings _openSettings;
-  final MapRenderer _renderer;
+  final _effects = StreamController<MapEffect>.broadcast();
+  Stream<MapEffect> get effects => _effects.stream;
 
-  Future<void> _onStarted(MapStarted event, Emitter<MapState> emit) =>
-      emit.forEach(
-        _renderer.statuses,
-        onData: (status) => state.copyWith(renderStatus: status),
-      );
+  void _onRenderStatusChanged(
+    MapRenderStatusChanged event,
+    Emitter<MapState> emit,
+  ) => emit(state.copyWith(renderStatus: event.status));
 
   Future<void> _onLayerRequested(
     MapLayerRequested event,
@@ -76,7 +75,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
                       .firstOrNull,
           ),
         );
-        _renderer.render(state.scene);
       case FailureResult(:final failure):
         emit(state.copyWith(loadingLayer: false, layerFailure: failure));
     }
@@ -99,7 +97,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
         switch (result) {
           case Success(:final value):
             final scene = state.scene.copyWith(location: value);
-            _renderer.render(scene);
             return state.copyWith(
               scene: scene,
               locationStatus: LocationTrackingStatus.live,
@@ -124,12 +121,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     MapLocationActionRequested event,
     Emitter<MapState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        scene: state.scene.copyWith(focus: MapCameraFocus.userLocation),
-      ),
-    );
-    _renderer.focus(state.scene);
+    if (state.scene.focus == MapCameraFocus.userLocation) {
+      _effects.add(const FocusMapCamera(MapCameraFocus.userLocation));
+    } else {
+      emit(
+        state.copyWith(
+          scene: state.scene.copyWith(focus: MapCameraFocus.userLocation),
+        ),
+      );
+    }
     if (state.locationAction == LocationAction.locate) {
       add(const MapLocationRequested());
       return;
@@ -158,29 +158,26 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   void _onStyleReloadRequested(
     MapStyleReloadRequested event,
     Emitter<MapState> emit,
-  ) => _renderer.reloadStyle();
+  ) => _effects.add(const ReloadMapCanvas());
 
-  Future<void> _onTapped(MapTapped event, Emitter<MapState> emit) {
-    final layerAtTap = state.scene.layer;
-    final selectionAtTap = state.selected;
-    return emit.forEach(
-      _renderer.placeAt(event.point).asStream(),
-      onData: (result) {
-        // A dismissed popup or replaced dataset invalidates the pending pick.
-        if (state.scene.layer != layerAtTap ||
-            state.selected != selectionAtTap) {
-          return state;
-        }
-        return switch (result) {
-          Success(:final value) => state.copyWith(
-            selected: layerAtTap?.places
-                .where((place) => place.id == value)
-                .map(PlaceDetails.fromPlace)
-                .firstOrNull,
-          ),
-          FailureResult() => state,
-        };
-      },
+  void _onTapped(MapTapped event, Emitter<MapState> emit) => _effects.add(
+    PickMapPlace(
+      event.point,
+      layer: state.scene.layer,
+      selection: state.selected,
+    ),
+  );
+
+  void _onPlacePicked(MapPlacePicked event, Emitter<MapState> emit) {
+    if (state.scene.layer != event.layer || state.selected != event.selection)
+      return;
+    emit(
+      state.copyWith(
+        selected: event.layer?.places
+            .where((place) => place.id == event.id)
+            .map(PlaceDetails.fromPlace)
+            .firstOrNull,
+      ),
     );
   }
 
@@ -188,18 +185,26 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       emit(state.copyWith(selected: null));
 
   void _onFocusRequested(MapFocusRequested event, Emitter<MapState> emit) {
-    emit(state.copyWith(scene: state.scene.copyWith(focus: event.focus)));
-    _renderer.focus(state.scene);
+    if (state.scene.focus == event.focus) {
+      _effects.add(FocusMapCamera(event.focus));
+    } else {
+      emit(state.copyWith(scene: state.scene.copyWith(focus: event.focus)));
+    }
   }
 
   void _onZoomRequested(MapZoomRequested event, Emitter<MapState> emit) =>
-      _renderer.zoomBy(event.amount);
+      _effects.add(ZoomMapCamera(event.amount));
 
   void _onPanned(MapPanned event, Emitter<MapState> emit) {
     if (state.scene.focus == MapCameraFocus.free) return;
     emit(
       state.copyWith(scene: state.scene.copyWith(focus: MapCameraFocus.free)),
     );
-    _renderer.render(state.scene);
+  }
+
+  @override
+  Future<void> close() async {
+    await super.close();
+    await _effects.close();
   }
 }

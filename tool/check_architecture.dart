@@ -213,16 +213,25 @@ List<String> checkArchitecture(Directory root) {
             '$name/$relativePath: repository must use platform adapters, not Flutter UI/lifecycle APIs',
           );
         }
-        if (name == 'map_presentation' &&
-            (relativePath.startsWith('src/map/bloc/') ||
-                relativePath == 'src/map/rendering/map_renderer.dart') &&
-            (uri.startsWith('package:maplibre_gl/') ||
-                uri.startsWith('package:synchronized/') ||
-                (uri.contains('/rendering/') &&
-                    !uri.endsWith('/map_renderer.dart')))) {
-          errors.add(
-            '$name/$relativePath: Bloc must use the renderer contract; native resources and render planning belong to the adapter',
-          );
+        if (name == 'map_presentation') {
+          if (relativePath.startsWith('src/map/bloc/') &&
+              (uri.contains('/rendering/') ||
+                  uri.contains('/bindings/') ||
+                  uri.startsWith('package:maplibre_gl/') ||
+                  uri.startsWith('package:synchronized/'))) {
+            errors.add(
+              '$name/$relativePath: Bloc must emit view state and effects; canvas binding owns rendering',
+            );
+          }
+          if (relativePath == 'src/map/rendering/map_renderer.dart' &&
+              (uri.startsWith('package:maplibre_gl/') ||
+                  uri.startsWith('package:synchronized/') ||
+                  (uri.contains('/rendering/') &&
+                      !uri.endsWith('/map_renderer.dart')))) {
+            errors.add(
+              '$name/$relativePath: renderer contract must remain SDK-free',
+            );
+          }
         }
         final parsed = Uri.parse(uri);
         if (parsed.scheme == 'dart') {

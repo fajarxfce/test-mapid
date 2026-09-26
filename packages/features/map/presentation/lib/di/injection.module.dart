@@ -11,7 +11,6 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:map_domain/map_domain.dart' as _i774;
 import 'package:map_presentation/src/map/bloc/map_bloc.dart' as _i1021;
-import 'package:map_presentation/src/map/rendering/map_renderer.dart' as _i19;
 import 'package:map_presentation/src/map/rendering/maplibre_renderer.dart'
     as _i466;
 import 'package:map_presentation/src/navigation/map_router.dart' as _i318;
@@ -21,14 +20,13 @@ class MapPresentationPackageModule extends _i526.MicroPackageModule {
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) {
     gh.factory<_i466.MapLibreRenderer>(() => _i466.MapLibreRenderer());
-    gh.lazySingleton<_i318.MapRouter>(() => _i318.MapRouter(gh<_i174.GetIt>()));
-    gh.factoryParam<_i1021.MapBloc, _i19.MapRenderer, dynamic>(
-      (_renderer, _) => _i1021.MapBloc(
+    gh.factory<_i1021.MapBloc>(
+      () => _i1021.MapBloc(
         gh<_i774.LoadMapLayer>(),
         gh<_i1025.WatchLocation>(),
         gh<_i1025.OpenLocationSettings>(),
-        _renderer,
       ),
     );
+    gh.lazySingleton<_i318.MapRouter>(() => _i318.MapRouter(gh<_i174.GetIt>()));
   }
 }
