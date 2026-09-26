@@ -91,3 +91,21 @@ certificate, a matching provisioning profile, and an export method appropriate
 for the intended distribution. The current workflow does not upload to TestFlight
 or the App Store.
 
+## Verified release pipeline
+
+The first [release workflow run](https://github.com/fajarxfce/test-mapid/actions/runs/36237835244)
+completed on 26 September 2026 for source `646d49e`. Generated-code checks,
+static analysis, architecture/dependency checks, and all 243 tests passed.
+Android, iOS, and Web artifacts were built and uploaded to draft `v1.0.0`.
+
+- The downloaded APK uses the production application ID and version `1.0.0+1`.
+  Its signing certificate matches the persistent project key. The AAB signature
+  and archive structure were also verified.
+- The iOS archive contains an ARM64 iPhoneOS application with the production
+  bundle ID, version `1.0.0+1`, and Flutter frameworks. Application signing and a
+  provisioning profile are absent as intended. It has not been run on an iPhone.
+- The Web build loaded Liberty and all 10 tourism features in Chromium. Feature
+  selection displayed the BBY name/address, the popup dismissed, and the location
+  action recentered on an emulated browser position without page errors. The
+  GitHub artifact's main JavaScript matches the locally tested build.
+- All four downloaded artifacts match the release's `SHA256SUMS`.

@@ -269,4 +269,3 @@ jobs:
               state = 'Published' if os.environ['RELEASE_PUBLISH'] == 'true' else 'Draft'
               output.write(f'{state} release: **{tag}**. All four artifacts and SHA256SUMS were uploaded.\n')
           PYTHON
-
