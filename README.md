@@ -49,6 +49,8 @@ GitHub Actions packages Android, unsigned iOS, and Web releases. See
   routes, and UI.
 - `packages/core/location/{domain,data}`: shared location contracts, use cases,
   permissions, and the Geolocator adapter.
+- `packages/core/lifecycle/{domain,data}`: application visibility contract and
+  Flutter lifecycle adapter.
 - `packages/core`: shared results, error handling, networking, and design system.
 
 See [Map architecture](docs/map-architecture.md) for rendering boundaries and lifecycle decisions.

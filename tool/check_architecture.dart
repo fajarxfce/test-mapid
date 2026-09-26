@@ -10,14 +10,26 @@ import 'bloc_architecture_visitor.dart';
 import 'ui_architecture_visitor.dart';
 
 // Reviewed utilities with no Flutter or platform I/O dependency.
-const purePackages = {'core_common', 'collection', 'equatable'};
+const purePackages = {
+  'core_common',
+  'collection',
+  'equatable',
+  'rxdart',
+  'core_lifecycle_domain',
+};
 
 const allowed = <String, Set<String>>{
   'core_common': {},
   'core_network': {'core_common'},
   'core_design_system': {},
-  'core_location_domain': {'core_common'},
-  'core_location_data': {'core_common', 'core_location_domain'},
+  'core_lifecycle_domain': {},
+  'core_lifecycle_data': {'core_lifecycle_domain'},
+  'core_location_domain': {'core_common', 'core_lifecycle_domain'},
+  'core_location_data': {
+    'core_common',
+    'core_location_domain',
+    'core_lifecycle_domain',
+  },
   'map_domain': {'core_common'},
   'map_data': {'map_domain', 'core_common', 'core_network'},
   'map_presentation': {
@@ -27,6 +39,7 @@ const allowed = <String, Set<String>>{
     'core_location_domain',
   },
   'fluent_starter': {
+    'core_lifecycle_data',
     'core_network',
     'core_location_domain',
     'core_location_data',
@@ -111,6 +124,7 @@ List<String> checkArchitecture(Directory root) {
         unit.accept(
           _RawDataVisitor(
             (message) => errors.add('$name/$relativePath: $message'),
+            datasource: p.posix.split(relativePath).contains('datasources'),
           ),
         );
       }
@@ -284,6 +298,7 @@ List<String> checkArchitecture(Directory root) {
               'map_data',
               'map_presentation',
               'core_network',
+              'core_lifecycle_data',
               'core_location_data',
             }.contains(name) &&
             uris.any((uri) => uri.startsWith('package:injectable/'))) {
@@ -316,8 +331,22 @@ List<String> checkArchitecture(Directory root) {
 }
 
 class _RawDataVisitor extends RecursiveAstVisitor<void> {
-  _RawDataVisitor(this.report);
+  _RawDataVisitor(this.report, {required this.datasource});
   final void Function(String) report;
+  final bool datasource;
+
+  @override
+  void visitFieldDeclaration(FieldDeclaration node) {
+    final type = node.fields.type;
+    if (datasource &&
+        type is NamedType &&
+        type.name.lexeme.endsWith('DataSource')) {
+      report(
+        'datasource must not depend on another datasource; coordinate sources in a repository',
+      );
+    }
+    super.visitFieldDeclaration(node);
+  }
 
   @override
   void visitNamedType(NamedType node) {

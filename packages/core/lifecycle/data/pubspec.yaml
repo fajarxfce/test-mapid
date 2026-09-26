@@ -1,0 +1,17 @@
+name: core_lifecycle_data
+description: Flutter adapter for application visibility.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+environment:
+  sdk: ">=3.13.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  core_lifecycle_domain: any
+  injectable: any
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: any
+  injectable_generator: any

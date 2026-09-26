@@ -181,6 +181,24 @@ void main() {
     }
     expect(checkArchitecture(root), isEmpty);
   });
+  test('datasources can wrap SDKs but cannot inject other datasources', () {
+    File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
+      'name: map_data\ndependencies: {core_common: any, map_domain: any}\n',
+    );
+    final file = File(p.join(root.path, 'domain/lib/src/datasources/gps.dart'));
+    file.parent.createSync(recursive: true);
+    file.writeAsStringSync(
+      'class GpsDataSource { final GeolocatorPlatform platform; }',
+    );
+    expect(checkArchitecture(root), isEmpty);
+    file.writeAsStringSync(
+      'class GpsDataSource { final PermissionDataSource permissions; }',
+    );
+    expect(
+      checkArchitecture(root),
+      contains(contains('coordinate sources in a repository')),
+    );
+  });
   test('presentation rejects feature sources outside src', () {
     File(p.join(root.path, 'domain/pubspec.yaml')).writeAsStringSync(
       'name: map_presentation\ndependencies: {core_common: any}\n',

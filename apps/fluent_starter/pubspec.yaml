@@ -11,6 +11,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   core_network: any
+  core_lifecycle_data: any
   core_location_data: any
   core_design_system: any
   map_data: any
