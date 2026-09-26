@@ -15,16 +15,20 @@ abstract class CoreLocationDataModule {
   GeolocatorPlatform geolocator() => GeolocatorPlatform.instance;
 
   @injectable
-  GetCurrentLocation getCurrentLocation(LocationRepository repository) =>
-      GetCurrentLocation(repository);
+  GetCurrentLocation getCurrentLocation(
+    LocationRepository repository,
+    LocationAccessRepository access,
+  ) => GetCurrentLocation(repository, access);
 
   @injectable
   WatchLocation watchLocation(
     LocationRepository repository,
+    LocationAccessRepository access,
     AppLifecycleRepository lifecycle,
-  ) => WatchLocation(repository, lifecycle);
+  ) => WatchLocation(repository, access, lifecycle);
 
   @injectable
-  OpenLocationSettings openLocationSettings(LocationRepository repository) =>
-      OpenLocationSettings(repository);
+  OpenLocationSettings openLocationSettings(
+    LocationAccessRepository repository,
+  ) => OpenLocationSettings(repository);
 }

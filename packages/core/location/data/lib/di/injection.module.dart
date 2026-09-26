@@ -20,6 +20,8 @@ import 'package:core_location_data/src/datasources/location_access_data_source.d
     as _i520;
 import 'package:core_location_data/src/datasources/location_data_source.dart'
     as _i633;
+import 'package:core_location_data/src/repositories/device_location_access_repository.dart'
+    as _i464;
 import 'package:core_location_data/src/repositories/device_location_repository.dart'
     as _i391;
 import 'package:core_location_domain/core_location_domain.dart' as _i1025;
@@ -48,24 +50,30 @@ class CoreLocationDataPackageModule extends _i526.MicroPackageModule {
     gh.lazySingleton<_i1025.LocationRepository>(
       () => _i391.DeviceLocationRepository(
         gh<_i633.LocationDataSource>(),
-        gh<_i520.LocationAccessDataSource>(),
         gh<_i468.CompassDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i1025.LocationAccessRepository>(
+      () => _i464.DeviceLocationAccessRepository(
+        gh<_i520.LocationAccessDataSource>(),
+      ),
+    );
+    gh.factory<_i1025.OpenLocationSettings>(
+      () => coreLocationDataModule.openLocationSettings(
+        gh<_i1025.LocationAccessRepository>(),
       ),
     );
     gh.factory<_i1025.WatchLocation>(
       () => coreLocationDataModule.watchLocation(
         gh<_i1025.LocationRepository>(),
+        gh<_i1025.LocationAccessRepository>(),
         gh<_i705.AppLifecycleRepository>(),
       ),
     );
     gh.factory<_i1025.GetCurrentLocation>(
       () => coreLocationDataModule.getCurrentLocation(
         gh<_i1025.LocationRepository>(),
-      ),
-    );
-    gh.factory<_i1025.OpenLocationSettings>(
-      () => coreLocationDataModule.openLocationSettings(
-        gh<_i1025.LocationRepository>(),
+        gh<_i1025.LocationAccessRepository>(),
       ),
     );
   }

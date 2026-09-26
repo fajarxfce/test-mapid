@@ -5,6 +5,7 @@ import 'package:core_lifecycle_domain/core_lifecycle_domain.dart';
 import 'package:core_location_data/src/datasources/compass_data_source.dart';
 import 'package:core_location_data/src/datasources/geolocator_location_access_data_source.dart';
 import 'package:core_location_data/src/datasources/geolocator_location_data_source.dart';
+import 'package:core_location_data/src/repositories/device_location_access_repository.dart';
 import 'package:core_location_data/src/repositories/device_location_repository.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +25,9 @@ void main() {
   late _Compass compass;
   late GeolocatorLocationAccessDataSource access;
   late DeviceLocationRepository repository;
+  late DeviceLocationAccessRepository accessRepository;
+  late BehaviorSubject<bool> foreground;
+  late WatchLocation watch;
   final position = Position(
     longitude: 110.36,
     latitude: -7.8,
@@ -43,9 +47,13 @@ void main() {
     access = GeolocatorLocationAccessDataSource(platform);
     repository = DeviceLocationRepository(
       GeolocatorLocationDataSource(platform),
-      access,
       compass,
     );
+    accessRepository = DeviceLocationAccessRepository(access);
+    foreground = BehaviorSubject<bool>.seeded(true);
+    final lifecycle = _Lifecycle();
+    when(lifecycle.watchForeground).thenAnswer((_) => foreground.stream);
+    watch = WatchLocation(repository, accessRepository, lifecycle);
     when(platform.isLocationServiceEnabled).thenAnswer((_) async => true);
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.whileInUse);
@@ -61,6 +69,7 @@ void main() {
       ),
     ).thenAnswer((_) => Stream.value(position));
   });
+  tearDown(() => foreground.close());
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
   test(
@@ -74,39 +83,36 @@ void main() {
     },
   );
 
-  test(
-    'repository checks service, permission, requests access, then reads GPS',
-    () async {
-      when(platform.checkPermission)
-          .thenAnswer((_) async => LocationPermission.denied);
-      when(platform.requestPermission)
-          .thenAnswer((_) async => LocationPermission.whileInUse);
-      expect(
-        await repository.locate(requestPermission: true),
-        isA<Success<LocationFix>>(),
-      );
-      verifyInOrder([
-        platform.isLocationServiceEnabled,
-        platform.checkPermission,
-        platform.requestPermission,
-        () => platform.getCurrentPosition(
-          locationSettings: any(named: 'locationSettings'),
-        ),
-      ]);
-    },
-  );
+  test('use case checks access, requests permission, then reads GPS', () async {
+    when(platform.checkPermission)
+        .thenAnswer((_) async => LocationPermission.denied);
+    when(platform.requestPermission)
+        .thenAnswer((_) async => LocationPermission.whileInUse);
+    expect(
+      await GetCurrentLocation(repository, accessRepository)(),
+      isA<Success<LocationFix>>(),
+    );
+    verifyInOrder([
+      platform.isLocationServiceEnabled,
+      platform.checkPermission,
+      platform.requestPermission,
+      () => platform.getCurrentPosition(
+        locationSettings: any(named: 'locationSettings'),
+      ),
+    ]);
+  });
 
   for (final entry in {
     LocationPermission.denied: FailureKind.permissionDenied,
     LocationPermission.deniedForever: FailureKind.permissionPermanentlyDenied,
+    LocationPermission.unableToDetermine: FailureKind.unexpected,
   }.entries) {
     test(
       'passive access maps ${entry.key} without prompting or starting sensors',
       () async {
         when(platform.checkPermission).thenAnswer((_) async => entry.key);
         final result =
-            await repository.watch(requestPermission: false).first
-                as FailureResult<LocationFix>;
+            await accessRepository.checkAccess().first as FailureResult<void>;
         expect(result.failure.kind, entry.value);
         verifyNever(platform.requestPermission);
         verifyNever(
@@ -120,14 +126,66 @@ void main() {
     );
   }
 
+  for (final permission in [
+    LocationPermission.always,
+    LocationPermission.whileInUse,
+  ]) {
+    test('$permission satisfies access without requesting it again', () async {
+      when(platform.checkPermission).thenAnswer((_) async => permission);
+      expect(await accessRepository.checkAccess().first, isA<Success<void>>());
+      verifyNever(platform.requestPermission);
+    });
+  }
+
+  for (final entry in {
+    LocationPermission.always: null,
+    LocationPermission.whileInUse: null,
+    LocationPermission.denied: FailureKind.permissionDenied,
+    LocationPermission.deniedForever: FailureKind.permissionPermanentlyDenied,
+    LocationPermission.unableToDetermine: FailureKind.unexpected,
+  }.entries) {
+    test('permission request maps ${entry.key} to a domain result', () async {
+      when(platform.requestPermission).thenAnswer((_) async => entry.key);
+      final result = await accessRepository.requestPermission();
+      if (entry.value == null) {
+        expect(result, isA<Success<void>>());
+      } else {
+        expect((result as FailureResult<void>).failure.kind, entry.value);
+      }
+      verifyNever(platform.openAppSettings);
+    });
+  }
+
+  for (final step in ['service', 'permission', 'prompt']) {
+    test('$step exceptions do not cross the repository boundary', () async {
+      final error = PlatformException(code: 'private');
+      switch (step) {
+        case 'service':
+          when(platform.isLocationServiceEnabled)
+              .thenAnswer((_) async => throw error);
+        case 'permission':
+          when(platform.checkPermission).thenAnswer((_) async => throw error);
+        default:
+          when(platform.requestPermission).thenAnswer((_) async => throw error);
+      }
+      final result =
+          await (step == 'prompt'
+                  ? accessRepository.requestPermission()
+                  : accessRepository.checkAccess().first)
+              as FailureResult<void>;
+      expect(result.failure.kind, FailureKind.unexpected);
+      expect(result.failure.message, isNot(contains('private')));
+    });
+  }
+
   test('denied request never starts GPS', () async {
     when(platform.checkPermission)
         .thenAnswer((_) async => LocationPermission.denied);
     when(platform.requestPermission)
         .thenAnswer((_) async => LocationPermission.denied);
-    final result = await repository.locate(
-      requestPermission: true,
-    ) as FailureResult<LocationFix>;
+    final result =
+        await GetCurrentLocation(repository, accessRepository)()
+            as FailureResult<LocationFix>;
     expect(result.failure.kind, FailureKind.permissionDenied);
     verifyNever(
       () => platform.getCurrentPosition(
@@ -138,9 +196,7 @@ void main() {
 
   test('disabled service stops before permission and sensor access', () async {
     when(platform.isLocationServiceEnabled).thenAnswer((_) async => false);
-    final result =
-        await repository.watch(requestPermission: true).first
-            as FailureResult<LocationFix>;
+    final result = await watch().first as FailureResult<LocationFix>;
     expect(result.failure.kind, FailureKind.serviceDisabled);
     verifyNever(platform.checkPermission);
     verifyNever(compass.watch);
@@ -172,9 +228,7 @@ void main() {
             return prompt.future;
           });
         }
-        final subscription = repository
-            .watch(requestPermission: true)
-            .listen((_) => fail('Late result'));
+        final subscription = watch().listen((_) => fail('Late result'));
         await started.future;
         await subscription.cancel().timeout(const Duration(seconds: 1));
         service.complete(true);
@@ -196,19 +250,19 @@ void main() {
   test('Settings commands use the access adapter and preserve technical errors there', () async {
     when(platform.openAppSettings).thenAnswer((_) async => true);
     expect(
-      await repository.openSettings(LocationSettingsTarget.application),
+      await accessRepository.openSettings(LocationSettingsTarget.application),
       isA<Success<void>>(),
     );
     verify(platform.openAppSettings).called(1);
     when(platform.openLocationSettings).thenAnswer((_) async => false);
     expect(
-      await repository.openSettings(LocationSettingsTarget.device),
+      await accessRepository.openSettings(LocationSettingsTarget.device),
       isA<FailureResult<void>>(),
     );
     final error = PlatformException(code: 'private');
     when(platform.openLocationSettings).thenThrow(error);
     await expectLater(access.openLocationSettings, throwsA(same(error)));
-    final result = await repository.openSettings(
+    final result = await accessRepository.openSettings(
       LocationSettingsTarget.device,
     ) as FailureResult<void>;
     expect(result.failure.kind, FailureKind.unexpected);
@@ -240,6 +294,7 @@ void main() {
         final values = <Result<LocationFix>>[];
         final subscription = WatchLocation(
           repository,
+          accessRepository,
           lifecycle,
         )().listen(values.add);
         await settle();
@@ -286,6 +341,7 @@ void main() {
       final values = <Result<LocationFix>>[];
       final subscription = WatchLocation(
         repository,
+        accessRepository,
         lifecycle,
       )().listen(values.add);
       await settle();

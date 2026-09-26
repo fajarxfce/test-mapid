@@ -24,10 +24,11 @@ void main() {
     maps = FakeMapRepository();
     fixes = StreamController<Result<LocationFix>>.broadcast();
     final locations = FakeLocationRepository()..updates = () => fixes.stream;
+    final access = FakeLocationAccessRepository();
     bloc = MapBloc(
       LoadMapLayer(maps),
-      WatchLocation(locations, const FakeAppLifecycleRepository()),
-      OpenLocationSettings(locations),
+      WatchLocation(locations, access, const FakeAppLifecycleRepository()),
+      OpenLocationSettings(access),
       renderer,
     );
   });

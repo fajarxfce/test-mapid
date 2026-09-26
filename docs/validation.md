@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 260 tests.
+  dependency boundaries, architecture rules, static analysis, and 273 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev universal release and staging ARM64 release builds: passed. Both
   APK signatures were verified with Android SDK `apksigner`. Earlier debug-build
@@ -31,20 +31,26 @@ The API key is absent from tracked source and local commit history. The root
 
 ## Clean Architecture boundary regressions
 
-The location orchestration refactor separates platform acquisition, repository
-coordination, and use-case policy. Regression tests verify that GPS reads never
+The location orchestration refactor separates platform acquisition, access
+operations, and use-case policy. `GetCurrentLocation` and `WatchLocation` decide
+whether to request permission through `LocationAccessRepository` before reading
+GPS through `LocationRepository`. Regression tests verify that GPS reads never
 request permission, access failures do not start either sensor, and cancelling
 during service checks, permission checks, or a pending prompt prevents later
-native operations. Pure Dart use-case tests cover initial background state,
-passive resumes, explicit retries, and recovery after a failed session. Shared
-lifecycle tests exercise Flutter visibility events separately.
+native operations. All Geolocator permission values are translated at the data
+boundary, including indeterminate status. Pure Dart use-case tests cover initial
+background state, passive resumes after denial, explicit retries, and recovery
+after a failed session. Shared lifecycle tests exercise Flutter visibility
+events separately.
 
-The staging ARM64 APK was verified on the Android 16 device on 26 September
-2026. Permanent denial displayed application-settings recovery with no active
-GPS request. Granting access and returning restored live GPS in the same app
-process without another location tap. Backgrounding released GPS; resuming
-restored it without another permission dialog. Original permission settings and
-screen timeout were restored after verification.
+The staging ARM64 APK with access preparation in the use cases was verified on
+the Android 16 device on 26 September 2026. Permanent denial displayed
+application-settings recovery with no active GPS request. Granting access and
+returning restored live GPS in the same app process without another location
+tap. Backgrounding released GPS; resuming restored it without another permission
+dialog. No Flutter errors or Android fatal exceptions appeared in the tested app
+process. Original permission settings and screen timeout were restored after
+verification.
 
 - Location datasources expose DTOs and preserve technical exceptions. Tests
   verify that synchronous, asynchronous, and stream failures become domain

@@ -2,10 +2,8 @@ import 'dart:async';
 
 import 'package:core_common/core_common.dart';
 import 'package:core_location_data/src/datasources/compass_data_source.dart';
-import 'package:core_location_data/src/datasources/location_access_data_source.dart';
 import 'package:core_location_data/src/datasources/location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
-import 'package:core_location_data/src/exceptions/location_permission_exception.dart';
 import 'package:core_location_data/src/repositories/device_location_repository.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:flutter/services.dart';
@@ -16,8 +14,6 @@ import 'package:mocktail/mocktail.dart';
 class _Locations extends Mock implements LocationDataSource {}
 
 class _Compass extends Mock implements CompassDataSource {}
-
-class _Access extends Mock implements LocationAccessDataSource {}
 
 const fix = LocationFixDto(
   latitude: -7.8,
@@ -36,20 +32,12 @@ void main() {
   setUp(() {
     local = _Locations();
     compass = _Compass();
-    final access = _Access();
-    when(access.isServiceEnabled).thenAnswer((_) async => true);
-    when(access.checkPermission)
-        .thenAnswer((_) async => LocationPermission.whileInUse);
-    repository = DeviceLocationRepository(local, access, compass);
+    repository = DeviceLocationRepository(local, compass);
     when(compass.watch).thenAnswer((_) => Stream.value(null));
   });
 
   for (final entry in <Exception, FailureKind>{
     TimeoutException('private'): FailureKind.timeout,
-    const LocationPermissionException(LocationPermission.denied):
-        FailureKind.permissionDenied,
-    const LocationPermissionException(LocationPermission.deniedForever):
-        FailureKind.permissionPermanentlyDenied,
     const LocationServiceDisabledException(): FailureKind.serviceDisabled,
     PermissionDeniedException('private'): FailureKind.permissionDenied,
     PlatformException(code: 'private'): FailureKind.unexpected,
@@ -59,8 +47,8 @@ void main() {
       () async {
         when(local.locate).thenThrow(entry.key);
         when(() => local.watch()).thenThrow(entry.key);
-        final once = await repository.locate(requestPermission: true);
-        final streamed = await repository.watch(requestPermission: true).first;
+        final once = await repository.locate();
+        final streamed = await repository.watch().first;
         for (final result in [once, streamed]) {
           expect(result, isA<FailureResult<LocationFix>>());
           final failure = (result as FailureResult<LocationFix>).failure;
@@ -79,9 +67,7 @@ void main() {
       when(() => local.watch()).thenAnswer((_) => gps.stream);
       when(compass.watch).thenAnswer((_) => headings.stream);
       final results = <Result<LocationFix>>[];
-      final subscription = repository
-          .watch(requestPermission: true)
-          .listen(results.add);
+      final subscription = repository.watch().listen(results.add);
       addTearDown(subscription.cancel);
       gps.add(fix);
       headings.add(20);

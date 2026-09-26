@@ -17,16 +17,18 @@ void main() {
   late FakeMapRepository maps;
   late FakeMapRenderer renderer;
   late FakeLocationRepository locations;
+  late FakeLocationAccessRepository access;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
-    WatchLocation(locations, const FakeAppLifecycleRepository()),
-    OpenLocationSettings(locations),
+    WatchLocation(locations, access, const FakeAppLifecycleRepository()),
+    OpenLocationSettings(access),
     renderer,
   );
   setUp(() {
     maps = FakeMapRepository();
     renderer = FakeMapRenderer();
     locations = FakeLocationRepository();
+    access = FakeLocationAccessRepository();
   });
 
   tearDown(() => renderer.close());
@@ -204,7 +206,7 @@ void main() {
         bloc.add(const MapLocationActionRequested());
       },
       verify: (bloc) {
-        expect(locations.opened, entry.value);
+        expect(access.opened, entry.value);
         expect(bloc.state.locationFailure?.kind, entry.key);
         expect(bloc.state.settingsMessage, isNull);
       },

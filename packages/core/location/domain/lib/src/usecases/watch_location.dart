@@ -1,13 +1,15 @@
 import 'package:core_common/core_common.dart';
 import 'package:core_lifecycle_domain/core_lifecycle_domain.dart';
 import 'package:core_location_domain/src/entities/location_fix.dart';
+import 'package:core_location_domain/src/repositories/location_access_repository.dart';
 import 'package:core_location_domain/src/repositories/location_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 /// Foreground position and bearing updates; cancellation releases device sensors.
 final class WatchLocation {
-  const WatchLocation(this._repository, this._lifecycle);
+  const WatchLocation(this._repository, this._access, this._lifecycle);
   final LocationRepository _repository;
+  final LocationAccessRepository _access;
   final AppLifecycleRepository _lifecycle;
 
   Stream<Result<LocationFix>> call() => Rx.defer(() {
@@ -24,13 +26,30 @@ final class WatchLocation {
           ),
         );
       }
-      final session = _repository.watch(
-        requestPermission: mayRequestPermission,
-      );
+      final allowPrompt = mayRequestPermission;
       mayRequestPermission = false;
       // Keep observing visibility after a failed acquisition so Settings can
       // restore access. Switching to the background cancels the current session.
-      return session;
+      return _access
+          .checkAccess()
+          .switchMap(
+            (access) => switch (access) {
+              FailureResult(
+                failure: Failure(kind: FailureKind.permissionDenied),
+              )
+                  when allowPrompt =>
+                Stream.fromFuture(_access.requestPermission()),
+              _ => Stream.value(access),
+            },
+          )
+          .switchMap(
+            (access) => switch (access) {
+              Success() => _repository.watch(),
+              FailureResult(:final failure) => Stream.value(
+                FailureResult<LocationFix>(failure),
+              ),
+            },
+          );
     });
   });
 }

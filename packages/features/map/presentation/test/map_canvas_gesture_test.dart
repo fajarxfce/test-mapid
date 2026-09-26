@@ -22,10 +22,11 @@ void main() {
   setUp(() {
     renderer = FakeMapRenderer();
     final locations = FakeLocationRepository();
+    final access = FakeLocationAccessRepository();
     bloc = MapBloc(
       LoadMapLayer(FakeMapRepository()),
-      WatchLocation(locations, const FakeAppLifecycleRepository()),
-      OpenLocationSettings(locations),
+      WatchLocation(locations, access, const FakeAppLifecycleRepository()),
+      OpenLocationSettings(access),
       renderer,
     );
     nativeTaps = 0;

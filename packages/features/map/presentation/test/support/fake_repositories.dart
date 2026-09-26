@@ -19,22 +19,28 @@ class FakeMapRepository implements MapRepository {
 class FakeLocationRepository implements LocationRepository {
   Future<Result<LocationFix>> Function() response = () async =>
       const Success(sampleLocation);
-  Result<void> settingsResult = const Success(null);
-  LocationSettingsTarget? opened;
   int calls = 0;
   Stream<Result<LocationFix>> Function()? updates;
   @override
-  Stream<Result<LocationFix>> watch({required bool requestPermission}) {
+  Stream<Result<LocationFix>> watch() {
     calls++;
     return updates?.call() ?? Stream.fromFuture(response());
   }
 
   @override
-  Future<Result<LocationFix>> locate({required bool requestPermission}) {
+  Future<Result<LocationFix>> locate() {
     calls++;
     return response();
   }
+}
 
+class FakeLocationAccessRepository implements LocationAccessRepository {
+  Result<void> settingsResult = const Success(null);
+  LocationSettingsTarget? opened;
+  @override
+  Stream<Result<void>> checkAccess() => Stream.value(const Success(null));
+  @override
+  Future<Result<void>> requestPermission() async => const Success(null);
   @override
   Future<Result<void>> openSettings(LocationSettingsTarget target) async {
     opened = target;

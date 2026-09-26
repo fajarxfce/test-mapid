@@ -100,25 +100,34 @@ when scene values are unchanged.
 
 ## Location and heading
 
-`WatchLocation` coordinates `LocationRepository` and `AppLifecycleRepository`.
-Each visible session asks the location repository to acquire access and stream
-fixes. Only the first session of an explicit request may prompt for permission;
-resuming is passive. A failed session does not end lifecycle observation, so
-returning from Settings can recover access. Hiding the app or cancelling the
-use case cancels the current acquisition and releases its sensors.
+`WatchLocation` coordinates `LocationAccessRepository`, `LocationRepository`,
+and `AppLifecycleRepository`. Each visible session checks access, requests
+permission if denied and prompting is allowed, then starts location acquisition.
+Only the first session of an explicit request may prompt; resuming is passive.
+A failed session does not end lifecycle observation, so returning from Settings
+can recover access. Hiding the app or cancelling the use case cancels the current
+acquisition and releases its sensors. `GetCurrentLocation` follows the same
+check/request/read sequence for a one-time user request.
 
-`DeviceLocationRepository` sequences service and permission checks through
-`LocationAccessDataSource`, then combines `LocationDataSource` GPS fixes with
-`CompassDataSource` readings. Cancelled checks cannot proceed to a later dialog
-or sensor acquisition. The repository maps DTOs and technical exceptions to
-domain values and failures. Compass failure is logged and falls back to GPS
-movement bearing while location tracking continues.
+`DeviceLocationAccessRepository` exposes separate read-only access checks,
+permission requests, and Settings commands through `LocationAccessDataSource`.
+It translates permission values and technical exceptions to domain results;
+the use case decides whether to prompt or start tracking. The access check emits
+one result as a stream so cancellation between pending platform calls stops
+subsequent checks. Cancelling the use case also prevents a later dialog or sensor
+acquisition; an already-open OS permission dialog cannot be dismissed this way.
+
+`DeviceLocationRepository` only reads positions and combines `LocationDataSource`
+GPS fixes with `CompassDataSource` readings, mapping DTOs and exceptions to domain
+values and failures. It does not manage permission policy or call another
+repository. Compass failure is logged and falls back to GPS movement bearing
+while location tracking continues.
 
 The GPS datasource only reads positions and configures native acquisition;
 the access datasource only calls permission, service, and Settings APIs.
 Neither depends on another datasource or decides when tracking should resume.
-`OpenLocationSettings` delegates an explicit user action through the repository
-to the access adapter. Flutter visibility observation lives in shared
+`OpenLocationSettings` delegates an explicit user action through the access
+repository to the access adapter. Flutter visibility observation lives in shared
 `core/lifecycle`, outside location and map implementations.
 
 Android requests high-accuracy positions at a one-second interval. A 20-second

@@ -39,13 +39,18 @@ void main() {
       final container = GetIt.asNewInstance();
       final fixes = StreamController<Result<LocationFix>>();
       final locations = FakeLocationRepository()..updates = () => fixes.stream;
+      final access = FakeLocationAccessRepository();
       addTearDown(fixes.close);
       container.registerSingleton<GetIt>(container);
       container.registerFactory(() => LoadMapLayer(FakeMapRepository()));
       container.registerFactory(
-        () => WatchLocation(locations, const FakeAppLifecycleRepository()),
+        () => WatchLocation(
+          locations,
+          access,
+          const FakeAppLifecycleRepository(),
+        ),
       );
-      container.registerFactory(() => OpenLocationSettings(locations));
+      container.registerFactory(() => OpenLocationSettings(access));
       await MapPresentationPackageModule().init(GetItHelper(container));
       addTearDown(container.reset);
       final previousPlatform = MapLibrePlatform.createInstance;
