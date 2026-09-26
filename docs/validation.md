@@ -7,11 +7,11 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 283 tests.
+  dependency boundaries, architecture rules, static analysis, and 296 tests.
 - Flavor generation and native scheme checks: passed.
-- Android dev universal release and staging ARM64 release builds: passed. Both
-  APK signatures were verified with Android SDK `apksigner`. Earlier debug-build
-  device verification is recorded below.
+- The presentation-boundaries staging ARM64 release build passed, and its APK
+  signature was verified with Android SDK `apksigner`. Earlier dev universal
+  release and debug-build verification is recorded below.
 - The configured GEO MAPID endpoint returned 10 point features in the
   `Pariwisata Jogja` layer. The committed test fixture contains two features and
   excludes API credentials and response user metadata.
@@ -67,7 +67,8 @@ restored after verification.
 - The production AutoRoute configuration and generated Injectable registrations
   create a shared route-owned renderer. Its native callbacks make the canvas
   ready, late observers receive the latest status, and removing the route closes
-  the Bloc and renderer. Only the native platform surface/controller is mocked.
+  the binding, Bloc, and renderer. Only the native platform surface/controller
+  is mocked.
 - Renderer tests cover controller replacement and independent session cleanup.
   Session timeout tests advance a controlled clock and check timer cancellation.
 - Architecture checks reject domain imports and Result/Failure wrappers in raw
@@ -79,7 +80,7 @@ below; observations retain their original build context.
 
 ## Presentation simplification
 
-The current presentation layer has 22 manual Dart files, down from 39. Its native
+The current presentation layer has 25 manual Dart files, down from 39. Its native
 rendering implementation occupies six files, down from 13. Generated code and
 asset files are excluded from these counts.
 
@@ -87,10 +88,12 @@ asset files are excluded from these counts.
   state and scene use Freezed. Tests cover independently reconstructed values,
   changed attributes, ordered layers, caller mutation, and fresh sensor metadata.
 - One `MapBloc` owns page data, location, selection, camera intent, and render
-  status. The second canvas Bloc, content-forwarding binding, nested content
-  model, and pass-through page view have been removed.
-- The renderer remains SDK-free at the Bloc boundary. The generated route injects
-  the same adapter into the Bloc and native widget, and owns its disposal.
+  status. The second canvas Bloc, nested content model, and pass-through page view
+  have been removed.
+- The Bloc depends on use cases and SDK-free page models. A route-owned canvas
+  binding forwards its state/effects to the rendering port and returns typed
+  events. The native widget uses the route's adapter directly. The binding owns
+  subscriptions; the route owns adapter disposal.
 - The location button dispatches one event. Late layer results preserve newer GPS,
   focus, and native status. Tests also cover commands during pending requests,
   popup preservation, stale picks, and cancellation of GPS/status observation.
@@ -101,10 +104,29 @@ asset files are excluded from these counts.
   its decoded dimensions and transparent area as well as symbol alignment and
   hidden-bearing behavior.
 
-All 243 tests and static checks passed. Android release validation is listed
-above. Physical verification of the simplified presentation is recorded in the
-Presentation simplification device follow-up below. Earlier device checks retain
+The initial simplification passed 243 tests and static checks. Current totals
+and Android release validation are listed above. Physical verification of the
+simplified presentation is recorded in the Presentation simplification device
+follow-up below. Earlier device checks retain
 their original build context.
+
+## Presentation boundaries and recovery
+
+- `MapBloc` constructs with use cases only. Architecture checks prohibit imports
+  of canvas bindings, renderer contracts, and native SDKs in Bloc files.
+- The generated route shares one native adapter between the canvas and binding.
+  Changing focus issues one camera movement; repeating the same action recenters
+  again. Status updates do not feed back into source writes. Latest-pick
+  cancellation, selection preservation, and route disposal remain covered.
+- Native camera cancellation does not advance the camera baseline or discard
+  confirmed sources. A subsequent action retries current intent; a pan supersedes
+  cancelled follow. Plugin acknowledgment differences are covered separately.
+- Delayed Settings failures cannot replace live-location feedback after recovery.
+  Equivalent popup values use Equatable and do not change page state.
+- Controlled-clock tests cover native creation timeout, rejected late attachment,
+  retry with the latest scene, and timer cleanup. The production route test
+  verifies that timeout removes the SDK widget and retry mounts a fresh instance
+  while retaining the same Bloc, loaded places, and GPS subscription.
 
 ## Map audit regressions
 
@@ -262,3 +284,30 @@ the release artifact produced after the single-Bloc refactor.
 This run did not measure walking distance or record a new label-fade video.
 Rotation and label stability were confirmed by the device owner; native marker
 appearance was also inspected directly.
+
+### Presentation boundaries device follow-up
+
+The presentation-boundaries staging ARM64 APK was verified on the Galaxy A72
+running Android 16 on 26 September 2026. The installed APK matched the local
+artifact (SHA-256 `51d8fb85df5e59fd2a8275d5dcea1ca2991c83bc55f7e88f1023e380dc6eb825`).
+
+- Liberty and the tourism markers rendered. Tapping BBY displayed its name and
+  address, and dismissal restored the live-location card. The GPS marker and
+  heading arrow were visible on the native map.
+- A deliberate pan kept the camera away from the GPS marker through seven
+  seconds of live updates. The location action restored follow. Zoom followed
+  by another same-focus location action restored camera framing, confirming
+  that equal page state does not suppress explicit recentering.
+- Refreshing tourism data retained GPS camera focus without a map or data
+  warning. No Flutter errors or Android fatal exceptions appeared in the tested
+  app process.
+- Permanent location denial displayed Settings recovery without an active GPS
+  request. Granting foreground access in Settings and returning restored live
+  GPS in the same process. Backgrounding released GPS; foregrounding resumed it
+  without another permission prompt. Original permission flags and screen
+  timeout were restored after testing.
+
+Native creation failure and delayed Settings responses were exercised with
+controlled regression tests; a native initialization failure was not forced on
+the physical device. This run did not repeat the walking/rotation experiment or
+record a new label-stability video.

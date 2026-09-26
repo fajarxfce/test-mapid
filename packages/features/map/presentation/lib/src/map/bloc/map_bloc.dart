@@ -142,8 +142,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     );
     if (emit.isDone ||
         state.locationStatus != LocationTrackingStatus.failed ||
-        state.locationFailure != recoveryFailure)
+        state.locationFailure != recoveryFailure) {
       return;
+    }
     emit(
       state.copyWith(
         settingsMessage: switch (result) {
@@ -169,8 +170,9 @@ class MapBloc extends Bloc<MapEvent, MapState> {
   );
 
   void _onPlacePicked(MapPlacePicked event, Emitter<MapState> emit) {
-    if (state.scene.layer != event.layer || state.selected != event.selection)
+    if (state.scene.layer != event.layer || state.selected != event.selection) {
       return;
+    }
     emit(
       state.copyWith(
         selected: event.layer?.places

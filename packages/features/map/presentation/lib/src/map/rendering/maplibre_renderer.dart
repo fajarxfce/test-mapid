@@ -12,10 +12,15 @@ import 'package:rxdart/rxdart.dart';
 /// Retains the desired scene across native creation and style replacement.
 @injectable
 final class MapLibreRenderer implements MapRenderer {
+  MapLibreRenderer() {
+    _waitForMap();
+  }
+
   static const styleUrl = 'https://tiles.openfreemap.org/styles/liberty';
   MapScene _scene = const MapScene();
   MapLibreSession? _session;
   StreamSubscription<MapRenderStatus>? _statusSubscription;
+  Timer? _creationTimeout;
   final _statuses = BehaviorSubject<MapRenderStatus>.seeded(
     MapRenderStatus.waitingForMap,
   );
@@ -23,9 +28,14 @@ final class MapLibreRenderer implements MapRenderer {
   @override
   Stream<MapRenderStatus> get statuses => _statuses.stream.distinct();
 
-  /// Native widget binding; never part of the Bloc-facing contract.
+  /// Native widget callback; late creation after a timeout is discarded.
   void attach(MapLibreMapController controller) {
-    if (_statuses.isClosed || controller.isDisposed) return;
+    if (_statuses.isClosed ||
+        _statuses.value == MapRenderStatus.creationTimeout ||
+        controller.isDisposed) {
+      return;
+    }
+    _creationTimeout?.cancel();
     unawaited(_statusSubscription?.cancel());
     unawaited(_session?.close());
     final session = MapLibreSession(controller, styleUrl: styleUrl);
@@ -55,7 +65,23 @@ final class MapLibreRenderer implements MapRenderer {
   void zoomBy(double amount) => _session?.zoomBy(amount);
 
   @override
-  void reloadStyle() => _session?.reloadStyle();
+  void reloadStyle() {
+    if (_statuses.isClosed) return;
+    if (_session != null) {
+      _session!.reloadStyle();
+    } else if (_statuses.value == MapRenderStatus.creationTimeout) {
+      // Returning to waitingForMap remounts the failed SDK widget.
+      _waitForMap();
+    }
+  }
+
+  void _waitForMap() {
+    _creationTimeout?.cancel();
+    _statuses.add(MapRenderStatus.waitingForMap);
+    _creationTimeout = Timer(const Duration(seconds: 25), () {
+      if (!_statuses.isClosed) _statuses.add(MapRenderStatus.creationTimeout);
+    });
+  }
 
   @override
   Future<Result<String?>> placeAt(Point<double> point) =>
@@ -64,6 +90,7 @@ final class MapLibreRenderer implements MapRenderer {
   /// The route owns this adapter; the SDK widget owns its native controller.
   Future<void> close() async {
     if (_statuses.isClosed) return;
+    _creationTimeout?.cancel();
     await Future.wait<void>([
       _statuses.close(),
       if (_statusSubscription != null) _statusSubscription!.cancel(),

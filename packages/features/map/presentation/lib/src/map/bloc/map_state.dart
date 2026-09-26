@@ -63,6 +63,8 @@ abstract class MapState with _$MapState {
             };
   bool get mapReady => renderStatus == MapRenderStatus.ready;
   String? get mapError => switch (renderStatus) {
+    MapRenderStatus.creationTimeout =>
+      'Peta belum dapat dimulai. Coba muat ulang peta.',
     MapRenderStatus.styleTimeout =>
       'Basemap belum dapat dimuat. Periksa koneksi internet lalu coba lagi.',
     MapRenderStatus.renderingFailure =>

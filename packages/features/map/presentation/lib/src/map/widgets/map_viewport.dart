@@ -37,7 +37,7 @@ class MapViewport extends StatelessWidget {
               left: 12,
               right: 70,
               child: AppInfoBar(
-                title: 'Koneksi peta',
+                title: 'Peta belum siap',
                 message: state.mapError,
                 status: AppStatus.warning,
                 action: AppButton(

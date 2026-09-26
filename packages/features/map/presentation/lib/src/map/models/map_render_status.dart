@@ -3,6 +3,7 @@ enum MapRenderStatus {
   waitingForMap,
   loadingStyle,
   ready,
+  creationTimeout,
   styleTimeout,
   renderingFailure,
 }

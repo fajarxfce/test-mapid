@@ -35,34 +35,33 @@ void main() {
     registerFallbackValue(Uint8List(0));
   });
 
+  late StreamController<Result<LocationFix>> fixes;
+  late RootStackRouter router;
+  setUp(() async {
+    final container = GetIt.asNewInstance();
+    fixes = StreamController<Result<LocationFix>>();
+    final locations = FakeLocationRepository()..updates = () => fixes.stream;
+    final access = FakeLocationAccessRepository();
+    addTearDown(fixes.close);
+    container.registerSingleton<GetIt>(container);
+    container.registerFactory(() => LoadMapLayer(FakeMapRepository()));
+    container.registerFactory(
+      () =>
+          WatchLocation(locations, access, const FakeAppLifecycleRepository()),
+    );
+    container.registerFactory(() => OpenLocationSettings(access));
+    await MapPresentationPackageModule().init(GetItHelper(container));
+    addTearDown(container.reset);
+    final previousPlatform = MapLibrePlatform.createInstance;
+    MapLibrePlatform.createInstance = TestMapPlatformView.new;
+    addTearDown(() => MapLibrePlatform.createInstance = previousPlatform);
+    router = RootStackRouter.build(routes: container<MapRouter>().routes);
+    addTearDown(router.dispose);
+  });
+
   testWidgets(
     'generated route DI shares one adapter and releases it when the route closes',
     (tester) async {
-      final container = GetIt.asNewInstance();
-      final fixes = StreamController<Result<LocationFix>>();
-      final locations = FakeLocationRepository()..updates = () => fixes.stream;
-      final access = FakeLocationAccessRepository();
-      addTearDown(fixes.close);
-      container.registerSingleton<GetIt>(container);
-      container.registerFactory(() => LoadMapLayer(FakeMapRepository()));
-      container.registerFactory(
-        () => WatchLocation(
-          locations,
-          access,
-          const FakeAppLifecycleRepository(),
-        ),
-      );
-      container.registerFactory(() => OpenLocationSettings(access));
-      await MapPresentationPackageModule().init(GetItHelper(container));
-      addTearDown(container.reset);
-      final previousPlatform = MapLibrePlatform.createInstance;
-      MapLibrePlatform.createInstance = TestMapPlatformView.new;
-      addTearDown(() => MapLibrePlatform.createInstance = previousPlatform);
-      final router = RootStackRouter.build(
-        routes: container<MapRouter>().routes,
-      );
-      addTearDown(router.dispose);
-
       await tester.pumpWidget(FluentApp.router(routerConfig: router.config()));
       await tester.pump();
       await tester.pump();
@@ -115,6 +114,62 @@ void main() {
       expect(disposed.isCompleted, isTrue);
       verifyNever(native.controller.dispose);
       await subscription.cancel();
+    },
+  );
+
+  testWidgets(
+    'native creation timeout remounts the canvas without restarting page data',
+    (tester) async {
+      await tester.pumpWidget(FluentApp.router(routerConfig: router.config()));
+      await tester.pump();
+      fixes.add(const Success(sampleLocation));
+      await tester.pump();
+      final context = tester.element(find.byType(MapCanvas));
+      final bloc = context.read<MapBloc>();
+      final originalNativeState = tester.state(find.byType(MapLibreMap));
+      final scene = bloc.state.scene;
+      expect(scene.layer?.places, hasLength(1));
+      expect(scene.location, sampleLocation);
+
+      await tester.pump(const Duration(seconds: 26));
+      await tester.pump();
+      expect(bloc.state.renderStatus, MapRenderStatus.creationTimeout);
+      expect(find.byType(MapLibreMap), findsNothing);
+      expect(originalNativeState.mounted, isFalse);
+      expect(
+        find.text('Peta belum dapat dimulai. Coba muat ulang peta.'),
+        findsOneWidget,
+      );
+      expect(bloc.state.scene, scene);
+      expect(fixes.hasListener, isTrue);
+
+      await tester.tap(find.text('Muat peta'));
+      await tester.pump();
+      await tester.pump();
+      expect(bloc.state.renderStatus, MapRenderStatus.waitingForMap);
+      expect(find.byType(MapLibreMap), findsOneWidget);
+      expect(
+        tester.state(find.byType(MapLibreMap)),
+        isNot(same(originalNativeState)),
+      );
+      expect(context.read<MapBloc>(), same(bloc));
+      expect(bloc.state.scene, scene);
+
+      final native = NativeMapHarness();
+      final canvas = tester.widget<MapLibreMap>(find.byType(MapLibreMap));
+      canvas.onMapCreated!(native.controller);
+      canvas.onStyleLoadedCallback!();
+      await tester.pump();
+      expect(bloc.state.mapReady, isTrue);
+      expect(native.sources['mapid-places']!['features'], hasLength(1));
+      expect(native.sources['user-location']!['features'], hasLength(1));
+      expect(find.text('Muat peta'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      expect(bloc.isClosed, isTrue);
+      expect(fixes.hasListener, isFalse);
+      expect(tester.takeException(), isNull);
     },
   );
 }

@@ -102,6 +102,14 @@ an old follow request. Camera progress does not wait for continuous sensor input
 to stop. Pending work and late status emission are discarded after session close.
 An already-issued platform call may finish against its original controller.
 
+Native creation and style loading each have a 25-second deadline. If the native
+controller never arrives, the adapter reports `creationTimeout`; the canvas
+selector unmounts the stalled SDK widget. Retry returns to `waitingForMap`, which
+mounts a fresh native view while preserving page data, selection, and GPS. Late
+creation after the deadline is ignored. Attachment and route disposal cancel the
+creation timer. This is a timeout fallback: the SDK does not provide a widget
+callback for reporting native initialization failures.
+
 Sources are written only after style readiness. Reloading or replacing a style
 restores custom sources, layers, and current camera intent. A 25-second timeout
 reports stalled style loading because MapLibre GL 0.27.1 has no widget-level

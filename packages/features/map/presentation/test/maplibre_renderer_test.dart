@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:core_common/core_common.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:map_domain/map_domain.dart';
@@ -55,6 +56,61 @@ void main() {
     native.operations.clear();
     native.cameraMoves.clear();
   }
+
+  test('stalled native creation can retry with the latest scene', () {
+    fakeAsync((clock) {
+      final stalled = MapLibreRenderer();
+      final events = <MapRenderStatus>[];
+      final subscription = stalled.statuses.listen(events.add);
+      stalled.render(MapScene(layer: sampleLayer));
+      clock.elapse(const Duration(seconds: 26));
+      expect(events.last, MapRenderStatus.creationTimeout);
+      stalled.attach(native.controller);
+      stalled.styleLoaded();
+      clock.flushMicrotasks();
+      expect(events.last, MapRenderStatus.creationTimeout);
+      expect(native.operations, isEmpty);
+
+      stalled.render(scene);
+      stalled.reloadStyle();
+      clock.flushMicrotasks();
+      expect(events.last, MapRenderStatus.waitingForMap);
+      final replacement = NativeMapHarness();
+      stalled.attach(replacement.controller);
+      clock.flushMicrotasks();
+      expect(events.last, MapRenderStatus.loadingStyle);
+      stalled.styleLoaded();
+      clock.flushMicrotasks();
+      expect(events.last, MapRenderStatus.ready);
+      expect(replacement.sources['mapid-places']!['features'], hasLength(1));
+      expect(replacement.sources['user-location']!['features'], hasLength(1));
+      expect(clock.pendingTimers, isEmpty);
+      clock.elapse(const Duration(seconds: 26));
+      expect(events.last, MapRenderStatus.ready);
+      stalled.close();
+      clock.flushMicrotasks();
+      subscription.cancel();
+    });
+  });
+
+  test('closing before native creation cancels its deadline and retry', () {
+    fakeAsync((clock) {
+      final stalled = MapLibreRenderer();
+      final events = <MapRenderStatus>[];
+      final subscription = stalled.statuses.listen(events.add);
+      stalled.close();
+      clock.flushMicrotasks();
+      expect(clock.pendingTimers, isEmpty);
+      stalled.reloadStyle();
+      stalled.attach(native.controller);
+      stalled.styleLoaded();
+      clock.elapse(const Duration(seconds: 26));
+      expect(events, [MapRenderStatus.waitingForMap]);
+      expect(native.operations, isEmpty);
+      expect(clock.pendingTimers, isEmpty);
+      subscription.cancel();
+    });
+  });
 
   test(
     'retains the newest scene before creation and waits for style readiness',
