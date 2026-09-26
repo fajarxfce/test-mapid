@@ -42,7 +42,9 @@ void main() {
       addTearDown(fixes.close);
       container.registerSingleton<GetIt>(container);
       container.registerFactory(() => LoadMapLayer(FakeMapRepository()));
-      container.registerFactory(() => WatchLocation(locations));
+      container.registerFactory(
+        () => WatchLocation(locations, const FakeAppLifecycleRepository()),
+      );
       container.registerFactory(() => OpenLocationSettings(locations));
       await MapPresentationPackageModule().init(GetItHelper(container));
       addTearDown(container.reset);

@@ -26,7 +26,7 @@ void main() {
     final locations = FakeLocationRepository()..updates = () => fixes.stream;
     bloc = MapBloc(
       LoadMapLayer(maps),
-      WatchLocation(locations),
+      WatchLocation(locations, const FakeAppLifecycleRepository()),
       OpenLocationSettings(locations),
       renderer,
     );

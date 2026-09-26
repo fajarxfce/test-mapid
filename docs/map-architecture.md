@@ -100,10 +100,26 @@ when scene values are unchanged.
 
 ## Location and heading
 
-`WatchLocation` exposes a cancellable repository stream. OS adapters return raw
-fixes, sensor readings, and permission results. The repository maps entities and
-technical failures, including permanent denial. Compass failure is logged and
-falls back to GPS movement bearing while location tracking continues.
+`WatchLocation` coordinates `LocationRepository` and `AppLifecycleRepository`.
+Each visible session asks the location repository to acquire access and stream
+fixes. Only the first session of an explicit request may prompt for permission;
+resuming is passive. A failed session does not end lifecycle observation, so
+returning from Settings can recover access. Hiding the app or cancelling the
+use case cancels the current acquisition and releases its sensors.
+
+`DeviceLocationRepository` sequences service and permission checks through
+`LocationAccessDataSource`, then combines `LocationDataSource` GPS fixes with
+`CompassDataSource` readings. Cancelled checks cannot proceed to a later dialog
+or sensor acquisition. The repository maps DTOs and technical exceptions to
+domain values and failures. Compass failure is logged and falls back to GPS
+movement bearing while location tracking continues.
+
+The GPS datasource only reads positions and configures native acquisition;
+the access datasource only calls permission, service, and Settings APIs.
+Neither depends on another datasource or decides when tracking should resume.
+`OpenLocationSettings` delegates an explicit user action through the repository
+to the access adapter. Flutter visibility observation lives in shared
+`core/lifecycle`, outside location and map implementations.
 
 Android requests high-accuracy positions at a one-second interval. A 20-second
 first-fix deadline is cancelled after the first result, so stationary tracking

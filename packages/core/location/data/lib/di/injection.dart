@@ -1,8 +1,12 @@
+import 'package:core_lifecycle_domain/core_lifecycle_domain.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
 
-@InjectableInit.microPackage(throwOnMissingDependencies: true)
+@InjectableInit.microPackage(
+  ignoreUnregisteredTypes: [AppLifecycleRepository],
+  throwOnMissingDependencies: true,
+)
 void configureCoreLocationDataPackage() {}
 
 @module
@@ -15,8 +19,10 @@ abstract class CoreLocationDataModule {
       GetCurrentLocation(repository);
 
   @injectable
-  WatchLocation watchLocation(LocationRepository repository) =>
-      WatchLocation(repository);
+  WatchLocation watchLocation(
+    LocationRepository repository,
+    AppLifecycleRepository lifecycle,
+  ) => WatchLocation(repository, lifecycle);
 
   @injectable
   OpenLocationSettings openLocationSettings(LocationRepository repository) =>

@@ -23,6 +23,7 @@ dependencies:
   get_it: any
   auto_route: any
 dev_dependencies:
+  core_lifecycle_domain: any
   flutter_test:
     sdk: flutter
   bloc_test: any

@@ -1,4 +1,5 @@
 import 'package:core_common/core_common.dart';
+import 'package:core_lifecycle_domain/core_lifecycle_domain.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:map_domain/map_domain.dart';
 
@@ -23,13 +24,13 @@ class FakeLocationRepository implements LocationRepository {
   int calls = 0;
   Stream<Result<LocationFix>> Function()? updates;
   @override
-  Stream<Result<LocationFix>> watch() {
+  Stream<Result<LocationFix>> watch({required bool requestPermission}) {
     calls++;
     return updates?.call() ?? Stream.fromFuture(response());
   }
 
   @override
-  Future<Result<LocationFix>> locate() {
+  Future<Result<LocationFix>> locate({required bool requestPermission}) {
     calls++;
     return response();
   }
@@ -39,4 +40,10 @@ class FakeLocationRepository implements LocationRepository {
     opened = target;
     return settingsResult;
   }
+}
+
+class FakeAppLifecycleRepository implements AppLifecycleRepository {
+  const FakeAppLifecycleRepository();
+  @override
+  Stream<bool> watchForeground() => Stream.value(true);
 }

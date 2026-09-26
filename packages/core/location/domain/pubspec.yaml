@@ -7,6 +7,8 @@ environment:
   sdk: ">=3.13.0 <4.0.0"
 dependencies:
   core_common: any
+  core_lifecycle_domain: any
+  rxdart: any
   equatable: any
 dev_dependencies:
   test: any

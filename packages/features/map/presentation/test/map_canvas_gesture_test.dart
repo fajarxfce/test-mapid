@@ -24,7 +24,7 @@ void main() {
     final locations = FakeLocationRepository();
     bloc = MapBloc(
       LoadMapLayer(FakeMapRepository()),
-      WatchLocation(locations),
+      WatchLocation(locations, const FakeAppLifecycleRepository()),
       OpenLocationSettings(locations),
       renderer,
     );

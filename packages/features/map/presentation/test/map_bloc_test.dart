@@ -19,7 +19,7 @@ void main() {
   late FakeLocationRepository locations;
   MapBloc createBloc() => MapBloc(
     LoadMapLayer(maps),
-    WatchLocation(locations),
+    WatchLocation(locations, const FakeAppLifecycleRepository()),
     OpenLocationSettings(locations),
     renderer,
   );
