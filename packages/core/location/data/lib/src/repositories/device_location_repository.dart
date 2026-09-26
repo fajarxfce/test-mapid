@@ -1,10 +1,10 @@
 import 'dart:developer' as developer;
 
 import 'package:core_common/core_common.dart';
+import 'package:core_location_data/src/calls/safe_location_call.dart';
 import 'package:core_location_data/src/datasources/compass_data_source.dart';
 import 'package:core_location_data/src/datasources/location_data_source.dart';
 import 'package:core_location_data/src/dto/location_fix_dto.dart';
-import 'package:core_location_data/src/mappers/map_location_exception.dart';
 import 'package:core_location_data/src/mappers/map_location_fix.dart';
 import 'package:core_location_domain/core_location_domain.dart';
 import 'package:injectable/injectable.dart';
@@ -16,36 +16,31 @@ final class DeviceLocationRepository implements LocationRepository {
   final LocationDataSource _positions;
   final CompassDataSource _compass;
   @override
-  Future<Result<LocationFix>> locate() async {
-    try {
-      return Success(mapLocationFix(await _positions.locate()));
-    } on Exception catch (error) {
-      return FailureResult(mapLocationException(error));
-    }
-  }
+  Future<Result<LocationFix>> locate() => safeLocationCall(
+    () async => Success(mapLocationFix(await _positions.locate())),
+  );
 
   @override
   Stream<Result<LocationFix>> watch() =>
-      Rx.combineLatest2<LocationFixDto, double?, Result<LocationFix>>(
-            Rx.defer(_positions.watch),
-            // Compass is optional: retain GPS and course when its sensor fails.
-            Rx.defer(_compass.watch)
-                .doOnError((error, stackTrace) {
-                  developer.log(
-                    'Compass unavailable; retaining GPS tracking.',
-                    name: 'location.repository',
-                    error: error,
-                    stackTrace: stackTrace,
-                  );
-                })
-                .onErrorReturn(null),
-            (fix, heading) => Success<LocationFix>(
-              mapLocationFix(fix, compassHeading: heading),
-            ),
-          )
-          .onErrorReturnWith(
-            (error, _) => FailureResult(mapLocationException(error)),
-          )
-          // An acquisition failure ends this session and releases both sensors.
-          .takeWhileInclusive((result) => result is Success<LocationFix>);
+      safeLocationStream(
+        () => Rx.combineLatest2<LocationFixDto, double?, Result<LocationFix>>(
+          Rx.defer(_positions.watch),
+          // Compass is optional: retain GPS and course when its sensor fails.
+          Rx.defer(_compass.watch)
+              .doOnError((error, stackTrace) {
+                developer.log(
+                  'Compass unavailable; retaining GPS tracking.',
+                  name: 'location.repository',
+                  error: error,
+                  stackTrace: stackTrace,
+                );
+              })
+              .onErrorReturn(null),
+          (fix, heading) => Success<LocationFix>(
+            mapLocationFix(fix, compassHeading: heading),
+          ),
+        ),
+      )
+      // An acquisition failure ends this session and releases both sensors.
+      .takeWhileInclusive((result) => result is Success<LocationFix>);
 }

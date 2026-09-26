@@ -123,6 +123,14 @@ values and failures. It does not manage permission policy or call another
 repository. Compass failure is logged and falls back to GPS movement bearing
 while location tracking continues.
 
+`safeLocationCall` and `safeLocationStream` centralize the location data error
+boundary. Repositories return their mapped results inside these functions;
+technical failures become domain failures through `mapLocationException`, with
+the original error and stack trace retained in the internal diagnostic log.
+Neither function retries operations or requests permission. Stream acquisition
+is deferred until subscription, cancellation reaches the source, and the GPS
+repository still owns the rule that a failed acquisition ends its session.
+
 The GPS datasource only reads positions and configures native acquisition;
 the access datasource only calls permission, service, and Settings APIs.
 Neither depends on another datasource or decides when tracking should resume.
