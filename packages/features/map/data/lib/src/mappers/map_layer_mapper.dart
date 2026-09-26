@@ -3,6 +3,10 @@ import 'package:map_data/src/dto/map_layer_response.dart';
 import 'package:map_data/src/dto/place_feature_dto.dart';
 import 'package:map_domain/map_domain.dart';
 
+// MAPID contains an unrecoverably corrupted alias in some Warungboto names.
+// Match only that suffix; valid local scripts and parenthetical names survive.
+final _corruptNameSuffix = RegExp(r'\s*\((?:[\u02a6\u02a7]\ufffd)+\)$');
+
 MapLayer mapLayer(MapLayerResponse response) {
   if (response.type != 'FeatureCollection') {
     throw const FormatException('Expected a GeoJSON FeatureCollection.');
@@ -28,7 +32,7 @@ MapPlace mapPlace(PlaceFeatureDto feature) {
   final properties = feature.properties;
   return MapPlace(
     id: feature.id,
-    name: properties.name,
+    name: properties.name.trim().replaceFirst(_corruptNameSuffix, ''),
     address: properties.address,
     city: properties.city,
     district: properties.district,

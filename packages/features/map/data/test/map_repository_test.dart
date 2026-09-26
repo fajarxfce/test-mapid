@@ -75,11 +75,28 @@ void main() {
       expect(result.value.places.first.point.latitude, -7.799231);
       expect(result.value.places.first.point.longitude, 110.368369);
       expect(result.value.places.first.name, 'TAMAN TIMUR PASAR BERINGHARJO');
+      expect(result.value.places.last.name, 'TAMAN TUGU AIR WARUNGBOTO');
       expect(result.value.places.first.address, isNotEmpty);
       expect(logs.join(), isNot(contains('test-key-private')));
       expect(logs.join(), isNot(contains('api_key')));
     },
   );
+  for (final name in [
+    'TAMAN WARUNGBOTO (ꦠꦩꦤ꧀)',
+    'Taman Kota (Area Timur)',
+    'Café & Musée',
+    'Nama fonetik (ʦʧ)',
+  ]) {
+    test('preserves valid Unicode and parenthetical names: $name', () async {
+      final json = jsonDecode(adapter.body) as Map<String, dynamic>;
+      final feature = (json['features'] as List).first as Map<String, dynamic>;
+      (feature['properties'] as Map<String, dynamic>)['NAMA'] = name;
+      adapter.body = jsonEncode(json);
+      final result = await repository.loadLayer() as Success<MapLayer>;
+      expect(result.value.places.first.name, name);
+    });
+  }
+
   test('an empty collection is a successful layer with no places', () async {
     adapter.body = jsonEncode({
       'type': 'FeatureCollection',

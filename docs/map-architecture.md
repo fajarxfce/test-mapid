@@ -9,6 +9,11 @@ Datasources expose DTOs and technical exceptions; repositories select and combin
 sources, map entities, and return domain failures. No SDK controller, Flutter UI
 type, or raw platform exception crosses the Bloc contract.
 
+The MAPID mapper removes a known corrupted alias suffix from place names. The
+API already contains Unicode replacement characters, so the lost alias cannot
+be recovered by changing fonts. Raw DTOs retain the response; valid Unicode and
+other parenthetical names are preserved in domain values.
+
 ```mermaid
 flowchart LR
     UI[Widget events] --> Bloc[MapBloc]
