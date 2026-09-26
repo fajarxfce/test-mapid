@@ -1,7 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val releaseSigningFile = rootProject.file("key.properties")
+val releaseSigning = Properties().apply {
+    if (releaseSigningFile.exists()) {
+        releaseSigningFile.reader().use { load(it) }
+    }
 }
 
 android {
@@ -28,10 +37,24 @@ android {
         versionName = flutter.versionName
     }
 
-    // Case-study artifacts use local debug signing in both build modes.
+    signingConfigs {
+        if (releaseSigningFile.exists()) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseSigning.getProperty("storeFile")))
+                storePassword = requireNotNull(releaseSigning.getProperty("storePassword"))
+                keyAlias = requireNotNull(releaseSigning.getProperty("keyAlias"))
+                keyPassword = requireNotNull(releaseSigning.getProperty("keyPassword"))
+            }
+        }
+    }
+
+    // Local case-study builds retain debug signing when no release key is configured.
+    // The GitHub release workflow requires a persistent release key before building.
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(
+                if (releaseSigningFile.exists()) "release" else "debug",
+            )
         }
     }
 
