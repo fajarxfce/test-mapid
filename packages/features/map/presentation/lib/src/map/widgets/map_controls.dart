@@ -32,8 +32,8 @@ class MapControls extends StatelessWidget {
               : null,
         ),
         AppIconButton(
-          icon: FluentIcons.map_layers,
-          tooltip: 'Lihat semua tempat',
+          icon: FluentIcons.city_next,
+          tooltip: 'Lihat tempat wisata',
           onPressed: enabled
               ? () => context.read<MapBloc>().add(
                   const MapFocusRequested(MapCameraFocus.places),

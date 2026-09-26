@@ -53,7 +53,9 @@ void main() {
     );
     states.add(loaded);
     await tester.pumpAndSettle();
-    expect(find.text('1 tempat untuk dijelajahi'), findsOneWidget);
+    expect(find.text('MAPID Explorer'), findsOneWidget);
+    expect(find.bySemanticsLabel('Muat ulang data wisata'), findsOneWidget);
+    expect(find.text('1 tempat untuk dijelajahi'), findsNothing);
     verifyNever(() => bloc.add(any()));
 
     await tester.tap(find.text('Lokasi saya'));
@@ -66,7 +68,7 @@ void main() {
     verifyNever(() => bloc.add(any()));
     expect(tester.widget<AppButton>(find.byType(AppButton)).isLoading, isTrue);
 
-    await tester.tap(find.bySemanticsLabel('Lihat semua tempat'));
+    await tester.tap(find.bySemanticsLabel('Lihat tempat wisata'));
     verify(
       () => bloc.add(
         any(
@@ -116,10 +118,16 @@ void main() {
       );
       final header = tester.widget<AppText>(
         find.byWidgetPredicate(
-          (widget) => widget is AppText && widget.data == sampleLayer.name,
+          (widget) => widget is AppText && widget.data == 'MAPID Explorer',
         ),
       );
       final controls = tester.widget<MapControls>(find.byType(MapControls));
+      final locationMessage = tester.widget<AppText>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is AppText && widget.data == initial.locationMessage,
+        ),
+      );
       for (var i = 0; i < 10; i++) {
         states.add(
           initial.copyWith(
@@ -139,7 +147,7 @@ void main() {
         expect(
           tester.widget<AppText>(
             find.byWidgetPredicate(
-              (widget) => widget is AppText && widget.data == sampleLayer.name,
+              (widget) => widget is AppText && widget.data == 'MAPID Explorer',
             ),
           ),
           same(header),
@@ -148,8 +156,17 @@ void main() {
           tester.widget<MapControls>(find.byType(MapControls)),
           same(controls),
         );
+        expect(
+          tester.widget<AppText>(
+            find.byWidgetPredicate(
+              (widget) =>
+                  widget is AppText && widget.data == initial.locationMessage,
+            ),
+          ),
+          same(locationMessage),
+        );
       }
-      expect(find.text('Arah hadap · 9°'), findsOneWidget);
+      expect(find.textContaining('Arah hadap'), findsNothing);
       final selected = initial.copyWith(
         scene: initial.scene.copyWith(
           layer: MapLayer(name: 'Updated layer', places: [samplePlace]),
@@ -158,7 +175,7 @@ void main() {
       );
       states.add(selected);
       await tester.pumpAndSettle();
-      expect(find.text('Updated layer'), findsOneWidget);
+      expect(find.text('Updated layer'), findsNothing);
       final popup = tester.widget<PlacePopup>(find.byType(PlacePopup));
       states.add(
         selected.copyWith(

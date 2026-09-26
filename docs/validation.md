@@ -7,7 +7,7 @@ Validated with Flutter 3.47.5, Dart 3.13.4, JDK 21, and Android SDK 36.
 - `dart run melos run generate --no-select`: passed; generated sources reproduce
   the committed output.
 - `dart run melos run check --no-select`: passed, including formatting,
-  dependency boundaries, architecture rules, static analysis, and 243 tests.
+  dependency boundaries, architecture rules, static analysis, and 247 tests.
 - Flavor generation and native scheme checks: passed.
 - Android dev universal release and staging ARM64 release builds: passed. Both
   APK signatures were verified with Android SDK `apksigner`. Earlier debug-build
@@ -87,7 +87,7 @@ their original build context.
 | Native failures | A failed hit test followed by a compass update does not rewrite places or move the camera. Camera retries preserve confirmed sources. Partial source failures, style replacement, and disposal are exercised separately. |
 | Dataset equality and selection | Independently reconstructed equal layers require no source rewrite or camera fit. Stable place IDs retain the popup, changed attributes update it, and removed IDs clear it. |
 | Gesture boundary | Tap jitter preserves follow; deliberate drags still reach the underlying surface. Cancellation and disposal release pointer tracking. |
-| Rebuild scope | Ten compass updates preserve the header and overlay widget instances while the bearing label updates. Layer and selection changes still render. |
+| Rebuild scope | Ten compass updates preserve header, controls, location status, and popup widget instances. Selection and relevant status changes still render. |
 
 Renderer tests use controllable native-controller doubles to reproduce ordering
 and failures. They do not establish GPU rendering behavior. The production

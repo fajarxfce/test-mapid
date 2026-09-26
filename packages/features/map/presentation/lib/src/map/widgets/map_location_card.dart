@@ -10,18 +10,8 @@ class MapLocationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
     buildWhen: (before, after) =>
-        (
-          before.locationMessage,
-          before.bearingLabel,
-          before.locationLabel,
-          before.locating,
-        ) !=
-        (
-          after.locationMessage,
-          after.bearingLabel,
-          after.locationLabel,
-          after.locating,
-        ),
+        (before.locationMessage, before.locationLabel, before.locating) !=
+        (after.locationMessage, after.locationLabel, after.locating),
     builder: (context, state) => AppCard(
       backgroundColor: FluentTheme.of(context)
           .resources
@@ -32,24 +22,10 @@ class MapLocationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const AppText(
-              'Jogja, dari sudut yang berbeda.',
-              variant: AppTextVariant.bodyStrong,
-            ),
-            const SizedBox(height: 4),
-            const AppText(
-              'Ketuk titik jingga untuk mengenal tempatnya.',
-              variant: AppTextVariant.caption,
-            ),
             if (state.locationMessage != null) ...[
-              const SizedBox(height: 8),
               AppText(state.locationMessage!, variant: AppTextVariant.caption),
+              const SizedBox(height: 12),
             ],
-            if (state.bearingLabel != null) ...[
-              const SizedBox(height: 4),
-              AppText(state.bearingLabel!, variant: AppTextVariant.caption),
-            ],
-            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: AppButton(

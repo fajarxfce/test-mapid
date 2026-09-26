@@ -108,7 +108,7 @@ void main() {
       format: ui.ImageByteFormat.rawRgba,
     ))!;
     final arrowCenter =
-        ((12 * ratio).floor() * image.width + (32 * ratio).floor()) * 4;
+        ((8 * ratio).floor() * image.width + (32 * ratio).floor()) * 4;
     final belowArrow =
         ((40 * ratio).floor() * image.width + (32 * ratio).floor()) * 4;
     expect(pixels.getUint8(arrowCenter + 3), 255);

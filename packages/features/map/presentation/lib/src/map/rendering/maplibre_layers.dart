@@ -17,10 +17,10 @@ class MapLibreLayers {
     layerId: _placesLayer,
     data: _placesGeoJson(layer),
     paint: const CircleLayerProperties(
-      circleRadius: 9,
-      circleColor: '#E77536',
+      circleRadius: 5,
+      circleColor: '#16803C',
       circleStrokeColor: '#FFFFFF',
-      circleStrokeWidth: 2.5,
+      circleStrokeWidth: 1.5,
     ),
   );
 
@@ -30,10 +30,10 @@ class MapLibreLayers {
       layerId: _locationLayer,
       data: _locationGeoJson(location),
       paint: const CircleLayerProperties(
-        circleRadius: 9,
+        circleRadius: 6,
         circleColor: '#1468D4',
         circleStrokeColor: '#FFFFFF',
-        circleStrokeWidth: 3,
+        circleStrokeWidth: 2,
       ),
     );
     if (_controller.isDisposed || location?.bearing == null) return;
@@ -51,7 +51,7 @@ class MapLibreLayers {
       _headingLayer,
       const SymbolLayerProperties(
         iconImage: _headingImage,
-        iconSize: 0.8,
+        iconSize: 0.65,
         iconRotate: ['get', 'bearing'],
         iconRotationAlignment: 'map',
         iconAllowOverlap: true,

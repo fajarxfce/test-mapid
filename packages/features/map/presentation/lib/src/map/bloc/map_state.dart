@@ -1,5 +1,4 @@
 import 'package:core_common/core_common.dart';
-import 'package:core_location_domain/core_location_domain.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:map_presentation/src/map/models/map_scene.dart';
 import 'package:map_presentation/src/map/models/place_details.dart';
@@ -22,27 +21,15 @@ abstract class MapState with _$MapState {
   }) = _MapState;
 
   bool get locating => locationStatus == LocationTrackingStatus.acquiring;
-  String? get bearingLabel =>
-      locationStatus != LocationTrackingStatus.live ||
-          scene.location?.bearing == null
-      ? null
-      : '${scene.location!.bearing!.source == LocationBearingSource.compass ? 'Arah hadap' : 'Arah gerak'} · ${scene.location!.bearing!.degrees.toStringAsFixed(0)}°';
-  String get layerName => scene.layer?.name ?? 'Pariwisata Jogja';
-  int get placeCount => scene.layer?.places.length ?? 0;
-  String get layerCaption => loadingLayer
-      ? 'Memuat data GEO MAPID…'
-      : placeCount == 0
-      ? 'Belum ada tempat pada layer ini'
-      : '$placeCount tempat untuk dijelajahi';
 
   String? get layerError => switch (layerFailure?.kind) {
     null => null,
     FailureKind.unauthorized || FailureKind.forbidden =>
-      'Akses layer ditolak. Periksa API key dan izin layer GEO MAPID.',
+      'Akses data wisata ditolak. Hubungi pengelola aplikasi.',
     FailureKind.network || FailureKind.timeout =>
       'Data wisata belum dapat dimuat. Periksa koneksi internet dan coba lagi.',
     FailureKind.invalidResponse => 'Format data layer belum dapat dibaca.',
-    _ => 'Layanan GEO MAPID belum dapat diakses. Coba lagi sebentar.',
+    _ => 'Data wisata belum dapat diakses. Coba lagi sebentar.',
   };
 
   LocationAction get locationAction => switch (locationFailure?.kind) {

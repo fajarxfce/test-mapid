@@ -10,22 +10,12 @@ class MapHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocBuilder<MapBloc, MapState>(
     buildWhen: (before, after) =>
-        (
-          before.layerName,
-          before.layerCaption,
-          before.loadingLayer,
-          before.layerError,
-        ) !=
-        (
-          after.layerName,
-          after.layerCaption,
-          after.loadingLayer,
-          after.layerError,
-        ),
+        (before.loadingLayer, before.layerError) !=
+        (after.loadingLayer, after.layerError),
     builder: (context, state) => Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 12, 16),
+          padding: const EdgeInsets.fromLTRB(20, 14, 12, 14),
           child: Row(
             children: [
               const DecoratedBox(
@@ -34,59 +24,33 @@ class MapHeader extends StatelessWidget {
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.all(11),
+                  padding: EdgeInsets.all(10),
                   child: Icon(
                     FluentIcons.map_pin,
                     color: Colors.white,
-                    size: 23,
+                    size: 22,
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const AppText(
-                      'MAPID Explorer',
-                      variant: AppTextVariant.subtitle,
-                    ),
-                    AppText(state.layerName, variant: AppTextVariant.caption),
-                  ],
-                ),
-              ),
-              AppIconButton(
-                icon: FluentIcons.refresh,
-                tooltip: 'Muat ulang data wisata',
-                onPressed: state.loadingLayer
-                    ? null
-                    : () => context.read<MapBloc>().add(
-                        const MapLayerRequested(),
-                      ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: Row(
-            children: [
-              if (state.loadingLayer)
-                const AppProgressRing(size: 13, strokeWidth: 2)
-              else
-                const Icon(
-                  FluentIcons.location,
-                  color: Color(0xFFD0642D),
-                  size: 14,
-                ),
-              const SizedBox(width: 8),
-              Expanded(
+              const Expanded(
                 child: AppText(
-                  state.layerCaption,
-                  variant: AppTextVariant.caption,
+                  'MAPID Explorer',
+                  variant: AppTextVariant.subtitle,
                 ),
               ),
-              const AppText('GEO MAPID', variant: AppTextVariant.caption),
+              if (state.loadingLayer)
+                const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: AppProgressRing(size: 18, strokeWidth: 2),
+                )
+              else
+                AppIconButton(
+                  icon: FluentIcons.refresh,
+                  tooltip: 'Muat ulang data wisata',
+                  onPressed: () =>
+                      context.read<MapBloc>().add(const MapLayerRequested()),
+                ),
             ],
           ),
         ),

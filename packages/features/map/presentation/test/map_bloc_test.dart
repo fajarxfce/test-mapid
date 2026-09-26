@@ -56,14 +56,14 @@ void main() {
       updates.add(Success(moved));
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.scene.location, same(moved));
-      expect(bloc.state.bearingLabel, 'Arah hadap · 90°');
+      expect(bloc.state.scene.location?.bearing?.degrees, 90);
       expect(bloc.state.locationMessage, contains('realtime'));
       updates.add(
         const FailureResult(Failure(FailureKind.cancelled, 'background')),
       );
       await Future<void>.delayed(Duration.zero);
       expect(bloc.state.locationStatus, LocationTrackingStatus.paused);
-      expect(bloc.state.bearingLabel, isNull);
+      expect(bloc.state.scene.location, same(moved));
       expect(bloc.state.locationMessage, contains('Lokasi terakhir'));
       updates.add(Success(moved));
       await Future<void>.delayed(Duration.zero);
@@ -80,8 +80,7 @@ void main() {
     act: (bloc) => bloc.add(const MapLayerRequested()),
     verify: (bloc) {
       expect(bloc.state.scene.layer, same(sampleLayer));
-      expect(bloc.state.scene.layer, same(sampleLayer));
-      expect(bloc.state.placeCount, 1);
+      expect(bloc.state.scene.layer?.places, hasLength(1));
       expect(bloc.state.loadingLayer, isFalse);
     },
   );
@@ -96,7 +95,7 @@ void main() {
       bloc.add(const MapLocationRequested());
     },
     verify: (bloc) {
-      expect(bloc.state.placeCount, 1);
+      expect(bloc.state.scene.layer?.places, hasLength(1));
       expect(bloc.state.locationFailure?.kind, FailureKind.permissionDenied);
       expect(
         bloc.state.locationMessage,

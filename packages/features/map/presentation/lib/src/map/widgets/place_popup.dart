@@ -23,7 +23,7 @@ class PlacePopup extends StatelessWidget {
                 child: AppText(
                   'DESTINASI WISATA',
                   variant: AppTextVariant.caption,
-                  color: Color(0xFFC65E25),
+                  color: Color(0xFF16803C),
                 ),
               ),
               AppIconButton(
@@ -43,10 +43,7 @@ class PlacePopup extends StatelessWidget {
             AppText(details.area, variant: AppTextVariant.caption),
           ],
           const SizedBox(height: 12),
-          AppText(
-            'Data ${details.period} · GEO MAPID',
-            variant: AppTextVariant.caption,
-          ),
+          AppText('Periode ${details.period}', variant: AppTextVariant.caption),
           AppText(details.coordinates, variant: AppTextVariant.caption),
         ],
       ),
