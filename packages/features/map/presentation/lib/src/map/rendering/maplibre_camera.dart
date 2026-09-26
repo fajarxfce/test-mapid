@@ -10,31 +10,31 @@ class MapLibreCamera {
   const MapLibreCamera(this._controller);
   final MapLibreMapController _controller;
 
-  Future<void> focus(MapScene scene, {bool reframe = false}) async {
+  Future<MapCameraOutcome> focus(MapScene scene, {bool reframe = false}) async {
     switch (scene.focus) {
       case MapCameraFocus.places:
-        if (scene.layer case final layer?) await _fitPlaces(layer);
+        if (scene.layer case final layer?) return _fitPlaces(layer);
       case MapCameraFocus.userLocation:
         if (scene.location case final location?) {
-          await _centerOn(location, reframe: reframe);
+          return _centerOn(location, reframe: reframe);
         }
       case MapCameraFocus.free:
         break;
     }
+    return MapCameraOutcome.applied;
   }
 
-  Future<void> _fitPlaces(MapLayer layer) async {
-    if (layer.places.isEmpty) return;
+  Future<MapCameraOutcome> _fitPlaces(MapLayer layer) async {
+    if (layer.places.isEmpty) return MapCameraOutcome.applied;
     if (layer.places.length == 1) {
       final point = layer.places.single.point;
-      await _controller.animateCamera(
+      return _animate(
         CameraUpdate.newLatLngZoom(LatLng(point.latitude, point.longitude), 14),
       );
-      return;
     }
     final latitudes = layer.places.map((place) => place.point.latitude);
     final longitudes = layer.places.map((place) => place.point.longitude);
-    await _controller.animateCamera(
+    return _animate(
       CameraUpdate.newLatLngBounds(
         LatLngBounds(
           southwest: LatLng(latitudes.reduce(min), longitudes.reduce(min)),
@@ -48,23 +48,35 @@ class MapLibreCamera {
     );
   }
 
-  Future<void> _centerOn(LocationFix location, {required bool reframe}) async {
+  Future<MapCameraOutcome> _centerOn(
+    LocationFix location, {
+    required bool reframe,
+  }) async {
     final target = LatLng(location.point.latitude, location.point.longitude);
     if (reframe) {
-      await _controller.animateCamera(CameraUpdate.newLatLngZoom(target, 15));
-      return;
+      return _animate(CameraUpdate.newLatLngZoom(target, 15));
     }
     // Android animateCamera uses flyTo, dipping zoom across tile boundaries on
     // every GPS fix and making labels blink (maplibre-native#2477). Following
     // changes only the center, with no flight or zoom excursion.
-    await _controller.easeCamera(
+    final completed = await _controller.easeCamera(
       CameraUpdate.newLatLng(target),
       duration: const Duration(milliseconds: 800),
       interpolation: CameraAnimationInterpolation.linear,
     );
+    return completed ? MapCameraOutcome.applied : MapCameraOutcome.cancelled;
   }
 
-  Future<void> zoomBy(double amount) async {
-    await _controller.animateCamera(CameraUpdate.zoomBy(amount));
+  Future<MapCameraOutcome> zoomBy(double amount) =>
+      _animate(CameraUpdate.zoomBy(amount));
+
+  Future<MapCameraOutcome> _animate(CameraUpdate update) async {
+    final completed = await _controller.animateCamera(update);
+    // iOS acknowledges an accepted animateCamera request with null.
+    return completed == false
+        ? MapCameraOutcome.cancelled
+        : MapCameraOutcome.applied;
   }
 }
+
+enum MapCameraOutcome { applied, cancelled }

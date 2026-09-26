@@ -10,6 +10,55 @@ import 'support/mock_map_controller.dart';
 void main() {
   setUpAll(() => registerFallbackValue(CameraUpdate.zoomBy(1)));
 
+  for (final completed in [true, false, null]) {
+    test(
+      'animateCamera result $completed follows the platform contract',
+      () async {
+        final controller = TestMapController();
+        when(() => controller.animateCamera(any()))
+            .thenAnswer((_) async => completed);
+        expect(
+          await MapLibreCamera(controller).focus(
+            const MapScene(
+              focus: MapCameraFocus.userLocation,
+              location: sampleLocation,
+            ),
+            reframe: true,
+          ),
+          completed == false
+              ? MapCameraOutcome.cancelled
+              : MapCameraOutcome.applied,
+        );
+        expect(
+          await MapLibreCamera(controller).zoomBy(1),
+          completed == false
+              ? MapCameraOutcome.cancelled
+              : MapCameraOutcome.applied,
+        );
+      },
+    );
+  }
+
+  test('cancelled easeCamera remains an explicit cancellation', () async {
+    final controller = TestMapController();
+    when(
+      () => controller.easeCamera(
+        any(),
+        duration: any(named: 'duration'),
+        interpolation: any(named: 'interpolation'),
+      ),
+    ).thenAnswer((_) async => false);
+    expect(
+      await MapLibreCamera(controller).focus(
+        const MapScene(
+          focus: MapCameraFocus.userLocation,
+          location: sampleLocation,
+        ),
+      ),
+      MapCameraOutcome.cancelled,
+    );
+  });
+
   test(
     'GPS follow eases only the center without the Android flyTo zoom dip',
     () async {

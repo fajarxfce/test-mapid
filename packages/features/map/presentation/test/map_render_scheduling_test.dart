@@ -70,6 +70,47 @@ void main() {
   });
 
   test(
+    'cancelled recenter preserves sources and retries unchanged intent',
+    () async {
+      var attempts = 0;
+      when(() => native.controller.animateCamera(any())).thenAnswer((_) async {
+        attempts++;
+        return attempts > 1;
+      });
+      final scene = sceneAt(-6.2);
+      renderer.focus(scene);
+      await Future<void>.delayed(Duration.zero);
+      expect(attempts, 1);
+      expect(statuses.last, MapRenderStatus.ready);
+      renderer.render(scene);
+      await Future<void>.delayed(Duration.zero);
+      expect(attempts, 2);
+      expect(
+        native.operations,
+        isEmpty,
+        reason: 'Confirmed sources are retained.',
+      );
+      renderer.render(scene);
+      await Future<void>.delayed(Duration.zero);
+      expect(attempts, 2);
+    },
+  );
+
+  test('pan after cancelled motion prevents subsequent recenter', () async {
+    var attempts = 0;
+    when(() => native.controller.animateCamera(any())).thenAnswer((_) async {
+      attempts++;
+      return false;
+    });
+    renderer.focus(sceneAt(-6.2));
+    await Future<void>.delayed(Duration.zero);
+    renderer.render(sceneAt(-6.2).copyWith(focus: MapCameraFocus.free));
+    await Future<void>.delayed(Duration.zero);
+    expect(attempts, 1);
+    expect(statuses.last, MapRenderStatus.ready);
+  });
+
+  test(
     'GPS bursts retain the in-flight write and newest position only',
     () async {
       final gate = Completer<void>();

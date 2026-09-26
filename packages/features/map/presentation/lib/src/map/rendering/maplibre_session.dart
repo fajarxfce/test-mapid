@@ -164,7 +164,14 @@ final class MapLibreSession {
         () => _camera.focus(scene, reframe: reframe),
       ),
     };
-    if (_closed || !_styleReady || result is FailureResult<void>) return false;
+    if (_closed || !_styleReady || result is FailureResult) return false;
+    if (result case Success(value: MapCameraOutcome.cancelled)) {
+      // Cancellation may stop between positions. Retry only on a future scene
+      // or command, using current intent; confirmed sources remain valid.
+      _applied = MapRenderBaseline(sources: _applied.sources);
+      _statuses.add(MapRenderStatus.ready);
+      return false;
+    }
     _applied = _applied.afterSuccess(change);
     return true;
   }
